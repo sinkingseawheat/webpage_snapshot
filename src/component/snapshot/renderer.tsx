@@ -2,7 +2,7 @@
 
 import {useForm } from 'react-hook-form';
 import type { SubmitHandler } from 'react-hook-form';
-import styles from '@/styles/FormSnapShotInput.module.scss';
+import styles from '@/styles/snapshot/FormInput.module.scss';
 
 import { browerContextDefaultFormFieldValue } from '@/component/headlessBrowser/FormData';
 
@@ -87,7 +87,7 @@ const Renderer:React.FC<{}> = ()=>{
     <form onSubmit={handleSubmit(onSubmit)}>
       <label>
         <span className='labelName'>対象のURL（必須）</span>
-        <textarea
+        <textarea className={styles.textarea}
           placeholder='URLを改行区切りで入力してください'
           {...register('urlsToOpen',{
             required:`URLの入力は必須です`,
@@ -158,7 +158,7 @@ const Renderer:React.FC<{}> = ()=>{
         }
         <FormItemMessage name='referer' />
       </fieldset>
-      <input type='submit' disabled={!isValid} />
+      <input type='submit' className={styles.submitButton} disabled={!isValid} />
     </form>
   );
 }
