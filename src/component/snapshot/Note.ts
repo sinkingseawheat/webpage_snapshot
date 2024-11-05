@@ -5,21 +5,12 @@ import { BrowserContextOptions } from "playwright";
 import type { Request } from 'playwright';
 import { ValidURL } from "./ScenarioFormData";
 
-import type { Entries } from '@/utility/Types';
+import { type IndexOfURL, isIndexOfURL, type Entries } from '@/utility/Types';
 
 class NoteError extends Error{
   static {
     this.prototype.name = 'NoteError';
   }
-}
-
-declare const IndexOfURLNormality: unique symbol;
-/* ブラウザで読み込む対象URLと1対1で紐づいた、'010'など数字のみで構成された文字列 */
-type IndexOfURL = string & {
-  IndexOfURLNormality: never,
-}
-const isIndexOfURL = (arg:string):arg is IndexOfURL => {
-  return /^\d+$/.test(arg);
 }
 
 // Todo:アプリのversionをpackage.jsonから取得して、取得データを一緒に記載する。

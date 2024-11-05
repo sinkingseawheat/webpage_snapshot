@@ -15,3 +15,12 @@ function isValidURL(arg:string):arg is ValidURL{
 
 export type { ValidURL }
 export { isValidURL }
+
+declare const IndexOfURLNormality: unique symbol;
+/* ブラウザで読み込む対象URLと1対1で紐づいた、'010'など数字のみで構成された文字列 */
+export type IndexOfURL = string & {
+  IndexOfURLNormality: never;
+};
+export const isIndexOfURL = (arg: string): arg is IndexOfURL => {
+  return /^\d+$/.test(arg);
+};
