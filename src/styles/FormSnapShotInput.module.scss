@@ -1,0 +1,16 @@
+.message {
+  $wrap:&;
+  &:not(.-touched){
+    visibility: hidden;
+  }
+}
+.checkboxes{
+  label{
+    display: inline-block;
+    margin-right: 1rem;
+    padding:0.5rem 0;
+  }
+}
+.fieldsetGroup{
+  padding:0.3rem;
+}
