@@ -1,18 +1,4 @@
-type RelativeURLs = ({
-  /** URLの取得元 */
-  type:'DOM_Attribute',
-  /** タグ名 */
-  tagName:string,
-  /** 取得できたURL */
-  url:string[],
-} | {
-  /** URLの取得元 */
-  type:'fromCascadingStyleSheets',
-  /** CSSファイル */
-  href:string|null,
-  /** 取得できたURL */
-  url:string[],
-})[];
+import type { RelativeURLs } from '../Note';
 
 export const getURLInPage = ():RelativeURLs=>{
   // ▼ HeadlessBrowser Context

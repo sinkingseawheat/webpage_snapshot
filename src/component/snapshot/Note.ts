@@ -15,29 +15,71 @@ class NoteError extends Error{
 
 // Todo:アプリのversionをpackage.jsonから取得して、取得データを一緒に記載する。
 
-/** ページごとの結果 */
-type PageResultRecord = {[k:string]:any};
-
-type ResponseRequestedInPage = {
-  /** リダイレクトを含む最終的な取得結果 */
-  responseURL: string|null,
-  /** リクエスト結果 */
-  status: number|null,
-  /** このURLへのアクセスが発生したページのindex */
-  linkSourceIndex: Set<IndexOfURL>
+/** リクエスト全体に共通する結果 */
+type MainResultRecord = {
+  bcOption:BrowserContextOptions,
+  /** ヘッドレスブラウザでリクエストするURLとそのindexの紐づけリスト */
+  targetURLs:Map<ValidURL, IndexOfURL>,
+  /** 各ページで読み込んだ、または設定されたリンクとそのレスポンス結果を格納する。keyは最初にリクエストしたURL。updateLinksで更新する */
+  links:Map<string, {
+    /** リダイレクトを含む最終的な取得結果 */
+    responseURL: string|null,
+    /** リクエスト結果 */
+    status: number|null,
+    /** このURLへのアクセスが発生したページのindex */
+    linkSourceIndex: Set<IndexOfURL>
+  }>,
 };
+
+/** ページごとの結果 */
+type PageResultRecord = {
+  'firstRequested'?:{
+    url: ValidURL,
+    redirect:null
+  } | {
+    url: ValidURL,
+    redirect:{
+      count:number|null,
+      transition:{url:string,status:number}[],
+    },
+  },
+  'URLRequestedFromPage'?:{
+    /** このデータの説明文 */
+    description:string,
+    /** ページ内で使用されているURL */
+    relativeURLs:string[],
+  },
+  'URLExtractored'?:{
+    /** このデータの説明文 */
+    description:string,
+    /** ページ内に記述されているURL。相対・ルート相対・#始まりなどもあり */
+    relativeURLs:({
+      /** 取得できたURL */
+      url:string[],
+    } & ({
+      /** URLの取得元 */
+      type:'DOM_Attribute',
+      /** タグ名 */
+      tagName:string,
+    } | {
+      /** URLの取得元 */
+      type:'fromCascadingStyleSheets',
+      /** CSSファイル */
+      href:string|null,
+    }))[]
+  }
+};
+
+export type RelativeURLs = Required<PageResultRecord>['URLExtractored']["relativeURLs"];
+
+/** 処理開始時に作成され、処理完了時に削除されるファイル */
+const DOT_FILE_NAME = '.running' as const;
 
 class Note{
   /** ページごとの結果にインデックスを付与したもの */
   private pageResults:Map<IndexOfURL, PageResultRecord> = new Map();
   /** リクエスト全体に共通する結果を格納する */
-  private mainResult!:{
-    bcOption:BrowserContextOptions,
-    /** ヘッドレスブラウザでリクエストするURLとそのindexの紐づけリスト */
-    targetURLs:Map<ValidURL, IndexOfURL>,
-    /** 各ページで読み込んだ、または設定されたリンクとそのレスポンス結果を格納する。keyは最初にリクエストしたURL */
-    links:Map<string, ResponseRequestedInPage>,
-  };
+  private mainResult!:MainResultRecord;
   /** 結果を格納するディレクトリのパス */
   private occupiedDirectoryPath!:string;
   constructor(
@@ -70,6 +112,7 @@ class Note{
 
   async init(){
     await fs.mkdir(this.occupiedDirectoryPath, {recursive:true});
+    await fs.writeFile(path.join(this.occupiedDirectoryPath, DOT_FILE_NAME),'');
   }
 
   createPageResult(url:ValidURL){
@@ -83,6 +126,7 @@ class Note{
   }
 
   async write(){
+    // 全体の結果
     const fileHandleMain = await fs.open(this.occupiedDirectoryPath+'/__main.json','ax');
     const recordMain:any = {}
     for (const [name, value] of Object.entries(this.mainResult) as Entries<typeof this.mainResult>){
@@ -110,14 +154,16 @@ class Note{
     }
     await fileHandleMain.write(JSON.stringify(recordMain, null, '\t'));
     await fileHandleMain.close();
+    // ページごとの結果
     for await(const [indexOfURL, record] of this.pageResults){
       const fileHandle = await fs.open(this.occupiedDirectoryPath + `/${indexOfURL}.json`, 'ax');
       fileHandle.write(JSON.stringify(record, null, '\t'));
       await fileHandle.close();
     }
+    await fs.unlink(path.join(this.occupiedDirectoryPath, DOT_FILE_NAME));
   }
 
-  async archiveFile(pathname:string, ){}
+  async archiveFile(){}
 }
 
 class PageResult {
@@ -131,12 +177,12 @@ class PageResult {
   getURL(){
     return this.url;
   }
-  async updateLinks(finallyRequested:Request){
+  async updateLinks(targetRequest:Request){
     // リダイレクト後であればリダイレクト前の一番最初にリクエストしたURLを、リダイレクト無しまたはリクエスト前であればそのままのURLを使用する
     const requestedURLInPage = (()=>{
       let redirectCount = 0;
-      let prevRequest = finallyRequested.redirectedFrom();
-      let url = finallyRequested.url();
+      let prevRequest = targetRequest.redirectedFrom();
+      let url = targetRequest.url();
       while(prevRequest!==null && redirectCount < 10){
         url = prevRequest.url();
         prevRequest = prevRequest?.redirectedFrom() || null;
@@ -146,7 +192,7 @@ class PageResult {
     })();
     const responseRequestedInPage = this.links.get(requestedURLInPage);
     if(responseRequestedInPage === undefined){
-      const _response = await finallyRequested.response();
+      const _response = await targetRequest.response();
       const _responseURL = _response?.url() ?? null;
       const _status = _response?.status() ?? null;
       const _indexOfURL = new Set<typeof this.indexOfURL>();
@@ -160,6 +206,10 @@ class PageResult {
       responseRequestedInPage.linkSourceIndex.add(this.indexOfURL);
     }
   }
+}
+
+class ArchiveFile{
+  constructor(occupiedDirectoryPath:string){}
 }
 
 export { Note };

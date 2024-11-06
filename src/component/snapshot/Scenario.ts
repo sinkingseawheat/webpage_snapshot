@@ -4,6 +4,7 @@ import { Note } from "./Note";
 import { getURLInPage } from './sub/getURLInPage';
 
 import { setting } from "@/utility/Setting";
+import { isValidURL } from "@/utility/Types";
 
 class Scenario {
   public URLWaitingForFinish:Set<string> = new Set();
@@ -22,16 +23,11 @@ class Scenario {
 
     // beforeGoto ページ読み込み前
     (()=>{
-      const recordedItem:{
-        /** このデータの説明文 */
-        description:string,
-        /** ページ内で使用されているURL */
-        relativeURLs:string[],
-      } = {
+      const recordedItem:typeof this.pageResult["record"]["URLRequestedFromPage"] = {
         description:'ページからのリクエストに対するレスポンスを記録する',
         relativeURLs:[]
       };
-      this.pageResult.record['record link in page'] = recordedItem;
+      this.pageResult.record['URLRequestedFromPage'] = recordedItem;
       page.on('request',(request)=>{
         this.URLWaitingForFinish.add(request.url());
       })
@@ -66,16 +62,6 @@ class Scenario {
     if(authEncoded !== null){
       page.setExtraHTTPHeaders({...authEncoded});
     }
-    type FirstRequested = {
-      url: ValidURL,
-      redirect:null
-    } | {
-      url: ValidURL,
-      redirect:{
-        count:number|null,
-        transition:{url:string,status:number}[],
-      },
-    };
     try {
       const optionOfPageTransition:Parameters<Page["goto"]>[1] = {
         ...{waitUntil:'networkidle'},
@@ -83,7 +69,7 @@ class Scenario {
       };
       const response = await page.goto(url, optionOfPageTransition);
       if(response === null){
-        const firstRequested:FirstRequested = {
+        const firstRequested:typeof this.pageResult["record"]["firstRequested"] = {
           url,
           redirect: null
         }
@@ -91,7 +77,7 @@ class Scenario {
       }else{
         // リダイレクト回数・遷移を取得
         let redirectCount:number = -1;
-        const redirectResult:Exclude<FirstRequested["redirect"],null>["transition"] = [];
+        const redirectResult:Exclude<Required<typeof this.pageResult["record"]>["firstRequested"]["redirect"], null>["transition"] = [];
         let prevRequest:Awaited<ReturnType<(typeof response)["request"]>>|null;
         const MAX_REDIRECT_COUNT = 10;
         prevRequest = response.request();
@@ -106,7 +92,7 @@ class Scenario {
           prevRequest = prevRequest.redirectedFrom();
           redirectCount++;
         };
-        const firstRequested:FirstRequested = {
+        const firstRequested:typeof this.pageResult["record"]["firstRequested"] = {
           url,
           redirect:{
             count: redirectCount <= MAX_REDIRECT_COUNT ? redirectCount : null,
@@ -120,18 +106,22 @@ class Scenario {
     }
     // afterLoaded ページ読み込み完了後
     await (async ()=>{
-      const recordedItem:{
-        /** このデータの説明文 */
-        description:string,
-        /** ページ内に記述されているURL。相対・ルート相対・#始まりなどもあり */
-        relativeURLs:ReturnType<typeof getURLInPage>,
-      } = {
+      const recordedItem:typeof this.pageResult["record"]["URLExtractored"] = {
         description:'ページからリンクを抽出する',
         relativeURLs:[]
       };
-      this.pageResult.record['extractor link'] = recordedItem;
+      this.pageResult.record['URLExtractored'] = recordedItem;
       const dataFromHeadlessBrowser = await page.evaluate(getURLInPage);
       recordedItem.relativeURLs = dataFromHeadlessBrowser;
+      for(const elmData of dataFromHeadlessBrowser){
+        for(const url of elmData.url){
+          if(isValidURL(url)){
+            const pendingRequest = new Request(url);
+            // Todo: ページから抽出したURLをどうするか
+            // this.pageResult.updateLinks(pendingRequest);
+          }
+        }
+      }
     })();
     await page.close({reason:'全てのシナリオが終了したため、ページをクローズ'});
     return {
