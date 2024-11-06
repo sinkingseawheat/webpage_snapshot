@@ -15,6 +15,19 @@ class NoteError extends Error{
 
 // Todo:アプリのversionをpackage.jsonから取得して、取得データを一緒に記載する。
 
+type ResponseResult = {
+      /** リダイレクトを含む最終的な取得結果 */
+      responseURL: string|null,
+      /** リクエスト結果 */
+      status: number|null,
+      /** Content-Type */
+      contentType: string|null,
+      /** Content-Length */
+      contentLength: number|null,
+      /** ファイルのハッシュ値 */
+      // hash:string,
+} | null;
+
 /** リクエスト全体に共通する結果 */
 type MainResultRecord = {
   bcOption:BrowserContextOptions,
@@ -22,12 +35,11 @@ type MainResultRecord = {
   targetURLs:Map<ValidURL, IndexOfURL>,
   /** 各ページで読み込んだ、または設定されたリンクとそのレスポンス結果を格納する。keyは最初にリクエストしたURL。updateLinksで更新する */
   links:Map<string, {
-    /** リダイレクトを含む最終的な取得結果 */
-    responseURL: string|null,
-    /** リクエスト結果 */
-    status: number|null,
+    response:ResponseResult,
+    /** ページからのリクエストか、ページから抽出したURLか */
+    source:'formPage'|'extractored',
     /** このURLへのアクセスが発生したページのindex */
-    linkSourceIndex: Set<IndexOfURL>
+    linkSourceIndex: Set<IndexOfURL>,
   }>,
 };
 
@@ -162,8 +174,6 @@ class Note{
     }
     await fs.unlink(path.join(this.occupiedDirectoryPath, DOT_FILE_NAME));
   }
-
-  async archiveFile(){}
 }
 
 class PageResult {
@@ -193,13 +203,26 @@ class PageResult {
     const responseRequestedInPage = this.links.get(requestedURLInPage);
     if(responseRequestedInPage === undefined){
       const _response = await targetRequest.response();
-      const _responseURL = _response?.url() ?? null;
-      const _status = _response?.status() ?? null;
+      const response:ResponseResult = await(async ()=>{
+        if(_response === null){return null;}
+        const responseURL = _response.url();
+        const status = _response.status();
+        const responseHeaders = await _response.allHeaders();
+        const contentType = responseHeaders['content-type'];
+        const contentLengthBeforeParse = responseHeaders['content-length'];
+        const contentLength = contentLengthBeforeParse === null ? null : parseInt(contentLengthBeforeParse);
+        return{
+          responseURL,
+          status,
+          contentType,
+          contentLength,
+        }
+      })();
       const _indexOfURL = new Set<typeof this.indexOfURL>();
-      _indexOfURL.add(this.indexOfURL)
+      _indexOfURL.add(this.indexOfURL);
       this.links.set(requestedURLInPage, {
-        responseURL: _responseURL,
-        status: _status,
+        response,
+        source: 'formPage',
         linkSourceIndex: _indexOfURL,
       });
     }else{
