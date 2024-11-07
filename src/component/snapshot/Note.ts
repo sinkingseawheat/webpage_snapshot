@@ -1,7 +1,7 @@
 import path from 'path';
 import fs from 'fs/promises';
+import crypto from 'crypto';
 
-import { BrowserContextOptions } from "playwright";
 import type { Request } from 'playwright';
 import { ValidURL, ScenarioFormFields } from "./ScenarioFormData";
 import type { BrowserContextPickedFormFields } from "@/component/headlessBrowser/FormData";
@@ -27,7 +27,7 @@ type ResponseResult = {
       /** Content-Length */
       contentLength: number,
       /** ファイルのハッシュ値 */
-      // hash:string,
+      shaHash:string|null,
 } | null | 'pending';
 
 /** リクエスト全体に共通する結果 */
@@ -41,7 +41,7 @@ type MainResultRecord = {
   links:Map<string, {
     response:ResponseResult,
     /** ページからのリクエストか、ページから抽出したURLか */
-    source:'formPage'|'extracted',
+    source:'fromPage'|'extracted',
     /** このURLへのアクセスが発生したページのindex */
     linkSourceIndex: Set<IndexOfURL>,
   }>,
@@ -220,18 +220,27 @@ class PageResult {
         const contentType = responseHeaders['content-type'];
         const contentLengthBeforeParse = responseHeaders['content-length'];
         const contentLength = contentLengthBeforeParse === null ? -1 : parseInt(contentLengthBeforeParse);
+        const shaHash = await (async ()=>{
+          try{
+            const _shaHash = crypto.createHash('sha256').update(await _response.body()).digest('hex');
+            return _shaHash;
+          }catch(e){
+            return null;
+          }
+        })();
         return{
           responseURL,
           status,
           contentType,
           contentLength,
+          shaHash,
         }
       })();
       const linkSourceIndex = new Set<typeof this.indexOfURL>();
       linkSourceIndex.add(this.indexOfURL);
       this.links.set(requestedURLInPage, {
         response,
-        source: 'formPage',
+        source: 'fromPage',
         linkSourceIndex,
       });
     }else{
@@ -255,7 +264,7 @@ class PageResult {
 }
 
 class ArchiveFile{
-  constructor(occupiedDirectoryPath:string){}
+  constructor(occupiedDirectoryPath:string, ){}
   writeFileWrittenURL(){}
   writeFileRequestedURL(){}
 }
