@@ -6,6 +6,7 @@ import type { Request } from 'playwright';
 import { ValidURL } from "./ScenarioFormData";
 
 import { type IndexOfURL, isIndexOfURL, type Entries } from '@/utility/Types';
+import { VERSION } from '@/utility/getVersion';
 
 class NoteError extends Error{
   static {
@@ -17,27 +18,29 @@ class NoteError extends Error{
 
 type ResponseResult = {
       /** リダイレクトを含む最終的な取得結果 */
-      responseURL: string|null,
+      responseURL: string,
       /** リクエスト結果 */
-      status: number|null,
+      status: number,
       /** Content-Type */
-      contentType: string|null,
+      contentType: string,
       /** Content-Length */
-      contentLength: number|null,
+      contentLength: number,
       /** ファイルのハッシュ値 */
       // hash:string,
-} | null;
+} | null | 'pending';
 
 /** リクエスト全体に共通する結果 */
 type MainResultRecord = {
   bcOption:BrowserContextOptions,
+  /** アプリのversion。package.jsonから取得 */
+  version:string|null,
   /** ヘッドレスブラウザでリクエストするURLとそのindexの紐づけリスト */
   targetURLs:Map<ValidURL, IndexOfURL>,
   /** 各ページで読み込んだ、または設定されたリンクとそのレスポンス結果を格納する。keyは最初にリクエストしたURL。updateLinksで更新する */
   links:Map<string, {
     response:ResponseResult,
     /** ページからのリクエストか、ページから抽出したURLか */
-    source:'formPage'|'extractored',
+    source:'formPage'|'extracted',
     /** このURLへのアクセスが発生したページのindex */
     linkSourceIndex: Set<IndexOfURL>,
   }>,
@@ -59,15 +62,16 @@ type PageResultRecord = {
     /** このデータの説明文 */
     description:string,
     /** ページ内で使用されているURL */
-    relativeURLs:string[],
+    requestedURLs:string[],
   },
-  'URLExtractored'?:{
+  'URLExtracted'?:{
     /** このデータの説明文 */
     description:string,
     /** ページ内に記述されているURL。相対・ルート相対・#始まりなどもあり */
-    relativeURLs:({
+    writtenURLs:({
       /** 取得できたURL */
-      url:string[],
+      relURL:string[],
+      absURL:(ValidURL|null)[]
     } & ({
       /** URLの取得元 */
       type:'DOM_Attribute',
@@ -82,7 +86,7 @@ type PageResultRecord = {
   }
 };
 
-export type RelativeURLs = Required<PageResultRecord>['URLExtractored']["relativeURLs"];
+export type WrittenURLs = Required<PageResultRecord>['URLExtracted']["writtenURLs"];
 
 /** 処理開始時に作成され、処理完了時に削除されるファイル */
 const DOT_FILE_NAME = '.running' as const;
@@ -115,6 +119,7 @@ class Note{
     const _links:typeof this.mainResult["links"] = new Map();
     this.mainResult = {
       bcOption: bcoption,
+      version: VERSION ?? null,
       targetURLs: _targetURLs,
       links: _links,
     }
@@ -139,8 +144,8 @@ class Note{
 
   async write(){
     // 全体の結果
-    const fileHandleMain = await fs.open(this.occupiedDirectoryPath+'/__main.json','ax');
-    const recordMain:any = {}
+    const fileHandleMain = await fs.open(this.occupiedDirectoryPath+'/main.json','ax');
+    const recordMain:Partial<{[k in keyof MainResultRecord]:any}> = {}
     for (const [name, value] of Object.entries(this.mainResult) as Entries<typeof this.mainResult>){
       switch(name){
         case 'bcOption':
@@ -162,13 +167,15 @@ class Note{
             })
           }
           break;
+        default:
+          recordMain[name] = value;
       }
     }
     await fileHandleMain.write(JSON.stringify(recordMain, null, '\t'));
     await fileHandleMain.close();
     // ページごとの結果
     for await(const [indexOfURL, record] of this.pageResults){
-      const fileHandle = await fs.open(this.occupiedDirectoryPath + `/${indexOfURL}.json`, 'ax');
+      const fileHandle = await fs.open(this.occupiedDirectoryPath + `/page_${indexOfURL}.json`, 'ax');
       fileHandle.write(JSON.stringify(record, null, '\t'));
       await fileHandle.close();
     }
@@ -187,8 +194,8 @@ class PageResult {
   getURL(){
     return this.url;
   }
-  async updateLinks(targetRequest:Request){
-    // リダイレクト後であればリダイレクト前の一番最初にリクエストしたURLを、リダイレクト無しまたはリクエスト前であればそのままのURLを使用する
+  async updateLinksFromRequestedURL(targetRequest:Request){
+    // リダイレクト後であればリダイレクト前の一番最初にリクエストしたURLを、リダイレクト無しであればそのままのURLを使用する
     const requestedURLInPage = (()=>{
       let redirectCount = 0;
       let prevRequest = targetRequest.redirectedFrom();
@@ -201,7 +208,8 @@ class PageResult {
       return url;
     })();
     const responseRequestedInPage = this.links.get(requestedURLInPage);
-    if(responseRequestedInPage === undefined){
+    // ページから抽出されたURLとページからリクエストされたURLが重複した場合は、リクエストされたURLを優先する
+    if(responseRequestedInPage === undefined || responseRequestedInPage["source"] === 'extracted'){
       const _response = await targetRequest.response();
       const response:ResponseResult = await(async ()=>{
         if(_response === null){return null;}
@@ -210,7 +218,7 @@ class PageResult {
         const responseHeaders = await _response.allHeaders();
         const contentType = responseHeaders['content-type'];
         const contentLengthBeforeParse = responseHeaders['content-length'];
-        const contentLength = contentLengthBeforeParse === null ? null : parseInt(contentLengthBeforeParse);
+        const contentLength = contentLengthBeforeParse === null ? -1 : parseInt(contentLengthBeforeParse);
         return{
           responseURL,
           status,
@@ -218,13 +226,27 @@ class PageResult {
           contentLength,
         }
       })();
-      const _indexOfURL = new Set<typeof this.indexOfURL>();
-      _indexOfURL.add(this.indexOfURL);
+      const linkSourceIndex = new Set<typeof this.indexOfURL>();
+      linkSourceIndex.add(this.indexOfURL);
       this.links.set(requestedURLInPage, {
         response,
         source: 'formPage',
-        linkSourceIndex: _indexOfURL,
+        linkSourceIndex,
       });
+    }else{
+      responseRequestedInPage.linkSourceIndex.add(this.indexOfURL);
+    }
+  }
+  updateLinksFromExtractedURL(validURL:ValidURL){
+    const responseRequestedInPage = this.links.get(validURL);
+    if(responseRequestedInPage === undefined){
+      const linkSourceIndex = new Set<typeof this.indexOfURL>();
+      linkSourceIndex.add(this.indexOfURL);
+      this.links.set(validURL,{
+        response:'pending',
+        source:'extracted',
+        linkSourceIndex,
+      })
     }else{
       responseRequestedInPage.linkSourceIndex.add(this.indexOfURL);
     }
@@ -233,6 +255,8 @@ class PageResult {
 
 class ArchiveFile{
   constructor(occupiedDirectoryPath:string){}
+  writeFileWrittenURL(){}
+  writeFileRequestedURL(){}
 }
 
 export { Note };

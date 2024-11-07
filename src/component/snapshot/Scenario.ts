@@ -25,7 +25,7 @@ class Scenario {
     (()=>{
       const recordedItem:typeof this.pageResult["record"]["URLRequestedFromPage"] = {
         description:'ページからのリクエストに対するレスポンスを記録する',
-        relativeURLs:[]
+        requestedURLs:[]
       };
       this.pageResult.record['URLRequestedFromPage'] = recordedItem;
       page.on('request',(request)=>{
@@ -36,16 +36,16 @@ class Scenario {
         if(statusType !== 3){
           // サーバーリダイレクト以外の場合は記録する
           (async ()=>{
-            await this.pageResult.updateLinks(response.request());
+            await this.pageResult.updateLinksFromRequestedURL(response.request());
           })();
-          recordedItem.relativeURLs.push(response.url());
+          recordedItem?.requestedURLs.push(response.url());
         }
       });
       page.on('requestfailed',(request)=>{
         (async ()=>{
-          await this.pageResult.updateLinks(request);
+          await this.pageResult.updateLinksFromRequestedURL(request);
         })();
-        recordedItem.relativeURLs.push(request.url());
+        recordedItem?.requestedURLs.push(request.url());
         this.URLWaitingForFinish.delete(request.url());
         // console.log(`request failed ${request.url()}`);
       });
@@ -106,22 +106,29 @@ class Scenario {
     }
     // afterLoaded ページ読み込み完了後
     await (async ()=>{
-      const recordedItem:typeof this.pageResult["record"]["URLExtractored"] = {
+      const recordedItem:typeof this.pageResult["record"]["URLExtracted"] = {
         description:'ページからリンクを抽出する',
-        relativeURLs:[]
+        writtenURLs:[]
       };
-      this.pageResult.record['URLExtractored'] = recordedItem;
+      this.pageResult.record['URLExtracted'] = recordedItem;
       const dataFromHeadlessBrowser = await page.evaluate(getURLInPage);
-      recordedItem.relativeURLs = dataFromHeadlessBrowser;
       for(const elmData of dataFromHeadlessBrowser){
-        for(const url of elmData.url){
-          if(isValidURL(url)){
-            const pendingRequest = new Request(url);
-            // Todo: ページから抽出したURLをどうするか
-            // this.pageResult.updateLinks(pendingRequest);
+        for(const url of elmData.relURL){
+          const absURL = (()=>{
+            try{
+              const _url = new URL(url, page.url()).href as ValidURL; // isValidURLの処理も含んでいるはずなので、型アサーション
+              return _url;
+            }catch(e){
+              return null;
+            }
+          })();
+          if(absURL !== null){
+            this.pageResult.updateLinksFromExtractedURL(absURL);
           }
+          elmData.absURL.push(absURL);
         }
       }
+      recordedItem.writtenURLs = dataFromHeadlessBrowser;
     })();
     await page.close({reason:'全てのシナリオが終了したため、ページをクローズ'});
     return {

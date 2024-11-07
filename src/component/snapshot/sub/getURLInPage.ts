@@ -1,8 +1,8 @@
-import type { RelativeURLs } from '../Note';
+import type { WrittenURLs } from '../Note';
 
-export const getURLInPage = ():RelativeURLs=>{
+export const getURLInPage = ():WrittenURLs=>{
   // ▼ HeadlessBrowser Context
-  const rv:RelativeURLs = [];
+  const rv:WrittenURLs = [];
   // DOM_Attribute
   for(const node of document.querySelectorAll('[href], [src], [srcset], [action], picture')){
     if(node.closest('picture')){
@@ -30,7 +30,8 @@ export const getURLInPage = ():RelativeURLs=>{
     rv.push({
       type:'DOM_Attribute',
       tagName,
-      url: Array.from(url).filter((item)=>item!==null),
+      relURL: Array.from(url).filter((item)=>item!==null),
+      absURL:[],
     });
   }
   // cssから取得
@@ -43,7 +44,8 @@ export const getURLInPage = ():RelativeURLs=>{
           rv.push({
             type: 'fromCascadingStyleSheets',
             href: rule.parentStyleSheet?.href ?? null,
-            url: [rule.style.backgroundImage]
+            relURL: [rule.style.backgroundImage],
+            absURL:[],
           });
         }
       }
