@@ -41,7 +41,7 @@ type MainResultRecord = {
   links:Map<string, {
     response:ResponseResult,
     /** ページからのリクエストか、ページから抽出したURLか */
-    source:'fromPage'|'extracted',
+    source:'requestedFromPage'|'extracted',
     /** このURLへのアクセスが発生したページのindex */
     linkSourceIndex: Set<IndexOfURL>,
   }>,
@@ -129,7 +129,9 @@ class Note{
   }
 
   async init(){
-    await fs.mkdir(this.occupiedDirectoryPath, {recursive:true});
+    for await (const indexOfURL of this.pageResults.keys()){
+      await fs.mkdir(path.join(this.occupiedDirectoryPath, indexOfURL), {recursive:true});
+    }
     await fs.writeFile(path.join(this.occupiedDirectoryPath, DOT_FILE_NAME),'');
   }
 
@@ -176,7 +178,7 @@ class Note{
     await fileHandleMain.close();
     // ページごとの結果
     for await(const [indexOfURL, record] of this.pageResults){
-      const fileHandle = await fs.open(this.occupiedDirectoryPath + `/page_${indexOfURL}.json`, 'ax');
+      const fileHandle = await fs.open(this.occupiedDirectoryPath + `/${indexOfURL}/page.json`, 'ax');
       fileHandle.write(JSON.stringify(record, null, '\t'));
       await fileHandle.close();
     }
@@ -240,7 +242,7 @@ class PageResult {
       linkSourceIndex.add(this.indexOfURL);
       this.links.set(requestedURLInPage, {
         response,
-        source: 'fromPage',
+        source: 'requestedFromPage',
         linkSourceIndex,
       });
     }else{
