@@ -3,7 +3,8 @@ import fs from 'fs/promises';
 
 import { BrowserContextOptions } from "playwright";
 import type { Request } from 'playwright';
-import { ValidURL } from "./ScenarioFormData";
+import { ValidURL, ScenarioFormFields } from "./ScenarioFormData";
+import type { BrowserContextPickedFormFields } from "@/component/headlessBrowser/FormData";
 
 import { type IndexOfURL, isIndexOfURL, type Entries } from '@/utility/Types';
 import { VERSION } from '@/utility/getVersion';
@@ -31,7 +32,7 @@ type ResponseResult = {
 
 /** リクエスト全体に共通する結果 */
 type MainResultRecord = {
-  bcOption:BrowserContextOptions,
+  formData:Omit<ScenarioFormFields & BrowserContextPickedFormFields, 'urlsToOpen'>,
   /** アプリのversion。package.jsonから取得 */
   version:string|null,
   /** ヘッドレスブラウザでリクエストするURLとそのindexの紐づけリスト */
@@ -99,7 +100,7 @@ class Note{
   /** 結果を格納するディレクトリのパス */
   private occupiedDirectoryPath!:string;
   constructor(
-    bcoption:BrowserContextOptions,
+    formData:Omit<ScenarioFormFields & BrowserContextPickedFormFields, 'urlsToOpen'>,
     urlsToOpen: ValidURL[],
     identifier:{
       apiType:string,
@@ -118,7 +119,7 @@ class Note{
     });
     const _links:typeof this.mainResult["links"] = new Map();
     this.mainResult = {
-      bcOption: bcoption,
+      formData: formData,
       version: VERSION ?? null,
       targetURLs: _targetURLs,
       links: _links,
@@ -148,7 +149,7 @@ class Note{
     const recordMain:Partial<{[k in keyof MainResultRecord]:any}> = {}
     for (const [name, value] of Object.entries(this.mainResult) as Entries<typeof this.mainResult>){
       switch(name){
-        case 'bcOption':
+        case 'formData':
           recordMain[name] = value;
           break;
         case 'targetURLs':

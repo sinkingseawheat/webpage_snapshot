@@ -33,11 +33,12 @@ class Context {
     contextId:string,
   }){
     const {formData, apiType, contextId} = args;
+    const {urlsToOpen ,...optionsToNote} = formData
     this.bcoption = deserializeBrowserContextPickedFormFields(formData);
     this.soption = deserializeScenerioFormFields(formData);
     this.id = contextId;
     this.note = new Note(
-      this.bcoption,
+      optionsToNote,
       this.soption.urlsToOpen,
       {
         apiType: apiType,
