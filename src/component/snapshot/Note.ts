@@ -188,10 +188,35 @@ class Note{
         }
         // シナリオオプションはいったん無しで行う。
         try{
-          const pageResponse = await page.goto(requestURL, {waitUntil:'domcontentloaded'});
+          page.on('requestfinished',async (request)=>{
+            // リクエストURLのサーバーリダイレクトが終わって、ロード完了したらそれ以上は何もロードしない。
+            const lastResponse = await request.response();
+            if(lastResponse !== null){
+              const lastRequested = lastResponse.request();
+              const firstRequest = await getRedirectStatusFromRequest(lastRequested, false);
+              if(firstRequest === requestURL && Math.floor(lastResponse.status()/100) !== 3){
+                // console.log(`ドキュメント読み込み完了で記録 ${requestURL}`);
+                const {body, response} = await getResponseAndBodyFromRequest(lastRequested);
+                result.response = response;
+                /* ファイルのアーカイブを開始する */
+                if(body !== null){
+                  this.fileArchive.archive({
+                    requestURL,
+                    buffer: body,
+                  });
+                }
+                page.route('**/*',async (route)=>{
+                  await route.abort();
+                  // console.log(`${route.request().url()} is cancel.`)
+                })
+              }
+            }
+          })
+          const pageResponse = await page.goto(requestURL, {waitUntil:'load'});
           if(pageResponse === null){
             result.response = null;
           }else{
+            // console.log(`ページ読み込み完了で記録 ${requestURL}`);
             const {body, response} = await getResponseAndBodyFromRequest(pageResponse.request());
             result.response = response;
             /* ファイルのアーカイブを開始する */
@@ -203,6 +228,8 @@ class Note{
             }
           }
         }catch(e){
+          // console.log(`ページの読み込みでエラー`)
+          // console.error(e);
           result.response = null;
         }
         await page.close();
@@ -265,7 +292,6 @@ class PageResult {
   }
   async updateLinksFromRequestedURL(targetRequest:Request){
     // リダイレクト後であればリダイレクト前の一番最初にリクエストしたURLを、リダイレクト無しであればそのままのURLを使用する
-
     const requestedURLInPage = await getRedirectStatusFromRequest(targetRequest, false);
     const linksItem = this.links.get(requestedURLInPage);
     // ページから抽出されたURLとページからリクエストされたURLが重複した場合は、リクエストされたURLを優先する
