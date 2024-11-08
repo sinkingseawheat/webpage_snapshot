@@ -24,7 +24,8 @@ class Setting {
     basicAuth:Map<RegExp,{
       username:string,
       password:string
-    }>|null
+    }>|null,
+    allowArchive: RegExp[],
   };
   constructor(){
     this.setData();
@@ -37,7 +38,7 @@ class Setting {
         const _json = JSON.parse(source);
         return _json;
       })();
-      const _proxy:typeof this.data["proxy"] = (()=>{
+      const proxy:typeof this.data["proxy"] = (()=>{
         if('proxy' in json
             && 'server' in json["proxy"]
             && typeof json["proxy"]["server"] === 'string'
@@ -50,9 +51,9 @@ class Setting {
           return null;
         }
       })();
-      const _basicAuth:typeof this.data["basicAuth"] = (()=>{
+      const basicAuth:typeof this.data["basicAuth"] = (()=>{
         if('basicAuth' in json){
-          const _basicAuth = new Map<RegExp,{username:string,password:string}>();
+          const basicAuth = new Map<RegExp,{username:string,password:string}>();
           for(const [server, auth] of Object.entries(json["basicAuth"])){
             try{
               const regServer = new RegExp(server);
@@ -61,7 +62,7 @@ class Setting {
                 && 'password' in auth && typeof auth.password === 'string'){
                   const _username = auth.username;
                   const _password = auth.password;
-                  _basicAuth.set(regServer, {
+                  basicAuth.set(regServer, {
                     username: _username,
                     password: _password,
                   });
@@ -70,22 +71,35 @@ class Setting {
               console.log(`${server}に対するBasic認証の設定に失敗しました`);
             }
           }
-          return _basicAuth;
+          return basicAuth;
         }else{
           return null;
         }
       })();
+      const allowArchive: typeof this.data["allowArchive"] = (()=>{
+        if('allowArchive' in json &&
+          Array.isArray(json["allowArchive"]) &&
+          json["allowArchive"].every((origin)=>typeof origin === 'string')
+        ){
+          return json["allowArchive"].map((origin)=>new RegExp(origin));
+        }else{
+          console.log(`allowArchiveの設定に失敗したためアーカイブの設定はされません`)
+          return [];
+        }
+      })();
       this.data = {
-        proxy: _proxy,
-        basicAuth: _basicAuth,
+        proxy,
+        basicAuth,
+        allowArchive,
       }
     }catch(e){
       if((e as any).code === 'ENOENT'){
-        console.log(`${JSON_PATH}が存在しません。proxyとBasic認証の設定はされません`)
+        console.log(`${JSON_PATH}が存在しません。proxyとBasic認証、アーカイブの設定はされません`)
       }
       this.data = {
         proxy: null,
         basicAuth: null,
+        allowArchive: [],
       }
     }
   }

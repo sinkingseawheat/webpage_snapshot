@@ -1,6 +1,6 @@
 import path from 'path';
 
-import type { BrowserContextOptions, Browser } from 'playwright';
+import type { BrowserContextOptions, Browser, BrowserContext } from 'playwright';
 import PQueue from 'p-queue';
 
 import { deserializeBrowserContextPickedFormFields } from '@/component/headlessBrowser/FormData';
@@ -24,6 +24,7 @@ class Context {
   private bcoption: BrowserContextOptions;
   private soption: ScenerioOption;
   private queue:PQueue;
+  private context: BrowserContext|null = null;
   private note!:Note;
   private scenarios:Scenario[] = [];
   private id:string;
@@ -69,10 +70,12 @@ class Context {
         };
       }
     })();
-    const context = await browser.newContext(contextOption);
+    this.context = await browser.newContext(contextOption);
     const {urlsToOpen, ...otherOption} = this.soption;
     urlsToOpen.forEach((url)=>{
-      this.scenarios.push(new Scenario(this.note.createPageResult(url), context, otherOption));
+      if(this.context !== null){
+        this.scenarios.push(new Scenario(this.note.createPageResult(url), this.context, otherOption));
+      }
     });
     return {
       validURLs:urlsToOpen,
@@ -90,18 +93,19 @@ class Context {
       }
     }
     this.queue.on('completed',(result)=>{
-      console.log(result);
+      // console.log(result);
       console.log('-- completed --');
     });
     this.queue.on('error',(error)=>{
-      console.error(error);
+      // console.error(error);
     });
     this.queue.on('idle',async ()=>{
       await (async ()=>{
         console.log(`${this.id}のリクエストを完了しました`);
         entrance.check(true);
-        await this.note.write();
-        console.log(`${this.id}の処理結果を保存しました`);
+        /* Todo:contextを渡す必要がある */
+        await this.note.archiveNotRequestURL(this.context);
+        console.log(`${this.id}の抽出したリンクをたたき始めました`);
       })();
     });
     this.scenarios.forEach((scenario)=>{
@@ -109,7 +113,7 @@ class Context {
         try{
           return await scenario.start();
         }catch(e){
-          console.error(e);
+          // console.error(e);
         }
       });
     });

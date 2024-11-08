@@ -1,8 +1,7 @@
 import path from 'path';
 import fs from 'fs/promises';
-import crypto from 'crypto';
 
-import type { Request } from 'playwright';
+import type { BrowserContext, Request } from 'playwright';
 import { ValidURL, ScenarioFormFields } from "./ScenarioFormData";
 import type { BrowserContextPickedFormFields } from "@/component/headlessBrowser/FormData";
 
@@ -10,6 +9,9 @@ import { getRedirectStatusFromRequest } from './sub/getRedirectStatusFromRequest
 import { getResponseAndBodyFromRequest } from './sub/getResponseAndBodyFromRequest';
 import { type IndexOfURL, isIndexOfURL, type Entries } from '@/utility/Types';
 import { VERSION } from '@/utility/getVersion';
+import PQueue from 'p-queue';
+
+import { setting } from "@/utility/Setting";
 
 class NoteError extends Error{
   static {
@@ -30,7 +32,18 @@ type ResponseResult = {
       contentLength: number,
       /** ファイルのハッシュ値 */
       shaHash:string|null,
-} | null | 'pending';
+    } | {
+      /** リダイレクトを含む最終的な取得結果 */
+      responseURL: null,
+      /** リクエスト結果 */
+      status?: number,
+      /** Content-Type */
+      contentType?: string,
+      /** Content-Length */
+      contentLength?: number,
+      /** ファイルのハッシュ値 */
+      shaHash?:string|null,
+    } | null;
 
 /** リクエスト全体に共通する結果 */
 type MainResultRecord = {
@@ -101,6 +114,8 @@ class Note{
   private mainResult!:MainResultRecord;
   /** 結果を格納するディレクトリのパス */
   private occupiedDirectoryPath!:string;
+  /** ファイルをアーカイブする */
+  private fileArchive!:FileArchive;
   constructor(
     formData:Omit<ScenarioFormFields & BrowserContextPickedFormFields, 'urlsToOpen'>,
     urlsToOpen: ValidURL[],
@@ -135,6 +150,10 @@ class Note{
       await fs.mkdir(path.join(this.occupiedDirectoryPath, indexOfURL), {recursive:true});
     }
     await fs.writeFile(path.join(this.occupiedDirectoryPath, DOT_FILE_NAME),'');
+
+    // ファイルのアーカイブ
+    this.fileArchive = new FileArchive(this.occupiedDirectoryPath, this.mainResult.links);
+    await this.fileArchive.init();
   }
 
   createPageResult(url:ValidURL){
@@ -144,7 +163,51 @@ class Note{
     }
     const pageResultRecord:PageResultRecord = {};
     this.pageResults.set(indexOfURL, pageResultRecord);
-    return new PageResult(url, indexOfURL, this.mainResult.links, pageResultRecord);
+    return new PageResult(url, indexOfURL, this.mainResult.links, pageResultRecord, this.fileArchive);
+  }
+
+  async archiveNotRequestURL(context:BrowserContext|null){
+    if(context===null){
+      throw new NoteError(`無効なcontextが渡されました。init()が完了しているか確認してください`);
+    }
+    // 新しくPageを開いて、Page["goto"]で開く。on()で行うのでいつ書き込むは要検討。
+    const queue = new PQueue({concurrency:3});
+    // 保存前に未リクエストのURLについて、リクエストして必要ならアーカイブする
+    queue.on('idle',async ()=>{
+      await this.write();
+      console.log(`処理結果を保存しました`);
+    });
+    for( const [requestURL, result] of  this.mainResult.links.entries()){
+      if(result.response?.responseURL !== null){continue;}
+      queue.add(async()=>{
+        const page = await context.newPage();
+        // Basic認証のアイパスの設定
+        const authEncoded = setting.getBasicAuthorization(requestURL);
+        if(authEncoded !== null){
+          page.setExtraHTTPHeaders({...authEncoded});
+        }
+        // シナリオオプションはいったん無しで行う。
+        try{
+          const pageResponse = await page.goto(requestURL, {waitUntil:'domcontentloaded'});
+          if(pageResponse === null){
+            result.response = null;
+          }else{
+            const {body, response} = await getResponseAndBodyFromRequest(pageResponse.request());
+            result.response = response;
+            /* ファイルのアーカイブを開始する */
+            if(body !== null){
+              this.fileArchive.archive({
+                requestURL,
+                buffer: body,
+              });
+            }
+          }
+        }catch(e){
+          result.response = null;
+        }
+        await page.close();
+      });
+    }
   }
 
   async write(){
@@ -194,6 +257,7 @@ class PageResult {
     private indexOfURL:IndexOfURL,
     private links:Note["mainResult"]["links"],
     public record:PageResultRecord,
+    private fileArchive:FileArchive,
   ){
   }
   getURL(){
@@ -203,7 +267,9 @@ class PageResult {
     // リダイレクト後であればリダイレクト前の一番最初にリクエストしたURLを、リダイレクト無しであればそのままのURLを使用する
 
     const requestedURLInPage = await getRedirectStatusFromRequest(targetRequest, false);
+    const linksItem = this.links.get(requestedURLInPage);
     // ページから抽出されたURLとページからリクエストされたURLが重複した場合は、リクエストされたURLを優先する
+    if(linksItem === undefined || linksItem["source"] === 'extracted'){
       const {body, response} = await getResponseAndBodyFromRequest(targetRequest);
       const linkSourceIndex = new Set<typeof this.indexOfURL>();
       linkSourceIndex.add(this.indexOfURL);
@@ -212,30 +278,70 @@ class PageResult {
         source: 'requestedFromPage',
         linkSourceIndex,
       });
+      /* ファイルのアーカイブを開始する */
+      if(body !== null){
+        this.fileArchive.archive({
+          requestURL:requestedURLInPage,
+          buffer: body,
+        });
+      }
     }else{
-      responseRequestedInPage.linkSourceIndex.add(this.indexOfURL);
+      linksItem.linkSourceIndex.add(this.indexOfURL);
     }
   }
   updateLinksFromExtractedURL(validURL:ValidURL){
-    const responseRequestedInPage = this.links.get(validURL);
-    if(responseRequestedInPage === undefined){
+    const linksItem = this.links.get(validURL);
+    if(linksItem === undefined){
       const linkSourceIndex = new Set<typeof this.indexOfURL>();
       linkSourceIndex.add(this.indexOfURL);
       this.links.set(validURL,{
-        response:'pending',
+        response:{responseURL:null},
         source:'extracted',
         linkSourceIndex,
       })
     }else{
-      responseRequestedInPage.linkSourceIndex.add(this.indexOfURL);
+      linksItem.linkSourceIndex.add(this.indexOfURL);
     }
   }
 }
 
-class ArchiveFile{
-  constructor(occupiedDirectoryPath:string, ){}
-  writeFileWrittenURL(){}
-  writeFileRequestedURL(){}
+class FileArchive{
+  private storeDirectory:string;
+  private counter:number = 1;
+  private listOfFile:Map<string, number> = new Map();
+  constructor(
+    occupiedDirectoryPath:string,
+    private links:Note["mainResult"]["links"],
+  ){
+    this.storeDirectory = path.join(occupiedDirectoryPath, '/archive');
+  }
+  async init(){
+    await fs.mkdir(this.storeDirectory);
+    return this;
+  }
+  async archive(args:{
+    requestURL:string,
+    buffer:Buffer
+  }){
+    const {requestURL, buffer} = args;
+    const linksItem = this.links.get(requestURL);
+    if(linksItem===undefined){
+      console.error(`${requestURL}はlinksに含まれていません`)
+      return null;
+    }
+    // 既にファイルのアーカイブとそのハッシュ値の取得が開始していたら
+    if(this.listOfFile.get(requestURL)!==undefined){
+      return null;
+    }
+    const targetPath = path.join(this.storeDirectory, this.counter.toString());
+    this.listOfFile.set(requestURL, this.counter);
+    this.counter++;
+    // bufferがあるときはrequestが完了していて、responseBodyがあると判断
+    const fileHandle = await fs.open(targetPath, 'ax');
+    await fileHandle.write(buffer);
+    await fileHandle.close();
+    return null;
+  }
 }
 
 export { Note };
