@@ -6,6 +6,7 @@ import type { Request } from 'playwright';
 import { ValidURL, ScenarioFormFields } from "./ScenarioFormData";
 import type { BrowserContextPickedFormFields } from "@/component/headlessBrowser/FormData";
 
+import { getRedirectStatusFromRequest } from './sub/getRedirectStatusFromRequest';
 import { type IndexOfURL, isIndexOfURL, type Entries } from '@/utility/Types';
 import { VERSION } from '@/utility/getVersion';
 
@@ -199,18 +200,8 @@ class PageResult {
   }
   async updateLinksFromRequestedURL(targetRequest:Request){
     // リダイレクト後であればリダイレクト前の一番最初にリクエストしたURLを、リダイレクト無しであればそのままのURLを使用する
-    const requestedURLInPage = (()=>{
-      let redirectCount = 0;
-      let prevRequest = targetRequest.redirectedFrom();
-      let url = targetRequest.url();
-      while(prevRequest!==null && redirectCount < 10){
-        url = prevRequest.url();
-        prevRequest = prevRequest?.redirectedFrom() || null;
-        redirectCount++;
-      }
-      return url;
-    })();
-    const responseRequestedInPage = this.links.get(requestedURLInPage);
+
+    const requestedURLInPage = await getRedirectStatusFromRequest(targetRequest, false);
     // ページから抽出されたURLとページからリクエストされたURLが重複した場合は、リクエストされたURLを優先する
     if(responseRequestedInPage === undefined || responseRequestedInPage["source"] === 'extracted'){
       const _response = await targetRequest.response();

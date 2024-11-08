@@ -5,6 +5,7 @@ import { getURLInPage } from './sub/getURLInPage';
 
 import { setting } from "@/utility/Setting";
 import { isValidURL } from "@/utility/Types";
+import { getRedirectStatusFromRequest } from "./sub/getRedirectStatusFromRequest";
 
 class Scenario {
   public URLWaitingForFinish:Set<string> = new Set();
@@ -75,29 +76,10 @@ class Scenario {
         }
         this.pageResult.record.firstRequested = firstRequested;
       }else{
-        // リダイレクト回数・遷移を取得
-        let redirectCount:number = -1;
-        const redirectResult:Exclude<Required<typeof this.pageResult["record"]>["firstRequested"]["redirect"], null>["transition"] = [];
-        let prevRequest:Awaited<ReturnType<(typeof response)["request"]>>|null;
-        const MAX_REDIRECT_COUNT = 10;
-        prevRequest = response.request();
-        while(prevRequest !== null && redirectCount <= MAX_REDIRECT_COUNT){
-          const status = (await prevRequest.response())?.status();
-          if(status !== undefined){
-            redirectResult.push({
-              url: prevRequest.url(),
-              status: status,
-            });
-          }
-          prevRequest = prevRequest.redirectedFrom();
-          redirectCount++;
-        };
+        const redirect = await getRedirectStatusFromRequest(response.request(), true);
         const firstRequested:typeof this.pageResult["record"]["firstRequested"] = {
           url,
-          redirect:{
-            count: redirectCount <= MAX_REDIRECT_COUNT ? redirectCount : null,
-            transition: redirectResult,
-          }
+          redirect,
         };
         this.pageResult.record.firstRequested = firstRequested;
       }
