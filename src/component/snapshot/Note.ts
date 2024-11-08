@@ -7,6 +7,7 @@ import { ValidURL, ScenarioFormFields } from "./ScenarioFormData";
 import type { BrowserContextPickedFormFields } from "@/component/headlessBrowser/FormData";
 
 import { getRedirectStatusFromRequest } from './sub/getRedirectStatusFromRequest';
+import { getResponseAndBodyFromRequest } from './sub/getResponseAndBodyFromRequest';
 import { type IndexOfURL, isIndexOfURL, type Entries } from '@/utility/Types';
 import { VERSION } from '@/utility/getVersion';
 
@@ -203,32 +204,7 @@ class PageResult {
 
     const requestedURLInPage = await getRedirectStatusFromRequest(targetRequest, false);
     // ページから抽出されたURLとページからリクエストされたURLが重複した場合は、リクエストされたURLを優先する
-    if(responseRequestedInPage === undefined || responseRequestedInPage["source"] === 'extracted'){
-      const _response = await targetRequest.response();
-      const response:ResponseResult = await(async ()=>{
-        if(_response === null){return null;}
-        const responseURL = _response.url();
-        const status = _response.status();
-        const responseHeaders = await _response.allHeaders();
-        const contentType = responseHeaders['content-type'];
-        const contentLengthBeforeParse = responseHeaders['content-length'];
-        const contentLength = contentLengthBeforeParse === null ? -1 : parseInt(contentLengthBeforeParse);
-        const shaHash = await (async ()=>{
-          try{
-            const _shaHash = crypto.createHash('sha256').update(await _response.body()).digest('hex');
-            return _shaHash;
-          }catch(e){
-            return null;
-          }
-        })();
-        return{
-          responseURL,
-          status,
-          contentType,
-          contentLength,
-          shaHash,
-        }
-      })();
+      const {body, response} = await getResponseAndBodyFromRequest(targetRequest);
       const linkSourceIndex = new Set<typeof this.indexOfURL>();
       linkSourceIndex.add(this.indexOfURL);
       this.links.set(requestedURLInPage, {
