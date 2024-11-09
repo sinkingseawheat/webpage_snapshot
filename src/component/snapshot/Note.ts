@@ -18,9 +18,6 @@ class NoteError extends Error{
     this.prototype.name = 'NoteError';
   }
 }
-
-// Todo:アプリのversionをpackage.jsonから取得して、取得データを一緒に記載する。
-
 type ResponseResult = {
       /** リダイレクトを含む最終的な取得結果 */
       responseURL: string,
@@ -75,34 +72,28 @@ type PageResultRecord = {
     },
   },
   'URLRequestedFromPage'?:{
-    /** このデータの説明文 */
-    description:string,
     /** ページ内で使用されているURL */
     requestedURLs:string[],
   },
-  'URLExtracted'?:{
-    /** このデータの説明文 */
-    description:string,
-    /** ページ内に記述されているURL。相対・ルート相対・#始まりなどもあり */
-    writtenURLs:({
-      /** 取得できたURL */
-      relURL:string[],
-      absURL:(ValidURL|null)[]
-    } & ({
-      /** URLの取得元 */
-      type:'DOM_Attribute',
-      /** タグ名 */
-      tagName:string,
-    } | {
-      /** URLの取得元 */
-      type:'fromCascadingStyleSheets',
-      /** CSSファイル */
-      href:string|null,
-    }))[]
-  }
+  /** ページ内に記述されているURL。相対・ルート相対・#始まりなどもあり */
+  'URLExtracted'?:({
+    /** 取得できたURL */
+    relURL:string[],
+    absURL:(ValidURL|null)[]
+  } & ({
+    /** URLの取得元 */
+    type:'DOM_Attribute',
+    /** タグ名 */
+    tagName:string,
+  } | {
+    /** URLの取得元 */
+    type:'fromCascadingStyleSheets',
+    /** CSSファイル */
+    href:string|null,
+  }))[]
 };
 
-export type WrittenURLs = Required<PageResultRecord>['URLExtracted']["writtenURLs"];
+export type WrittenURLs = Required<PageResultRecord>['URLExtracted'];
 
 /** 処理開始時に作成され、処理完了時に削除されるファイル */
 const DOT_FILE_NAME = '.running' as const;
@@ -170,7 +161,6 @@ class Note{
     if(context===null){
       throw new NoteError(`無効なcontextが渡されました。init()が完了しているか確認してください`);
     }
-    // 新しくPageを開いて、Page["goto"]で開く。on()で行うのでいつ書き込むは要検討。
     const queue = new PQueue({concurrency:3});
     // 保存前に未リクエストのURLについて、リクエストして必要ならアーカイブする
     queue.on('idle',async ()=>{
@@ -181,6 +171,15 @@ class Note{
       if(result.response?.responseURL !== null){continue;}
       queue.add(async()=>{
         const page = await context.newPage();
+        // Page["goto"]の引数のURLがロード完了したらtrue
+        let isLoadedDocument = false;
+        await page.route('**/*',(route, request)=>{
+          if(isLoadedDocument === true){
+            route.abort();
+          }else{
+            route.continue();
+          }
+        });
         // Basic認証のアイパスの設定
         const authEncoded = setting.getBasicAuthorization(requestURL);
         if(authEncoded !== null){
@@ -188,38 +187,38 @@ class Note{
         }
         // シナリオオプションはいったん無しで行う。
         try{
-          page.on('requestfinished',async (request)=>{
-            // リクエストURLのサーバーリダイレクトが終わって、ロード完了したらそれ以上は何もロードしない。
-            const lastResponse = await request.response();
-            if(lastResponse !== null){
-              const lastRequested = lastResponse.request();
-              const firstRequest = await getRedirectStatusFromRequest(lastRequested, false);
-              if(firstRequest === requestURL && Math.floor(lastResponse.status()/100) !== 3){
-                // console.log(`ドキュメント読み込み完了で記録 ${requestURL}`);
-                const {body, response} = await getResponseAndBodyFromRequest(lastRequested);
-                result.response = response;
-                /* ファイルのアーカイブを開始する */
-                if(body !== null){
-                  this.fileArchive.archive({
-                    requestURL,
-                    buffer: body,
-                  });
+          page.on('requestfinished',(request)=>{
+            (async ()=>{
+              // リクエストURLのサーバーリダイレクトが終わって、ロード完了したらそれ以上は何もロードしない。
+              const lastResponse = await request.response();
+              if(lastResponse !== null){
+                const lastRequested = lastResponse.request();
+                const firstRequest = await getRedirectStatusFromRequest(lastRequested, false);
+                if(
+                  firstRequest === requestURL
+                  && Math.floor(lastResponse.status()/100) !== 3
+                ){
+                  console.log(`${requestURL} form requestfinished`);
+                  const {body, response} = await getResponseAndBodyFromRequest(lastRequested);
+                  result.response = response;
+                  if(body !== null){
+                    this.fileArchive.archive({
+                      requestURL,
+                      buffer: body,
+                    });
+                  }
+                  isLoadedDocument = true;
                 }
-                page.route('**/*',async (route)=>{
-                  await route.abort();
-                  // console.log(`${route.request().url()} is cancel.`)
-                })
               }
-            }
-          })
-          const pageResponse = await page.goto(requestURL, {waitUntil:'load'});
+            })();
+          });
+          const pageResponse = await page.goto(requestURL, {waitUntil:'load', timeout:3000});
+          console.log(`${requestURL} form returnType<Page["goto"]>`);
           if(pageResponse === null){
             result.response = null;
           }else{
-            // console.log(`ページ読み込み完了で記録 ${requestURL}`);
             const {body, response} = await getResponseAndBodyFromRequest(pageResponse.request());
             result.response = response;
-            /* ファイルのアーカイブを開始する */
             if(body !== null){
               this.fileArchive.archive({
                 requestURL,
@@ -228,11 +227,11 @@ class Note{
             }
           }
         }catch(e){
-          // console.log(`ページの読み込みでエラー`)
-          // console.error(e);
           result.response = null;
+        }finally{
+          await page.close();
+          console.log(`${page.url()} is closed`)
         }
-        await page.close();
       });
     }
   }

@@ -19,13 +19,10 @@ class Scenario {
     url:string,
   }>{
     const url = this.pageResult.getURL();
-
     const page = await this.context.newPage();
-
     // beforeGoto ページ読み込み前
     (()=>{
       const recordedItem:typeof this.pageResult["record"]["URLRequestedFromPage"] = {
-        description:'ページからのリクエストに対するレスポンスを記録する',
         requestedURLs:[]
       };
       this.pageResult.record['URLRequestedFromPage'] = recordedItem;
@@ -52,9 +49,6 @@ class Scenario {
       });
       page.on('requestfinished', (request)=>{
         this.URLWaitingForFinish.delete(request.url());
-        (async ()=>{
-          //Todo: 取得したファイルを保存する
-        })();
       });
     })();
 
@@ -88,11 +82,8 @@ class Scenario {
     }
     // afterLoaded ページ読み込み完了後
     await (async ()=>{
-      const recordedItem:typeof this.pageResult["record"]["URLExtracted"] = {
-        description:'ページからリンクを抽出する',
-        writtenURLs:[]
-      };
-      this.pageResult.record['URLExtracted'] = recordedItem;
+      const recordedItem:typeof this.pageResult["record"] = {URLExtracted:[]};
+      this.pageResult.record = recordedItem;
       const dataFromHeadlessBrowser = await page.evaluate(getURLInPage);
       for(const elmData of dataFromHeadlessBrowser){
         for(const url of elmData.relURL){
@@ -110,7 +101,7 @@ class Scenario {
           elmData.absURL.push(absURL);
         }
       }
-      recordedItem.writtenURLs = dataFromHeadlessBrowser;
+      recordedItem["URLExtracted"] = dataFromHeadlessBrowser;
     })();
     await page.close({reason:'全てのシナリオが終了したため、ページをクローズ'});
     return {

@@ -30,12 +30,15 @@ async function getResponseAndBodyFromRequest(targetRequest:Request):Promise<{
     if(_response === null){return null;}
     const responseURL = _response.url();
     const status = _response.status();
+    // statusが2xx以外はnullなど無効な値にする
+    const isStatusOK = Math.floor(status/100) === 2;
     const responseHeaders = await _response.allHeaders();
-    const contentType = responseHeaders['content-type'];
+    const contentType = isStatusOK ? responseHeaders['content-type'] : '';
     const contentLengthBeforeParse = responseHeaders['content-length'];
-    const contentLength = contentLengthBeforeParse === null ? -1 : parseInt(contentLengthBeforeParse);
+    const contentLength = (!isStatusOK || contentLengthBeforeParse === null) ? -1 : parseInt(contentLengthBeforeParse);
     const [shaHash, body] = await (async ()=>{
       try{
+        if(isStatusOK === false){ return  [null, null] }
         const _body = await _response.body();
         const _shaHash = crypto.createHash('sha256').update(_body).digest('hex');
         return [_shaHash, _body];
