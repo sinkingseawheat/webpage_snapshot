@@ -63,20 +63,12 @@ class Scenario {
         ...this.option,
       };
       const response = await page.goto(url, optionOfPageTransition);
-      if(response === null){
-        const firstRequested:typeof this.pageResult["record"]["firstRequested"] = {
-          url,
-          redirect: null
-        }
-        this.pageResult.record.firstRequested = firstRequested;
-      }else{
-        const redirect = await getRedirectStatusFromRequest(response.request(), true);
-        const firstRequested:typeof this.pageResult["record"]["firstRequested"] = {
-          url,
-          redirect,
-        };
-        this.pageResult.record.firstRequested = firstRequested;
+      const redirect = response === null ? null : await getRedirectStatusFromRequest(response.request(), true);
+      const firstRequested:typeof this.pageResult["record"]["firstRequested"] = {
+        url,
+        redirect
       }
+      this.pageResult.record.firstRequested = firstRequested;
     }catch(e){
       console.error(e);
     }
