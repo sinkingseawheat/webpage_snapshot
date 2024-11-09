@@ -4,6 +4,8 @@ import fs from 'fs/promises';
 import type { BrowserContext, Request } from 'playwright';
 import { ValidURL, ScenarioFormFields } from "./ScenarioFormData";
 import type { BrowserContextPickedFormFields } from "@/component/headlessBrowser/FormData";
+import { PageResult, type PageResultRecord } from './PageResult';
+import { FileArchive } from './FileArchive';
 
 import { getRedirectStatusFromRequest } from './sub/getRedirectStatusFromRequest';
 import { getResponseAndBodyFromRequest } from './sub/getResponseAndBodyFromRequest';
@@ -18,29 +20,32 @@ class NoteError extends Error{
     this.prototype.name = 'NoteError';
   }
 }
+
+
+/** 未リクエストの場合はnull。それ以外はオブジェクト */
 type ResponseResult = {
-      /** リダイレクトを含む最終的な取得結果 */
-      responseURL: string,
-      /** リクエスト結果 */
-      status: number,
-      /** Content-Type */
-      contentType: string,
-      /** Content-Length */
-      contentLength: number,
-      /** ファイルのハッシュ値 */
-      shaHash:string|null,
-    } | {
-      /** リダイレクトを含む最終的な取得結果 */
-      responseURL: null,
-      /** リクエスト結果 */
-      status?: number,
-      /** Content-Type */
-      contentType?: string,
-      /** Content-Length */
-      contentLength?: number,
-      /** ファイルのハッシュ値 */
-      shaHash?:string|null,
-    } | null;
+  /** 通信が完了したらURL入れる。ただし、タイムアウトなどでレスポンスが得られなかったらnull */
+  responseURL: string,
+  /** リクエスト結果 */
+  status: number,
+  /** Content-Type */
+  contentType: string,
+  /** Content-Length */
+  contentLength: number,
+  /** ファイルのハッシュ値 */
+  shaHash:string|null,
+} | {
+  /** 通信が完了したらURL入れる。ただし、タイムアウトなどでレスポンスが得られなかったらnull */
+  responseURL: null,
+  /** リクエスト結果 */
+  status?: number,
+  /** Content-Type */
+  contentType?: string,
+  /** Content-Length */
+  contentLength?: number,
+  /** ファイルのハッシュ値 */
+  shaHash?:string|null,
+} | null;
 
 /** リクエスト全体に共通する結果 */
 type MainResultRecord = {
@@ -57,40 +62,6 @@ type MainResultRecord = {
     /** このURLへのアクセスが発生したページのindex */
     linkSourceIndex: Set<IndexOfURL>,
   }>,
-};
-
-/** ページごとの結果 */
-type PageResultRecord = {
-  'firstRequested'?:{
-    url: ValidURL,
-    redirect:null
-  } | {
-    url: ValidURL,
-    redirect:{
-      count:number|null,
-      transition:{url:string,status:number}[],
-    },
-  },
-  'URLRequestedFromPage'?:{
-    /** ページ内で使用されているURL */
-    requestedURLs:string[],
-  },
-  /** ページ内に記述されているURL。相対・ルート相対・#始まりなどもあり */
-  'URLExtracted'?:({
-    /** 取得できたURL */
-    relURL:string[],
-    absURL:(ValidURL|null)[]
-  } & ({
-    /** URLの取得元 */
-    type:'DOM_Attribute',
-    /** タグ名 */
-    tagName:string,
-  } | {
-    /** URLの取得元 */
-    type:'fromCascadingStyleSheets',
-    /** CSSファイル */
-    href:string|null,
-  }))[]
 };
 
 export type WrittenURLs = Required<PageResultRecord>['URLExtracted'];
@@ -237,8 +208,10 @@ class Note{
   }
 
   async write(){
+    // アーカイブしたファイルのリストを書き込む
+    await this.fileArchive.close();
     // 全体の結果
-    const fileHandleMain = await fs.open(this.occupiedDirectoryPath+'/main.json','ax');
+    const fileHandleMain = await fs.open(this.occupiedDirectoryPath+'/__main.json','ax');
     const recordMain:Partial<{[k in keyof MainResultRecord]:any}> = {}
     for (const [name, value] of Object.entries(this.mainResult) as Entries<typeof this.mainResult>){
       switch(name){
@@ -277,96 +250,5 @@ class Note{
   }
 }
 
-class PageResult {
-  constructor(
-    private url:ValidURL,
-    private indexOfURL:IndexOfURL,
-    private links:Note["mainResult"]["links"],
-    public record:PageResultRecord,
-    private fileArchive:FileArchive,
-  ){
-  }
-  getURL(){
-    return this.url;
-  }
-  async updateLinksFromRequestedURL(targetRequest:Request){
-    // リダイレクト後であればリダイレクト前の一番最初にリクエストしたURLを、リダイレクト無しであればそのままのURLを使用する
-    const requestedURLInPage = await getRedirectStatusFromRequest(targetRequest, false);
-    const linksItem = this.links.get(requestedURLInPage);
-    // ページから抽出されたURLとページからリクエストされたURLが重複した場合は、リクエストされたURLを優先する
-    if(linksItem === undefined || linksItem["source"] === 'extracted'){
-      const {body, response} = await getResponseAndBodyFromRequest(targetRequest);
-      const linkSourceIndex = new Set<typeof this.indexOfURL>();
-      linkSourceIndex.add(this.indexOfURL);
-      this.links.set(requestedURLInPage, {
-        response,
-        source: 'requestedFromPage',
-        linkSourceIndex,
-      });
-      /* ファイルのアーカイブを開始する */
-      if(body !== null){
-        this.fileArchive.archive({
-          requestURL:requestedURLInPage,
-          buffer: body,
-        });
-      }
-    }else{
-      linksItem.linkSourceIndex.add(this.indexOfURL);
-    }
-  }
-  updateLinksFromExtractedURL(validURL:ValidURL){
-    const linksItem = this.links.get(validURL);
-    if(linksItem === undefined){
-      const linkSourceIndex = new Set<typeof this.indexOfURL>();
-      linkSourceIndex.add(this.indexOfURL);
-      this.links.set(validURL,{
-        response:{responseURL:null},
-        source:'extracted',
-        linkSourceIndex,
-      })
-    }else{
-      linksItem.linkSourceIndex.add(this.indexOfURL);
-    }
-  }
-}
-
-class FileArchive{
-  private storeDirectory:string;
-  private counter:number = 1;
-  private listOfFile:Map<string, number> = new Map();
-  constructor(
-    occupiedDirectoryPath:string,
-    private links:Note["mainResult"]["links"],
-  ){
-    this.storeDirectory = path.join(occupiedDirectoryPath, '/archive');
-  }
-  async init(){
-    await fs.mkdir(this.storeDirectory);
-    return this;
-  }
-  async archive(args:{
-    requestURL:string,
-    buffer:Buffer
-  }){
-    const {requestURL, buffer} = args;
-    const linksItem = this.links.get(requestURL);
-    if(linksItem===undefined){
-      console.error(`${requestURL}はlinksに含まれていません`)
-      return null;
-    }
-    // 既にファイルのアーカイブとそのハッシュ値の取得が開始していたら
-    if(this.listOfFile.get(requestURL)!==undefined){
-      return null;
-    }
-    const targetPath = path.join(this.storeDirectory, this.counter.toString());
-    this.listOfFile.set(requestURL, this.counter);
-    this.counter++;
-    // bufferがあるときはrequestが完了していて、responseBodyがあると判断
-    const fileHandle = await fs.open(targetPath, 'ax');
-    await fileHandle.write(buffer);
-    await fileHandle.close();
-    return null;
-  }
-}
 
 export { Note };
