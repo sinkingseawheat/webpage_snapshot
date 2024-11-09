@@ -7,6 +7,12 @@ import { setting } from "@/utility/Setting";
 import { isValidURL } from "@/utility/Types";
 import { getRedirectStatusFromRequest } from "./sub/getRedirectStatusFromRequest";
 
+class ScenarioError extends Error {
+  static {
+    this.prototype.name = 'ScenarioError';
+  }
+}
+
 class Scenario {
   public URLWaitingForFinish:Set<string> = new Set();
   constructor(
@@ -19,6 +25,8 @@ class Scenario {
     url:string,
   }>{
     const url = this.pageResult.getURL();
+    console.log(`-------`);
+    console.log(`次のページ単体の処理を開始しました: ${url}`);
     const page = await this.context.newPage();
     // beforeGoto ページ読み込み前
     (()=>{
@@ -63,19 +71,19 @@ class Scenario {
         ...this.option,
       };
       const response = await page.goto(url, optionOfPageTransition);
-      const redirect = response === null ? null : await getRedirectStatusFromRequest(response.request(), true);
-      const firstRequested:typeof this.pageResult["record"]["firstRequested"] = {
+      const redirect =
+        response === null ?
+          null
+          : await getRedirectStatusFromRequest(response.request(), true);
+      this.pageResult.record.firstRequested = {
         url,
         redirect
-      }
-      this.pageResult.record.firstRequested = firstRequested;
+      };
     }catch(e){
       console.error(e);
     }
     // afterLoaded ページ読み込み完了後
     await (async ()=>{
-      const recordedItem:typeof this.pageResult["record"] = {URLExtracted:[]};
-      this.pageResult.record = recordedItem;
       const dataFromHeadlessBrowser = await page.evaluate(getURLInPage);
       for(const elmData of dataFromHeadlessBrowser){
         for(const url of elmData.relURL){
@@ -93,9 +101,10 @@ class Scenario {
           elmData.absURL.push(absURL);
         }
       }
-      recordedItem["URLExtracted"] = dataFromHeadlessBrowser;
+      this.pageResult.record["URLExtracted"] = dataFromHeadlessBrowser;
     })();
     await page.close({reason:'全てのシナリオが終了したため、ページをクローズ'});
+    console.log(`次のページ単体の処理を完了しました:${url}`);
     return {
       url
     };

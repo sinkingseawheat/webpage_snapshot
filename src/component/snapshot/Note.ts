@@ -128,7 +128,7 @@ class Note{
     return new PageResult(url, indexOfURL, this.mainResult.links, pageResultRecord, this.fileArchive);
   }
 
-  async archiveNotRequestURL(context:BrowserContext|null){
+  async archiveNotRequestURL(context:BrowserContext|null, onEnd:()=>void){
     if(context===null){
       throw new NoteError(`無効なcontextが渡されました。init()が完了しているか確認してください`);
     }
@@ -137,12 +137,12 @@ class Note{
     queue.on('idle',async ()=>{
       await this.write();
       console.log(`処理結果を保存しました`);
+      onEnd();
     });
     for( const [requestURL, result] of  this.mainResult.links.entries()){
       if(result.response?.responseURL !== null){continue;}
       queue.add(async()=>{
         const page = await context.newPage();
-        // Page["goto"]の引数のURLがロード完了したらtrue
         let isLoadedDocument = false;
         await page.route('**/*',(route, request)=>{
           if(isLoadedDocument === true){
@@ -169,7 +169,6 @@ class Note{
                   firstRequest === requestURL
                   && Math.floor(lastResponse.status()/100) !== 3
                 ){
-                  console.log(`${requestURL} form requestfinished`);
                   const {body, response} = await getResponseAndBodyFromRequest(lastRequested);
                   result.response = response;
                   if(body !== null){
@@ -184,7 +183,6 @@ class Note{
             })();
           });
           const pageResponse = await page.goto(requestURL, {waitUntil:'load', timeout:3000});
-          console.log(`${requestURL} form returnType<Page["goto"]>`);
           if(pageResponse === null){
             result.response = null;
           }else{
@@ -201,7 +199,6 @@ class Note{
           result.response = null;
         }finally{
           await page.close();
-          console.log(`${page.url()} is closed`)
         }
       });
     }

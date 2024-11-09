@@ -61,6 +61,7 @@ class Entrance {
         break;
       }
       const [contextId, context] = value;
+      console.log(`-- ${contextId}の処理を開始しました --`);
       const result = context.start();
       this.contextsPending.delete(contextId);
       if(result.isStarted === false){

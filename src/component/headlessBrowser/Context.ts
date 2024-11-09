@@ -92,20 +92,10 @@ class Context {
         message:'URLが登録されていません。await init()を実行してください'
       }
     }
-    this.queue.on('completed',(result)=>{
-      // console.log(result);
-      console.log('-- completed --');
-    });
-    this.queue.on('error',(error)=>{
-      // console.error(error);
-    });
-    this.queue.on('idle',async ()=>{
+    this.queue.on('idle', async ()=>{
       await (async ()=>{
-        console.log(`${this.id}のリクエストを完了しました`);
         entrance.check(true);
-        /* Todo:contextを渡す必要がある */
-        await this.note.archiveNotRequestURL(this.context);
-        console.log(`${this.id}の抽出したリンクをたたき始めました`);
+        await this.note.archiveNotRequestURL(this.context, this.onEnd.bind(this));
       })();
     });
     this.scenarios.forEach((scenario)=>{
@@ -113,13 +103,17 @@ class Context {
         try{
           return await scenario.start();
         }catch(e){
-          // console.error(e);
+          console.error(e);
         }
       });
     });
     return {
       isStarted:true,
     }
+  }
+
+  onEnd():void{
+    console.log(`-- ${this.id}の処理を完了しました --`);
   }
 }
 
