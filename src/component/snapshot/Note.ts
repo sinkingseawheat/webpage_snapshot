@@ -178,6 +178,7 @@ class Note{
                     this.fileArchive.archive({
                       requestURL,
                       buffer: body,
+                      contentType: response?.contentType || '',
                     });
                   }
                   isLoadedDocument = true;
@@ -195,6 +196,7 @@ class Note{
               this.fileArchive.archive({
                 requestURL,
                 buffer: body,
+                contentType: response?.contentType || '',
               });
             }
           }
@@ -257,7 +259,7 @@ class Note{
       // DOMテキストを格納
       if(record['DOM']?.source !== undefined){
         await fs.writeFile(this.getPageResultPath(indexOfURL,'document_object_model.txt'), record['DOM'].source, {flag:'ax'});
-    }
+      }
     }
   }
 }
