@@ -13,7 +13,7 @@ class FileArchiveError extends Error {
 class FileArchive{
   private storeDirectory:string;
   private counter:number = 1;
-  private listOfFile:Map<string, number> = new Map();
+  private listOfFile:Map<string, {index:number, contentType:string}> = new Map();
   private state:'created'|'initiated'|'closed' = 'created';
   constructor(
     occupiedDirectoryPath:string,
@@ -31,12 +31,13 @@ class FileArchive{
   }
   async archive(args:{
     requestURL:string,
-    buffer:Buffer
+    buffer:Buffer,
+    contentType:string,
   }){
     if(this.state !== 'initiated'){
       throw new FileArchiveError(`archiveに失敗しました。${this.state}がinitiatedではありません`);
     }
-    const {requestURL, buffer} = args;
+    const {requestURL, buffer, contentType} = args;
     const linksItem = this.links.get(requestURL);
     if(linksItem===undefined){
       console.error(`${requestURL}はlinksに含まれていません`)
@@ -47,12 +48,12 @@ class FileArchive{
     if(
       this.listOfFile.get(requestURL) !== undefined
       || conditionOfCanArchive.length === 0
-      || conditionOfCanArchive.every( (regExp) => !regExp.test(requestURL) )
+      || !conditionOfCanArchive.some((regExp) => regExp.test(requestURL))
     ){
       return null;
     }
     const targetPath = path.join(this.storeDirectory, this.counter.toString());
-    this.listOfFile.set(requestURL, this.counter);
+    this.listOfFile.set(requestURL, {index:this.counter, contentType:contentType});
     this.counter++;
     const fileHandle = await fs.open(targetPath, 'ax');
     await fileHandle.write(buffer);
@@ -65,9 +66,9 @@ class FileArchive{
     }
     const targetPath = path.join(this.storeDirectory, '__list.json');
     const fileHandle = await fs.open(targetPath, 'ax');
-    const serializableList:{[k:string]:number} = {};
-    for( const [requestURL,index] of this.listOfFile ){
-      serializableList[requestURL] = index;
+    const serializableList:{[k:string]:{index:number,contentType:string}} = {};
+    for( const [requestURL, obj] of this.listOfFile ){
+      serializableList[requestURL] = obj;
     }
     await fileHandle.write(JSON.stringify(serializableList, null, '\t'));
     await fileHandle.close();
