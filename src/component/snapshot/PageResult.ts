@@ -44,6 +44,9 @@ type PageResultRecord = {
     type:'fromCascadingStyleSheets',
     /** CSSファイル。nullの場合はHTMLのインラインstyle */
     href:string|null,
+  } | {
+    /** URLの取得元。style属性から */
+    type:'styleAttribute',
   }))[]
   /** キャプチャ */
   'PageCapture'?:{
@@ -80,9 +83,10 @@ class PageResult {
       });
       /* ファイルのアーカイブを開始する */
       if(body !== null){
-        this.fileArchive.archive({
+        await this.fileArchive.archive({
           requestURL:requestedURLInPage,
           buffer: body,
+          contentType: response?.contentType || '',
         });
       }
     }else{
