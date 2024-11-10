@@ -8,7 +8,7 @@ export const getURLInPage = ():WrittenURLs=>{
   // ▼ HeadlessBrowser Context
   const rv:WrittenURLs = [];
   // DOM_Attribute
-  for(const node of document.querySelectorAll('[href], [src], [srcset], [action], picture')){
+  for(const node of document.querySelectorAll('[href], [src], [srcset], [action], picture, meta[property="og:image"], meta[name="twitter:image"]')){
     const tagName = node.tagName;
     if(tagName !== 'PICTURE' && node.closest('picture')){
       continue;
@@ -25,6 +25,7 @@ export const getURLInPage = ():WrittenURLs=>{
       nullable.add(cur.getAttribute('href'));
       nullable.add(cur.getAttribute('src'));
       nullable.add(cur.getAttribute('action'));
+      nullable.add(cur.getAttribute('content'));
       const attrSrcset = cur.getAttribute('srcset');
       if(attrSrcset !== null){
         attrSrcset.split(',').forEach(src=>{
