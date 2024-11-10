@@ -41,6 +41,11 @@ type PageResultRecord = {
     /** CSSファイル。nullの場合はHTMLのインラインstyle */
     href:string|null,
   }))[]
+  /** キャプチャ */
+  'PageCapture'?:{
+    name: 'fullpage',
+    buffer: Buffer,
+  }
 };
 
 class PageResult {

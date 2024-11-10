@@ -53,7 +53,7 @@ class FileArchive{
     await fileHandle.close();
     return null;
   }
-  async close():Promise<void>{
+  async finish():Promise<void>{
     if(this.state !== 'initiated'){
       throw new Error(`closeに失敗しました。${this.state}がinitiatedではありません`)
     }

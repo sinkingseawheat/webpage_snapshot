@@ -107,9 +107,11 @@ class Note{
     this.occupiedDirectoryPath = path.join(process.cwd(),`./_data/result/${identifier.apiType}/${ymd}/${hash}`);
   }
 
+  private getPageResultPath = (indexOfURL:IndexOfURL, suffix:string) => path.join(this.occupiedDirectoryPath, indexOfURL, suffix);
+
   async init(){
     for await (const indexOfURL of this.pageResults.keys()){
-      await fs.mkdir(path.join(this.occupiedDirectoryPath, indexOfURL), {recursive:true});
+      await fs.mkdir(this.getPageResultPath(indexOfURL,''), {recursive:true});
     }
     await fs.writeFile(path.join(this.occupiedDirectoryPath, DOT_FILE_NAME),'');
 
@@ -206,7 +208,7 @@ class Note{
 
   async write(){
     // アーカイブしたファイルのリストを書き込む
-    await this.fileArchive.close();
+    await this.fileArchive.finish();
     // 全体の結果
     const fileHandleMain = await fs.open(this.occupiedDirectoryPath+'/__main.json','ax');
     const recordMain:Partial<{[k in keyof MainResultRecord]:any}> = {}
@@ -239,9 +241,18 @@ class Note{
     await fileHandleMain.close();
     // ページごとの結果
     for await(const [indexOfURL, record] of this.pageResults){
-      const fileHandle = await fs.open(this.occupiedDirectoryPath + `/${indexOfURL}/page.json`, 'ax');
-      fileHandle.write(JSON.stringify(record, null, '\t'));
+      const fileHandle = await fs.open(this.getPageResultPath(indexOfURL,'page.json'), 'ax');
+      const jsonStored:Pick<PageResultRecord,'firstRequested'|'URLRequestedFromPage'|'URLExtracted'> = {
+        firstRequested: record['firstRequested'],
+        URLRequestedFromPage: record['URLRequestedFromPage'],
+        URLExtracted: record['URLExtracted'],
+      };
+      fileHandle.write(JSON.stringify(jsonStored, null, '\t'));
       await fileHandle.close();
+      // キャプチャを格納
+      if(record['PageCapture']?.buffer !== undefined){
+        await fs.writeFile(this.getPageResultPath(indexOfURL,'capture_fullpage.jpg'), record['PageCapture'].buffer);
+      }
     }
     await fs.unlink(path.join(this.occupiedDirectoryPath, DOT_FILE_NAME));
   }
