@@ -130,8 +130,9 @@ class Setting {
     return null;
   }
 
-  getallowArchive(url:string):RegExp[]{
-    return this.data.allowArchive;
+  isAllowedArchiveURL(url:string):boolean{
+    const regExpArray = this.data.allowArchive;
+    return regExpArray.length !== 0 && regExpArray.some(regExp => regExp.test(url));
   }
 
 }

@@ -43,12 +43,10 @@ class FileArchive{
       console.error(`${requestURL}はlinksに含まれていません`)
       return null;
     }
-    const conditionOfCanArchive = setting.getallowArchive(requestURL);
     // 既にファイルのアーカイブとそのハッシュ値の取得が開始している。またはアーカイブの許可設定がない、アーカイブが不許可のURLの場合はスキップ
     if(
       this.listOfFile.get(requestURL) !== undefined
-      || conditionOfCanArchive.length === 0
-      || !conditionOfCanArchive.some((regExp) => regExp.test(requestURL))
+      || !setting.isAllowedArchiveURL(requestURL)
     ){
       return null;
     }
