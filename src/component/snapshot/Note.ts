@@ -253,8 +253,11 @@ class Note{
       if(record['PageCapture']?.buffer !== undefined){
         await fs.writeFile(this.getPageResultPath(indexOfURL,'capture_fullpage.jpg'), record['PageCapture'].buffer, {flag:'ax'});
       }
+      // DOMテキストを格納
+      if(record['DOM']?.source !== undefined){
+        await fs.writeFile(this.getPageResultPath(indexOfURL,'document_object_model.txt'), record['DOM'].source, {flag:'ax'});
     }
-    await fs.unlink(path.join(this.occupiedDirectoryPath, DOT_FILE_NAME));
+    }
   }
 }
 

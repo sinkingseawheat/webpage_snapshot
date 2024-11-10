@@ -24,6 +24,10 @@ type PageResultRecord = {
     /** ページ内で使用されているURL */
     requestedURLs:string[],
   },
+  /** ページのDOM */
+  'DOM'?:{
+    source:string,
+  }
   /** ページ内に記述されているURL。 */
   'URLExtracted'?:({
     /** 取得できたURL。相対・ルート相対・#始まりなども含む */

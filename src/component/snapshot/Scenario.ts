@@ -85,6 +85,13 @@ class Scenario {
     // afterLoaded ページ読み込み完了後
     await (async ()=>{
 
+      // ページのDOM構造を取得
+      if(setting.isAllowedArchiveURL(url)){
+        this.pageResult.record["DOM"] = {
+          source: await page.content(),
+        }
+      }
+
       // リンク要素の抽出
       const dataFromHeadlessBrowser = await page.evaluate(getURLInPage);
       for(const elmData of dataFromHeadlessBrowser){
