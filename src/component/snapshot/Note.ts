@@ -251,7 +251,7 @@ class Note{
       await fileHandle.close();
       // キャプチャを格納
       if(record['PageCapture']?.buffer !== undefined){
-        await fs.writeFile(this.getPageResultPath(indexOfURL,'capture_fullpage.jpg'), record['PageCapture'].buffer);
+        await fs.writeFile(this.getPageResultPath(indexOfURL,'capture_fullpage.jpg'), record['PageCapture'].buffer, {flag:'ax'});
       }
     }
     await fs.unlink(path.join(this.occupiedDirectoryPath, DOT_FILE_NAME));
