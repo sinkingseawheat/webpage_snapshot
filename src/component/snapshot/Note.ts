@@ -139,6 +139,7 @@ class Note{
     queue.on('idle',async ()=>{
       await this.write();
       console.log(`処理結果を保存しました`);
+      await fs.unlink(path.join(this.occupiedDirectoryPath, DOT_FILE_NAME));
       onEnd();
     });
     for( const [requestURL, result] of  this.mainResult.links.entries()){
