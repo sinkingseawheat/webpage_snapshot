@@ -130,6 +130,10 @@ class Setting {
     return null;
   }
 
+  getallowArchive(url:string):RegExp[]{
+    return this.data.allowArchive;
+  }
+
 }
 
 const setting = new Setting();

@@ -84,6 +84,7 @@ class Scenario {
     }
     // afterLoaded ページ読み込み完了後
     await (async ()=>{
+
       // リンク要素の抽出
       const dataFromHeadlessBrowser = await page.evaluate(getURLInPage);
       for(const elmData of dataFromHeadlessBrowser){
@@ -103,6 +104,7 @@ class Scenario {
         }
       }
       this.pageResult.record["URLExtracted"] = dataFromHeadlessBrowser;
+
       // キャプチャ取得
       // Todo:ヘッドレスブラウザの幅を変更したときのキャプチャも取得できるようにする
       const screenshotBuffer = await page.screenshot({
@@ -112,7 +114,7 @@ class Scenario {
         scale: 'css', // 精細なRetinaのキャプチャは不要
         type: 'jpeg',
       });
-      this.pageResult.record.PageCapture = {
+      this.pageResult.record["PageCapture"] = {
         name: 'fullpage',
         buffer: screenshotBuffer,
       };

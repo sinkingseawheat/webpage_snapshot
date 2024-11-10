@@ -2,6 +2,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import type { Note } from './Note';
+import { setting } from '@/utility/Setting';
 
 class FileArchiveError extends Error {
   static {
@@ -41,8 +42,13 @@ class FileArchive{
       console.error(`${requestURL}はlinksに含まれていません`)
       return null;
     }
-    // 既にファイルのアーカイブとそのハッシュ値の取得が開始していたらスキップ
-    if(this.listOfFile.get(requestURL)!==undefined){
+    const conditionOfCanArchive = setting.getallowArchive(requestURL);
+    // 既にファイルのアーカイブとそのハッシュ値の取得が開始している。またはアーカイブの許可設定がない、アーカイブが不許可のURLの場合はスキップ
+    if(
+      this.listOfFile.get(requestURL) !== undefined
+      || conditionOfCanArchive.length === 0
+      || conditionOfCanArchive.every( (regExp) => !regExp.test(requestURL) )
+    ){
       return null;
     }
     const targetPath = path.join(this.storeDirectory, this.counter.toString());
