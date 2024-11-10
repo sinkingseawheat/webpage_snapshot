@@ -46,13 +46,13 @@ export const getURLInPage = ():WrittenURLs=>{
       absURL:[],
     });
   }
-  // cssから取得。疑似要素へのcssもここで取得できるはず。要確認。
-  for(const sheet of document.styleSheets){
+  function getURLsFromCSS(sheet:CSSStyleSheet){
     const rules = sheet.cssRules;
+    const rvFromCSS:WrittenURLs = []
     for(const rule of rules){
       if(rule instanceof CSSStyleRule){
         if(rule.style.backgroundImage !== ''){
-          rv.push({
+          rvFromCSS.push({
             type: 'fromCascadingStyleSheets',
             href: rule.parentStyleSheet?.href ?? null,
             relURL: getURLsFromUrlMethod(rule.style.backgroundImage),
@@ -60,7 +60,7 @@ export const getURLInPage = ():WrittenURLs=>{
           });
         }else if(rule.style.background !== ''){
           // Todo:ショートハンドの場合でもbackgroundImageに反映されるか確認
-          rv.push({
+          rvFromCSS.push({
             type: 'fromCascadingStyleSheets',
             href: rule.parentStyleSheet?.href ?? null,
             relURL: getURLsFromUrlMethod(rule.style.background),
@@ -69,12 +69,18 @@ export const getURLInPage = ():WrittenURLs=>{
         }
       }else if(rule instanceof CSSImportRule){
         if(rule.styleSheet!==null){
-          const rules = rule.styleSheet.cssRules;
-          for(const _rule of rules){
-            // Todo:@import時の再帰呼び出し
+          for(const recursiveRv of getURLsFromCSS(rule.styleSheet)){
+            rvFromCSS.push(recursiveRv);
           }
         }
       }
+    }
+    return rvFromCSS;
+  }
+
+  for(const sheet of document.styleSheets){
+    for(const recursiveRv of getURLsFromCSS(sheet)){
+      rv.push(recursiveRv);
     }
   }
   // style属性から取得
