@@ -55,20 +55,26 @@ export const getURLInPage = ():WrittenURLs=>{
     for(const rule of rules){
       if(rule instanceof CSSStyleRule){
         if(rule.style.backgroundImage !== ''){
-          rvFromCSS.push({
-            type: 'fromCascadingStyleSheets',
-            href: rule.parentStyleSheet?.href ?? null,
-            relURL: getURLsFromUrlMethod(rule.style.backgroundImage),
-            absURL:[],
-          });
+          const _relURL = getURLsFromUrlMethod(rule.style.backgroundImage);
+          if(_relURL.length!==0){
+            rvFromCSS.push({
+              type: 'fromCascadingStyleSheets',
+              href: rule.parentStyleSheet?.href ?? null,
+              relURL: _relURL,
+              absURL:[],
+            });
+          }
         }else if(rule.style.background !== ''){
+          const _relURL = getURLsFromUrlMethod(rule.style.background);
           // Todo:ショートハンドの場合でもbackgroundImageに反映されるか確認
-          rvFromCSS.push({
-            type: 'fromCascadingStyleSheets',
-            href: rule.parentStyleSheet?.href ?? null,
-            relURL: getURLsFromUrlMethod(rule.style.background),
-            absURL:[],
-          });
+          if(_relURL.length!==0){
+            rvFromCSS.push({
+              type: 'fromCascadingStyleSheets',
+              href: rule.parentStyleSheet?.href ?? null,
+              relURL: _relURL,
+              absURL:[],
+            });
+          }
         }
       }else if(rule instanceof CSSImportRule){
         if(rule.styleSheet!==null){
