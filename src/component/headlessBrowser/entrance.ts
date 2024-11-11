@@ -31,12 +31,13 @@ class Entrance {
   }
   async request(formData: FormData, apiType: string): Promise<ResponseData>{
     if(this.browser === null){
+      console.log('browser is null');
       // Basic認証のエラーメッセージなど、ブラウザ特有のメッセージがあるので、chromium以外は使用しない。
       this.browser = await chromium.launch({headless:false});
     }
     // Contextにデータを送信
     const contextId = this.randomString.getUniqueRandomString();
-    const context = new Context({formData, apiType, contextId});
+    const context = new Context({formData, apiType, contextId, browser:this.browser});
     const resultInitiation = await context.init(this.browser);
     this.contextsPending.set(contextId, context);
     this.check();

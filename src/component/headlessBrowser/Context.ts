@@ -29,13 +29,16 @@ class Context {
   private scenarios:Scenario[] = [];
   private id:string;
   private iscaughtError:boolean = false;
+  private browser!:Browser|null;
   constructor(args:{
     formData:ScenarioFormFields & BrowserContextPickedFormFields,
     apiType:string,
     contextId:string,
+    browser:Browser|null,
   }){
-    const {formData, apiType, contextId} = args;
-    const {urlsToOpen ,...optionsToNote} = formData
+    const {formData, apiType, contextId, browser} = args;
+    const {urlsToOpen ,...optionsToNote} = formData;
+    this.browser = browser;
     this.bcoption = deserializeBrowserContextPickedFormFields(formData);
     this.soption = deserializeScenerioFormFields(formData);
     this.id = contextId;
@@ -128,6 +131,13 @@ class Context {
     if(this.context !== null){
       this.context.close().finally(()=>{
         console.log(`-- ${this.id}の処理を完了しました --`);
+        // broser.contextが0の状態で起動したまま、Context["request"]を繰り返すとChromeのスレッドが増殖していくのでちゃんと閉じる
+        if(this.browser !== null && this.browser.contexts().length === 0){
+          this.browser.close().finally(()=>{
+            this.browser = null;
+            console.log('フォームからのリクエストがすべて終了したため、browserが終了しました')
+          });
+        }
       });
     }
   }
