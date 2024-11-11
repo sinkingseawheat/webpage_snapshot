@@ -72,13 +72,13 @@ class Context {
       this.browser = await chromium.launch({headless:true});
     }
     const context = await this.browser.newContext(contextOption);
-    const page = await context.newPage();
     const {urlsToOpen, ...otherOption} = this.soption;
-    urlsToOpen.forEach((url)=>{
-      if(context !== null){
+    if(context !== null){
+      for await (const url of urlsToOpen){
+        const page = await context.newPage();
         this.scenarios.push(new Scenario(this.note.createPageResult(url), page, otherOption));
       }
-    });
+    }
     this.scenarioQueue.on('idle', async ()=>{
       await (async ()=>{
         if(this.iscaughtError){
