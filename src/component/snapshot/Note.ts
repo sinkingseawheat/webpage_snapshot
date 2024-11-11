@@ -146,43 +146,54 @@ class Note{
       if(result.response?.responseURL !== null){continue;}
       queue.add(async()=>{
         const page = await context.newPage();
-        let isLoadedDocument = false;
-        await page.route('**/*',(route, request)=>{
-          if(isLoadedDocument === true){
-            route.abort();
-          }else{
-            route.continue();
-          }
-        });
-        // Basic認証のアイパスの設定
-        const authEncoded = setting.getBasicAuthorization(requestURL);
-        if(authEncoded !== null){
-          page.setExtraHTTPHeaders({...authEncoded});
-        }
-        // シナリオオプション（referer）はいったん無しで行う。
         try{
+          // page["route"]はリダイレクトによる再リクエストには反映されないらしいので、これで問題ないはず
+          await page.route('**/*',(route, request)=>{
+            if(request.url() !== requestURL){
+              route.abort();
+            }else{
+              route.continue();
+            }
+          });
+          // Basic認証のアイパスの設定
+          const authEncoded = setting.getBasicAuthorization(requestURL);
+          if(authEncoded !== null){
+            page.setExtraHTTPHeaders({...authEncoded});
+          }
+          // シナリオオプション（referer）はいったん無しで行う。
+          let redirectCount = 0;
+          page.on('response', ()=>{
+            if(redirectCount>=10){
+              throw new NoteError(`[too many redirects] リダイレクト数が多すぎます`)
+            }
+            redirectCount++;
+          })
           page.on('requestfinished',(request)=>{
             (async ()=>{
-              // リクエストURLのサーバーリダイレクトが終わって、ロード完了したらそれ以上は何もロードしない。
-              const lastResponse = await request.response();
-              if(lastResponse !== null){
-                const lastRequested = lastResponse.request();
-                const firstRequest = await getRedirectStatusFromRequest(lastRequested, false);
-                if(
-                  firstRequest === requestURL
-                  && Math.floor(lastResponse.status()/100) !== 3
-                ){
-                  const {body, response} = await getResponseAndBodyFromRequest(lastRequested);
-                  result.response = response;
-                  if(body !== null){
-                    this.fileArchive.archive({
-                      requestURL,
-                      buffer: body,
-                      contentType: response?.contentType || '',
-                    });
+              try{
+                // リクエストURLのサーバーリダイレクトが終わって、ロード完了したらそれ以上は何もロードしない。
+                const lastResponse = await request.response();
+                if(lastResponse !== null){
+                  const lastRequested = lastResponse.request();
+                  const firstRequest = await getRedirectStatusFromRequest(lastRequested, false);
+                  if(
+                    firstRequest === requestURL
+                    && Math.floor(lastResponse.status()/100) !== 3
+                  ){
+                    const {body, response} = await getResponseAndBodyFromRequest(lastRequested);
+                    result.response = response;
+                    if(body !== null){
+                      this.fileArchive.archive({
+                        requestURL,
+                        buffer: body,
+                        contentType: response?.contentType || '',
+                      });
+                    }
                   }
-                  isLoadedDocument = true;
                 }
+              }catch(e){
+                // request送信→ページクローズ→requestfinishedの場合
+                throw new NoteError(`[page has closed before requestfinished] リクエストが完了する前にページが閉じられました`)
               }
             })();
           });
@@ -201,17 +212,30 @@ class Note{
             }
           }
         }catch(e){
-          if(e instanceof Error && e.message.indexOf('ERR_INVALID_AUTH_CREDENTIALS') !== -1){
-            // ERR_INVALID_AUTH_CREDENTIALSはbasic認証エラーとみなす
-            result.response = {
-                responseURL: null,
-                status: 401,
-                contentType: '',
-                contentLength: -1,
-                shaHash:null,
+          if(e instanceof Error){
+            if(e.message.indexOf('ERR_INVALID_AUTH_CREDENTIALS') !== -1){
+              // ERR_INVALID_AUTH_CREDENTIALSはbasic認証エラーとみなす
+              result.response = {
+                  responseURL: null,
+                  status: 401,
+                  contentType: '',
+                  contentLength: -1,
+                  shaHash:null,
+              }
+            }else if(e.message.indexOf('[page has closed before requestfinished]') !== -1){
+              console.log(`[page has closed before requestfinished] ${requestURL}`);
+              result.response = null;
+            }else if(e.message.indexOf('[too many redirects]') !== -1){
+              console.log(`[too many redirects] ${requestURL}`);
+              result.response = null;
+            }else if(e.message.indexOf('Target page, context or browser has been closed') !== -1){
+              // ブラウザを手動で閉じたとみなすため、強制終了。
+              console.error(e);
+              console.log('強制終了します')
+              process.exit(-1);
+            }else{
+              result.response = null;
             }
-          }else{
-            result.response = null;
           }
         }finally{
           await page.close();

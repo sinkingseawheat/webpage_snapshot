@@ -22,6 +22,7 @@ export default async function handler(
       res.writeHead(200, {'Content-Type': 'application/json'});
       res.end(JSON.stringify(responseData));
     }catch(e){
+      console.error(e);
       res.writeHead(400, {'Content-Type': 'application/json'});
       res.end(JSON.stringify({
         status:'NG',
