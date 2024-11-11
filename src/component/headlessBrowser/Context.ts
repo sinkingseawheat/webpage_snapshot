@@ -125,7 +125,11 @@ class Context {
     if(errorMessage){
       console.error(errorMessage);
     }
-    console.log(`-- ${this.id}の処理を完了しました --`);
+    if(this.context !== null){
+      this.context.close().finally(()=>{
+        console.log(`-- ${this.id}の処理を完了しました --`);
+      });
+    }
   }
 }
 
