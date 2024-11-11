@@ -6,14 +6,11 @@ import { ValidURL, ScenarioFormFields } from "./ScenarioFormData";
 import type { BrowserContextPickedFormFields } from "@/component/headlessBrowser/FormData";
 import { PageResult, type PageResultRecord } from './PageResult';
 import { FileArchive } from './FileArchive';
-
-import { getRedirectStatusFromRequest } from './sub/getRedirectStatusFromRequest';
-import { getResponseAndBodyFromRequest } from './sub/getResponseAndBodyFromRequest';
 import { type IndexOfURL, isIndexOfURL, type Entries } from '@/utility/Types';
 import { VERSION } from '@/utility/getVersion';
 import PQueue from 'p-queue';
 
-import { setting } from "@/utility/Setting";
+import { requestNotRequestedButInPage } from './sub/requestNotRequestedButInPage';
 
 class NoteError extends Error{
   static {
@@ -47,6 +44,16 @@ type ResponseResult = {
   shaHash?:string|null,
 } | null;
 
+
+export type LinksItem = {
+  response:ResponseResult,
+  /** ページからのリクエストか、ページから抽出したURLか */
+  source:'requestedFromPage'|'extracted',
+  /** このURLへのアクセスが発生したページのindex */
+  linkSourceIndex: Set<IndexOfURL>,
+}
+
+
 /** リクエスト全体に共通する結果 */
 type MainResultRecord = {
   formData:Omit<ScenarioFormFields & BrowserContextPickedFormFields, 'urlsToOpen'>,
@@ -55,13 +62,7 @@ type MainResultRecord = {
   /** ヘッドレスブラウザでリクエストするURLとそのindexの紐づけリスト */
   targetURLs:Map<ValidURL, IndexOfURL>,
   /** 各ページで読み込んだ、または設定されたリンクとそのレスポンス結果を格納する。keyは最初にリクエストしたURL。updateLinksで更新する */
-  links:Map<string, {
-    response:ResponseResult,
-    /** ページからのリクエストか、ページから抽出したURLか */
-    source:'requestedFromPage'|'extracted',
-    /** このURLへのアクセスが発生したページのindex */
-    linkSourceIndex: Set<IndexOfURL>,
-  }>,
+  links:Map<string, LinksItem>,
 };
 
 export type WrittenURLs = Required<PageResultRecord>['URLExtracted'];
@@ -134,8 +135,8 @@ class Note{
     if(context===null){
       throw new NoteError(`無効なcontextが渡されました。init()が完了しているか確認してください`);
     }
-    const queue = new PQueue({concurrency:3});
-    queue.on('idle',async ()=>{
+    const pageQueue = new PQueue({concurrency:3});
+    pageQueue.on('idle',async ()=>{
       await this.write();
       console.log(`処理結果を保存しました`);
       await fs.unlink(path.join(this.occupiedDirectoryPath, DOT_FILE_NAME));
@@ -144,103 +145,8 @@ class Note{
     // 保存前に未リクエストのURLについて、リクエストして必要ならアーカイブする
     for( const [requestURL, result] of  this.mainResult.links.entries()){
       if(result.response?.responseURL !== null){continue;}
-      queue.add(async()=>{
-        const page = await context.newPage();
-        try{
-          // page["route"]はリダイレクトによる再リクエストには反映されないらしいので、これで問題ないはず
-          await page.route('**/*',(route, request)=>{
-            if(request.url() !== requestURL){
-              route.abort();
-            }else{
-              route.continue();
-            }
-          });
-          // Basic認証のアイパスの設定
-          const authEncoded = setting.getBasicAuthorization(requestURL);
-          if(authEncoded !== null){
-            page.setExtraHTTPHeaders({...authEncoded});
-          }
-          // シナリオオプション（referer）はいったん無しで行う。
-          let redirectCount = 0;
-          page.on('response', ()=>{
-            if(redirectCount>=10){
-              throw new NoteError(`[too many redirects] リダイレクト数が多すぎます`)
-            }
-            redirectCount++;
-          })
-          page.on('requestfinished',(request)=>{
-            (async ()=>{
-              try{
-                // リクエストURLのサーバーリダイレクトが終わって、ロード完了したらそれ以上は何もロードしない。
-                const lastResponse = await request.response();
-                if(lastResponse !== null){
-                  const lastRequested = lastResponse.request();
-                  const firstRequest = await getRedirectStatusFromRequest(lastRequested, false);
-                  if(
-                    firstRequest === requestURL
-                    && Math.floor(lastResponse.status()/100) !== 3
-                  ){
-                    const {body, response} = await getResponseAndBodyFromRequest(lastRequested);
-                    console.log(`${requestURL} の確認が完了しました： ${response?.status}`)
-                    result.response = response;
-                    if(body !== null){
-                      this.fileArchive.archive({
-                        requestURL,
-                        buffer: body,
-                        contentType: response?.contentType || '',
-                      });
-                    }
-                  }
-                }
-              }catch(e){
-                // request送信→ページクローズ→requestfinishedの場合
-                throw new NoteError(`[page has closed before requestfinished] リクエストが完了する前にページが閉じられました`)
-              }
-            })();
-          });
-          const pageResponse = await page.goto(requestURL, {waitUntil:'load', timeout:5000});
-          if(pageResponse === null){
-            result.response = null;
-          }else{
-            const {body, response} = await getResponseAndBodyFromRequest(pageResponse.request());
-            result.response = response;
-            if(body !== null){
-              this.fileArchive.archive({
-                requestURL,
-                buffer: body,
-                contentType: response?.contentType || '',
-              });
-            }
-          }
-        }catch(e){
-          if(e instanceof Error){
-            if(e.message.indexOf('ERR_INVALID_AUTH_CREDENTIALS') !== -1){
-              // ERR_INVALID_AUTH_CREDENTIALSはbasic認証エラーとみなす
-              result.response = {
-                  responseURL: null,
-                  status: 401,
-                  contentType: '',
-                  contentLength: -1,
-                  shaHash:null,
-              }
-            }else if(e.message.indexOf('[page has closed before requestfinished]') !== -1){
-              console.log(`[page has closed before requestfinished] ${requestURL}`);
-              result.response = null;
-            }else if(e.message.indexOf('[too many redirects]') !== -1){
-              console.log(`[too many redirects] ${requestURL}`);
-              result.response = null;
-            }else if(e.message.indexOf('Target page, context or browser has been closed') !== -1){
-              // ブラウザを手動で閉じたとみなすため、強制終了。
-              console.error(e);
-              console.log('強制終了します')
-              process.exit(-1);
-            }else{
-              result.response = null;
-            }
-          }
-        }finally{
-          await page.close();
-        }
+      pageQueue.add(async ()=>{
+        await requestNotRequestedButInPage(await context.newPage(), requestURL, result, this.fileArchive);
       });
     }
   }

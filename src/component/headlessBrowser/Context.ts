@@ -23,22 +23,19 @@ class Context {
   private bcoption: BrowserContextOptions;
   private soption: ScenerioOption;
   private scenarioQueue:PQueue;
-  private context: BrowserContext|null = null;
   private note!:Note;
   private scenarios:Scenario[] = [];
-  private id:string;
   private iscaughtError:boolean = false;
   private browser!:Browser|null;
   constructor(
     formData:ScenarioFormFields & BrowserContextPickedFormFields,
     apiType:string,
-    contextId:string,
+    private contextId:string,
   ){
     const {urlsToOpen ,...optionsToNote} = formData;
     this.browser = null;
     this.bcoption = deserializeBrowserContextPickedFormFields(formData);
     this.soption = deserializeScenerioFormFields(formData);
-    this.id = contextId;
     this.note = new Note(
       optionsToNote,
       this.soption.urlsToOpen,
@@ -48,7 +45,7 @@ class Context {
       },
     );
     this.scenarioQueue = new PQueue({concurrency:3,throwOnTimeout:true});
-    // 新しいリクエストが来る際にproxyとbasic認証は読み込みなおす
+    // 新しいリクエストが来る際にsettingは読み込みなおす
     setting.update();
   }
   async init(){
@@ -74,13 +71,26 @@ class Context {
     if(this.browser === null){
       this.browser = await chromium.launch({headless:true});
     }
-    this.context = await this.browser.newContext(contextOption);
-    const page = await this.context.newPage();
+    const context = await this.browser.newContext(contextOption);
+    const page = await context.newPage();
     const {urlsToOpen, ...otherOption} = this.soption;
     urlsToOpen.forEach((url)=>{
-      if(this.context !== null){
+      if(context !== null){
         this.scenarios.push(new Scenario(this.note.createPageResult(url), page, otherOption));
       }
+    });
+    this.scenarioQueue.on('completed',(result)=>{
+    })
+    this.scenarioQueue.on('idle', async ()=>{
+      await (async ()=>{
+        if(this.iscaughtError){
+          context.pages().forEach(async (page)=>{
+            await page.close();
+          })
+        }
+        entrance.check(true);
+        await this.note.archiveNotRequestURL(context, this.onAllScenarioEnd.bind(this, context));
+      })();
     });
     return {
       validURLs:urlsToOpen,
@@ -97,20 +107,6 @@ class Context {
         message:'URLが登録されていません。await init()を実行してください'
       }
     }
-    this.scenarioQueue.on('completed',(result)=>{
-    })
-    this.scenarioQueue.on('idle', async ()=>{
-      await (async ()=>{
-        if(this.iscaughtError){
-          this.onAllScenarioEnd(`続行不可能なエラーが発生しました`);
-          this.context?.pages().forEach(async (page)=>{
-            await page.close();
-          })
-        }
-        entrance.check(true);
-        await this.note.archiveNotRequestURL(this.context, this.onAllScenarioEnd.bind(this));
-      })();
-    });
     this.scenarios.forEach((scenario)=>{
       this.scenarioQueue.add(async ()=>{
         try{
@@ -127,13 +123,10 @@ class Context {
     }
   }
 
-  onAllScenarioEnd(errorMessage?:string):void{
-    if(errorMessage){
-      console.error(errorMessage);
-    }
-    if(this.context !== null){
-      this.context.close().finally(()=>{
-        console.log(`-- ${this.id}の処理を完了しました --`);
+  onAllScenarioEnd(context:BrowserContext):void{
+    if(context !== null){
+      context.close().finally(()=>{
+        console.log(`-- ${this.contextId}の処理を完了しました --`);
         // broser.contextが0の状態で起動したまま、Context["request"]を繰り返すとChromeのスレッドが増殖していくのでちゃんと閉じる
         if(this.browser !== null && this.browser.contexts().length === 0){
           this.browser.close().finally(()=>{
