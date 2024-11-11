@@ -75,10 +75,11 @@ class Context {
       this.browser = await chromium.launch({headless:true});
     }
     this.context = await this.browser.newContext(contextOption);
+    const page = await this.context.newPage();
     const {urlsToOpen, ...otherOption} = this.soption;
     urlsToOpen.forEach((url)=>{
       if(this.context !== null){
-        this.scenarios.push(new Scenario(this.note.createPageResult(url), this.context, otherOption));
+        this.scenarios.push(new Scenario(this.note.createPageResult(url), page, otherOption));
       }
     });
     return {

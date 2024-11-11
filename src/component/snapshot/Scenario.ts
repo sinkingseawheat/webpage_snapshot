@@ -18,7 +18,7 @@ class Scenario {
   public URLWaitingForFinish:Set<string> = new Set();
   constructor(
     private pageResult: ReturnType<Note["createPageResult"]>,
-    private context: BrowserContext,
+    private page: Page,
     private option: Omit<ScenerioOption, "urlsToOpen">,
   ){
   }
@@ -28,17 +28,16 @@ class Scenario {
     const url = this.pageResult.getURL();
     console.log(`-------`);
     console.log(`次のページ単体の処理を開始しました: ${url}`);
-    const page = await this.context.newPage();
     // beforeGoto ページ読み込み前
     (()=>{
       const recordedItem:typeof this.pageResult["record"]["URLRequestedFromPage"] = {
         requestedURLs:[]
       };
       this.pageResult.record['URLRequestedFromPage'] = recordedItem;
-      page.on('request',(request)=>{
+      this.page.on('request',(request)=>{
         this.URLWaitingForFinish.add(request.url());
       })
-      page.on('response', (response)=>{
+      this.page.on('response', (response)=>{
         const statusType = Math.floor(response.status() / 100);
         if(statusType !== 3){
           // サーバーリダイレクト以外の場合は記録する
@@ -48,7 +47,7 @@ class Scenario {
           recordedItem?.requestedURLs.push(response.url());
         }
       });
-      page.on('requestfailed',(request)=>{
+      this.page.on('requestfailed',(request)=>{
         (async ()=>{
           await this.pageResult.updateLinksFromRequestedURL(request);
         })();
@@ -56,7 +55,7 @@ class Scenario {
         this.URLWaitingForFinish.delete(request.url());
         // console.log(`request failed ${request.url()}`);
       });
-      page.on('requestfinished', (request)=>{
+      this.page.on('requestfinished', (request)=>{
         this.URLWaitingForFinish.delete(request.url());
       });
     })();
@@ -64,14 +63,14 @@ class Scenario {
     // Basic認証のアイパスの設定
     const authEncoded = setting.getBasicAuthorization(url);
     if(authEncoded !== null){
-      page.setExtraHTTPHeaders({...authEncoded});
+      this.page.setExtraHTTPHeaders({...authEncoded});
     }
     try {
       const optionOfPageTransition:Parameters<Page["goto"]>[1] = {
         ...{waitUntil:'networkidle'},
         ...this.option,
       };
-      const response = await page.goto(url, optionOfPageTransition);
+      const response = await this.page.goto(url, optionOfPageTransition);
       const redirect =
         response === null ?
           null
@@ -94,12 +93,12 @@ class Scenario {
       // ページのDOM構造を取得
       if(setting.isAllowedArchiveURL(url)){
         this.pageResult.record["DOM"] = {
-          source: await page.content(),
+          source: await this.page.content(),
         }
       }
 
       // リンク要素の抽出
-      this.pageResult.record["URLExtracted"] = await getExtractLinks(page);
+      this.pageResult.record["URLExtracted"] = await getExtractLinks(this.page);
 
       for(const extractedLink of this.pageResult.record["URLExtracted"] || []){
         for(const absURLItem of extractedLink["absURL"]){
@@ -110,9 +109,9 @@ class Scenario {
       }
 
       // キャプチャ取得
-      this.pageResult.record["PageCapture"] = await getCapture(page);
+      this.pageResult.record["PageCapture"] = await getCapture(this.page);
     })();
-    await page.close({reason:'全てのシナリオが終了したため、ページをクローズ'});
+    await this.page.close({reason:'全てのシナリオが終了したため、ページをクローズ'});
     console.log(`次のページ単体の処理を完了しました:${url}`);
     return {
       url
