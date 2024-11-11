@@ -22,7 +22,7 @@ class ContextError extends Error {
 class Context {
   private bcoption: BrowserContextOptions;
   private soption: ScenerioOption;
-  private queue:PQueue;
+  private scenarioQueue:PQueue;
   private context: BrowserContext|null = null;
   private note!:Note;
   private scenarios:Scenario[] = [];
@@ -47,7 +47,7 @@ class Context {
         contextId: contextId,
       },
     );
-    this.queue = new PQueue({concurrency:3,throwOnTimeout:true});
+    this.scenarioQueue = new PQueue({concurrency:3,throwOnTimeout:true});
     // 新しいリクエストが来る際にproxyとbasic認証は読み込みなおす
     setting.update();
   }
@@ -96,7 +96,9 @@ class Context {
         message:'URLが登録されていません。await init()を実行してください'
       }
     }
-    this.queue.on('idle', async ()=>{
+    this.scenarioQueue.on('completed',(result)=>{
+    })
+    this.scenarioQueue.on('idle', async ()=>{
       await (async ()=>{
         if(this.iscaughtError){
           this.onAllScenarioEnd(`続行不可能なエラーが発生しました`);
@@ -109,12 +111,12 @@ class Context {
       })();
     });
     this.scenarios.forEach((scenario)=>{
-      this.queue.add(async ()=>{
+      this.scenarioQueue.add(async ()=>{
         try{
           return await scenario.start();
         }catch(e){
           console.error(e);
-          this.queue.clear();
+          this.scenarioQueue.clear();
           this.iscaughtError = true;
         }
       });
