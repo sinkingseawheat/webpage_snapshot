@@ -72,7 +72,7 @@ class Context {
       }
     })();
     if(this.browser === null){
-      this.browser = await chromium.launch({headless:false});
+      this.browser = await chromium.launch({headless:true});
     }
     this.context = await this.browser.newContext(contextOption);
     const {urlsToOpen, ...otherOption} = this.soption;

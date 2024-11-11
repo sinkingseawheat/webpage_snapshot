@@ -181,6 +181,7 @@ class Note{
                     && Math.floor(lastResponse.status()/100) !== 3
                   ){
                     const {body, response} = await getResponseAndBodyFromRequest(lastRequested);
+                    console.log(`${requestURL} の確認が完了しました： ${response?.status}`)
                     result.response = response;
                     if(body !== null){
                       this.fileArchive.archive({
