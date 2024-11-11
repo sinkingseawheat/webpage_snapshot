@@ -74,10 +74,15 @@ class Context {
     const context = await this.browser.newContext(contextOption);
     const {urlsToOpen, ...otherOption} = this.soption;
     if(context !== null){
-      for await (const url of urlsToOpen){
+      const getPromiseItem = async (url:ValidURL)=>{
         const page = await context.newPage();
         this.scenarios.push(new Scenario(this.note.createPageResult(url), page, otherOption));
       }
+      const promises:Promise<void>[] = []
+      for (const url of urlsToOpen){
+        promises.push(getPromiseItem(url));
+      }
+      await Promise.all(promises);
     }
     this.scenarioQueue.on('idle', async ()=>{
       await (async ()=>{

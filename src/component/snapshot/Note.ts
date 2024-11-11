@@ -111,9 +111,11 @@ class Note{
   private getPageResultPath = (indexOfURL:IndexOfURL, suffix:string) => path.join(this.occupiedDirectoryPath, indexOfURL, suffix);
 
   async init(){
-    for await (const indexOfURL of this.pageResults.keys()){
-      await fs.mkdir(this.getPageResultPath(indexOfURL,''), {recursive:true});
+    const promises:Promise<string | undefined>[] = []
+    for (const indexOfURL of this.pageResults.keys()){
+      promises.push(fs.mkdir(this.getPageResultPath(indexOfURL,''), {recursive:true}));
     }
+    await Promise.all(promises)
     await fs.writeFile(path.join(this.occupiedDirectoryPath, DOT_FILE_NAME),'');
 
     // ファイルのアーカイブ
