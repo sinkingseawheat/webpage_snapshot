@@ -205,6 +205,7 @@ class Note{
     if(pageResultRecord['DOM']?.source !== undefined){
       await fs.writeFile(this.getPageResultPath(indexOfURL,'document_object_model.txt'), pageResultRecord['DOM'].source, {flag:'ax'});
     }
+    this.pageResults.delete(indexOfURL);
   }
 }
 
