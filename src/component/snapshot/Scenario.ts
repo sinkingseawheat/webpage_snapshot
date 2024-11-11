@@ -80,7 +80,12 @@ class Scenario {
         redirect
       };
     }catch(e){
-      throw new ScenarioError(`ページの読み込みに失敗しました。\n  ${url}\nに対するBasic認証が正しいか確認してください。`);
+      if(e instanceof Error && e.message.indexOf('ERR_INVALID_AUTH_CREDENTIALS') !== -1){
+        // ERR_INVALID_AUTH_CREDENTIALSはbasic認証エラーとみなす
+        throw new ScenarioError(`ページの読み込みに失敗しました。\n  ${url}\nに対するBasic認証が正しいか確認してください。`);
+      }else{
+        throw new ScenarioError(`「${url}」のページの読み込みに失敗しました。原因は不明です`);
+      }
     }
     // afterLoaded ページ読み込み完了後
     await (async ()=>{

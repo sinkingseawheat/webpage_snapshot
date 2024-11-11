@@ -159,7 +159,7 @@ class Note{
         if(authEncoded !== null){
           page.setExtraHTTPHeaders({...authEncoded});
         }
-        // シナリオオプションはいったん無しで行う。
+        // シナリオオプション（referer）はいったん無しで行う。
         try{
           page.on('requestfinished',(request)=>{
             (async ()=>{
@@ -186,7 +186,7 @@ class Note{
               }
             })();
           });
-          const pageResponse = await page.goto(requestURL, {waitUntil:'load', timeout:3000});
+          const pageResponse = await page.goto(requestURL, {waitUntil:'load', timeout:5000});
           if(pageResponse === null){
             result.response = null;
           }else{
@@ -201,7 +201,18 @@ class Note{
             }
           }
         }catch(e){
-          result.response = null;
+          if(e instanceof Error && e.message.indexOf('ERR_INVALID_AUTH_CREDENTIALS') !== -1){
+            // ERR_INVALID_AUTH_CREDENTIALSはbasic認証エラーとみなす
+            result.response = {
+                responseURL: null,
+                status: 401,
+                contentType: '',
+                contentLength: -1,
+                shaHash:null,
+            }
+          }else{
+            result.response = null;
+          }
         }finally{
           await page.close();
         }
