@@ -130,18 +130,18 @@ class Note{
     return new PageResult(url, indexOfURL, this.mainResult.links, pageResultRecord, this.fileArchive);
   }
 
-  async archiveNotRequestURL(context:BrowserContext|null, onEnd:()=>void){
+  async archiveNotRequestURL(context:BrowserContext|null, onAllScenarioEnd:()=>void){
     if(context===null){
       throw new NoteError(`無効なcontextが渡されました。init()が完了しているか確認してください`);
     }
     const queue = new PQueue({concurrency:3});
-    // 保存前に未リクエストのURLについて、リクエストして必要ならアーカイブする
     queue.on('idle',async ()=>{
       await this.write();
       console.log(`処理結果を保存しました`);
       await fs.unlink(path.join(this.occupiedDirectoryPath, DOT_FILE_NAME));
-      onEnd();
+      onAllScenarioEnd();
     });
+    // 保存前に未リクエストのURLについて、リクエストして必要ならアーカイブする
     for( const [requestURL, result] of  this.mainResult.links.entries()){
       if(result.response?.responseURL !== null){continue;}
       queue.add(async()=>{

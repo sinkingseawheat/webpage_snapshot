@@ -96,13 +96,13 @@ class Context {
     this.queue.on('idle', async ()=>{
       await (async ()=>{
         if(this.iscaughtError){
-          this.onEnd(`続行不可能なエラーが発生しました`);
+          this.onAllScenarioEnd(`続行不可能なエラーが発生しました`);
           this.context?.pages().forEach(async (page)=>{
             await page.close();
           })
         }
         entrance.check(true);
-        await this.note.archiveNotRequestURL(this.context, this.onEnd.bind(this));
+        await this.note.archiveNotRequestURL(this.context, this.onAllScenarioEnd.bind(this));
       })();
     });
     this.scenarios.forEach((scenario)=>{
@@ -121,7 +121,7 @@ class Context {
     }
   }
 
-  onEnd(errorMessage?:string):void{
+  onAllScenarioEnd(errorMessage?:string):void{
     if(errorMessage){
       console.error(errorMessage);
     }
