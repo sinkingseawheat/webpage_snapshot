@@ -16,10 +16,9 @@ class ScenarioError extends Error {
 
 class Scenario {
   public URLWaitingForFinish:Set<string> = new Set();
-  private page!:Page;
   constructor(
     private pageResult: ReturnType<Note["createPageResult"]>,
-    private context: BrowserContext,
+    private page: Page,
     private option: Omit<ScenerioOption, "urlsToOpen">,
   ){
   }
@@ -28,7 +27,6 @@ class Scenario {
     console.log(`-------`);
     console.log(`次のページ単体の処理を開始しました: ${url}`);
     // beforeGoto ページ読み込み前
-    this.page = await this.context.newPage();
     (()=>{
       const recordedItem:typeof this.pageResult["record"]["URLRequestedFromPage"] = {
         requestedURLs:[]
@@ -84,7 +82,6 @@ class Scenario {
         // ERR_INVALID_AUTH_CREDENTIALSはbasic認証エラーとみなす
         throw new ScenarioError(`ページの読み込みに失敗しました。\n  ${url}\nに対するBasic認証が正しいか確認してください。`);
       }else{
-        console.error(e);
         throw new ScenarioError(`「${url}」のページの読み込みに失敗しました。原因は不明です`);
       }
     }
