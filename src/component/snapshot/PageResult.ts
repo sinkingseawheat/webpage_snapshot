@@ -1,7 +1,7 @@
 import type { Request } from 'playwright';
 
 import { type IndexOfURL } from '@/utility/Types';
-import { ValidURL } from "./ScenarioFormData";
+import { ValidURL } from "./FormData";
 import type { Note } from './Note';
 import type { FileArchive } from './FileArchive';
 

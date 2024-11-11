@@ -1,4 +1,4 @@
-import type { ScenerioOption, ValidURL } from "@/component/snapshot/ScenarioFormData";
+import type { ScenerioOption, ValidURL } from "@/component/snapshot/FormData";
 import type { Page, BrowserContext } from "playwright";
 import { Note } from "./Note";
 

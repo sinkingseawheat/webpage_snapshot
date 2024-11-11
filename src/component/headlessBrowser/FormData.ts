@@ -1,6 +1,6 @@
 import type { BrowserContextOptions, ViewportSize, HTTPCredentials } from "playwright";
 import type { Entries } from "@/utility/Types";
-import type {ValidURL} from '@/component/snapshot/ScenarioFormData';
+import type {ValidURL} from '@/component/snapshot/FormData';
 
 class FormDataError extends Error {
   static {

@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs/promises';
 
 import type { BrowserContext, Request } from 'playwright';
-import { ValidURL, ScenarioFormFields } from "./ScenarioFormData";
+import { ValidURL, ScenarioFormFields } from "./FormData";
 import type { BrowserContextPickedFormFields } from "@/component/headlessBrowser/FormData";
 import { PageResult, type PageResultRecord } from './PageResult';
 import { FileArchive } from './FileArchive';

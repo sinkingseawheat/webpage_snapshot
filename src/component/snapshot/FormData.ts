@@ -1,5 +1,4 @@
 import type { Page } from "playwright";
-import {URL} from "url";
 
 import type { Entries, ValidURL } from "@/utility/Types";
 import {isValidURL} from "@/utility/Types";

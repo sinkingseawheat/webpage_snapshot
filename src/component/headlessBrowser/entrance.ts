@@ -7,7 +7,7 @@ import type { BrowserContextPickedFormFields, ResponseData } from '@/component/h
 import { Context } from '@/component/headlessBrowser/Context';
 
 // entranceは各APIで共通化したい。フォームデータの判別はBrowserContextはContextクラスで、ScenarioはScenarioクラスで行うようにしたい。
-import type { ScenarioFormFields } from '@/component/snapshot/ScenarioFormData';
+import type { ScenarioFormFields } from '@/component/snapshot/FormData';
 
 class EntranceError extends Error {
   static {
