@@ -4,8 +4,9 @@ import { Note } from "./Note";
 import { getURLInPage } from './sub/getURLInPage';
 
 import { setting } from "@/utility/Setting";
-import { isValidURL } from "@/utility/Types";
 import { getRedirectStatusFromRequest } from "./sub/getRedirectStatusFromRequest";
+
+import { getCapture } from "./sub_scenario/getCapture";
 
 class ScenarioError extends Error {
   static {
@@ -124,18 +125,7 @@ class Scenario {
       this.pageResult.record["URLExtracted"] = dataFromHeadlessBrowser;
 
       // キャプチャ取得
-      // Todo:ヘッドレスブラウザの幅を変更したときのキャプチャも取得できるようにする
-      const screenshotBuffer = await page.screenshot({
-        fullPage:true,
-        animations:'disabled',
-        quality: 50, // 高クオリティのキャプチャは不要
-        scale: 'css', // 精細なRetinaのキャプチャは不要
-        type: 'jpeg',
-      });
-      this.pageResult.record["PageCapture"] = {
-        name: 'fullpage',
-        buffer: screenshotBuffer,
-      };
+      this.pageResult.record["PageCapture"] = await getCapture(page);
     })();
     await page.close({reason:'全てのシナリオが終了したため、ページをクローズ'});
     console.log(`次のページ単体の処理を完了しました:${url}`);

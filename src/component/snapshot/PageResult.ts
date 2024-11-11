@@ -50,9 +50,9 @@ type PageResultRecord = {
   }))[]
   /** キャプチャ */
   'PageCapture'?:{
-    name: 'fullpage',
+    name: string,
     buffer: Buffer,
-  }
+  }[]
 };
 
 class PageResult {

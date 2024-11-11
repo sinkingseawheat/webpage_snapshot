@@ -264,8 +264,8 @@ class Note{
       fileHandle.write(JSON.stringify(jsonStored, null, '\t'));
       await fileHandle.close();
       // キャプチャを格納
-      if(record['PageCapture']?.buffer !== undefined){
-        await fs.writeFile(this.getPageResultPath(indexOfURL,'capture_fullpage.jpg'), record['PageCapture'].buffer, {flag:'ax'});
+      for(const capture of record['PageCapture'] ?? []){
+        await fs.writeFile(this.getPageResultPath(indexOfURL,`capture_${capture['name']}.jpg`), capture["buffer"], {flag:'ax'});
       }
       // DOMテキストを格納
       if(record['DOM']?.source !== undefined){
