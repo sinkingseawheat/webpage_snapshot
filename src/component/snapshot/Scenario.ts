@@ -1,12 +1,12 @@
 import type { ScenerioOption, ValidURL } from "@/component/snapshot/ScenarioFormData";
 import type { Page, BrowserContext } from "playwright";
 import { Note } from "./Note";
-import { getURLInPage } from './sub/getURLInPage';
 
 import { setting } from "@/utility/Setting";
 import { getRedirectStatusFromRequest } from "./sub/getRedirectStatusFromRequest";
 
 import { getCapture } from "./sub_scenario/getCapture";
+import { getExtractLinks } from "./sub_scenario/getExtractLinks";
 
 class ScenarioError extends Error {
   static {
@@ -99,30 +99,15 @@ class Scenario {
       }
 
       // リンク要素の抽出
-      const dataFromHeadlessBrowser = await page.evaluate(getURLInPage);
-      for(const elmData of dataFromHeadlessBrowser){
-        for(const url of elmData.relURL){
-          const absURL = (()=>{
-            try{
-              const cssFilePath = (()=>{
-                if(elmData.type === 'fromCascadingStyleSheets'){
-                  return elmData.href;
-                }
-                return null;
-              })();
-              const _url = new URL(url, cssFilePath ?? page.url()).href as ValidURL; // isValidURLの処理も含んでいるはずなので、型アサーション
-              return _url;
-            }catch(e){
-              return null;
-            }
-          })();
-          if(absURL !== null){
-            this.pageResult.updateLinksFromExtractedURL(absURL);
+      this.pageResult.record["URLExtracted"] = await getExtractLinks(page);
+
+      for(const extractedLink of this.pageResult.record["URLExtracted"] || []){
+        for(const absURLItem of extractedLink["absURL"]){
+          if(absURLItem !== null){
+            this.pageResult.updateLinksFromExtractedURL(absURLItem);
           }
-          elmData.absURL.push(absURL);
         }
       }
-      this.pageResult.record["URLExtracted"] = dataFromHeadlessBrowser;
 
       // キャプチャ取得
       this.pageResult.record["PageCapture"] = await getCapture(page);

@@ -1,5 +1,7 @@
 import type { WrittenURLs } from '../Note';
 
+/* ヘッドレスブラウザのみで実行可能。Node.jsのコンテキストでは実行不可 */
+
 export const getURLInPage = ():WrittenURLs=>{
   function getURLsFromUrlMethod(cssText:string){
     const rv = cssText.match(/(?<=url\()[^)]+/g) ?? [];
