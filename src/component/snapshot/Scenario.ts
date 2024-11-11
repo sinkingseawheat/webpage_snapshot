@@ -103,7 +103,13 @@ class Scenario {
         for(const url of elmData.relURL){
           const absURL = (()=>{
             try{
-              const _url = new URL(url, page.url()).href as ValidURL; // isValidURLの処理も含んでいるはずなので、型アサーション
+              const cssFilePath = (()=>{
+                if(elmData.type === 'fromCascadingStyleSheets'){
+                  return elmData.href;
+                }
+                return null;
+              })();
+              const _url = new URL(url, cssFilePath ?? page.url()).href as ValidURL; // isValidURLの処理も含んでいるはずなので、型アサーション
               return _url;
             }catch(e){
               return null;
