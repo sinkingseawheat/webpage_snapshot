@@ -1,5 +1,4 @@
-import path from 'path';
-
+import { chromium } from 'playwright';
 import type { BrowserContextOptions, Browser, BrowserContext } from 'playwright';
 import PQueue from 'p-queue';
 
@@ -30,15 +29,13 @@ class Context {
   private id:string;
   private iscaughtError:boolean = false;
   private browser!:Browser|null;
-  constructor(args:{
+  constructor(
     formData:ScenarioFormFields & BrowserContextPickedFormFields,
     apiType:string,
     contextId:string,
-    browser:Browser|null,
-  }){
-    const {formData, apiType, contextId, browser} = args;
+  ){
     const {urlsToOpen ,...optionsToNote} = formData;
-    this.browser = browser;
+    this.browser = null;
     this.bcoption = deserializeBrowserContextPickedFormFields(formData);
     this.soption = deserializeScenerioFormFields(formData);
     this.id = contextId;
@@ -54,7 +51,7 @@ class Context {
     // 新しいリクエストが来る際にproxyとbasic認証は読み込みなおす
     setting.update();
   }
-  async init(browser: Browser){
+  async init(){
     try{
       await this.note.init();
     }catch(e){
@@ -74,7 +71,10 @@ class Context {
         };
       }
     })();
-    this.context = await browser.newContext(contextOption);
+    if(this.browser === null){
+      this.browser = await chromium.launch({headless:false});
+    }
+    this.context = await this.browser.newContext(contextOption);
     const {urlsToOpen, ...otherOption} = this.soption;
     urlsToOpen.forEach((url)=>{
       if(this.context !== null){
@@ -135,7 +135,7 @@ class Context {
         if(this.browser !== null && this.browser.contexts().length === 0){
           this.browser.close().finally(()=>{
             this.browser = null;
-            console.log('フォームからのリクエストがすべて終了したため、browserが終了しました')
+            console.log('フォームからのリクエストがすべて終了したため、browserが終了しました');
           });
         }
       });
