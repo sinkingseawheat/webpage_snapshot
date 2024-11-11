@@ -28,6 +28,7 @@ class Context {
   private note!:Note;
   private scenarios:Scenario[] = [];
   private id:string;
+  private iscaughtError:boolean = false;
   constructor(args:{
     formData:ScenarioFormFields & BrowserContextPickedFormFields,
     apiType:string,
@@ -94,6 +95,12 @@ class Context {
     }
     this.queue.on('idle', async ()=>{
       await (async ()=>{
+        if(this.iscaughtError){
+          this.onEnd(`続行不可能なエラーが発生しました`);
+          this.context?.pages().forEach(async (page)=>{
+            await page.close();
+          })
+        }
         entrance.check(true);
         await this.note.archiveNotRequestURL(this.context, this.onEnd.bind(this));
       })();
@@ -104,6 +111,8 @@ class Context {
           return await scenario.start();
         }catch(e){
           console.error(e);
+          this.queue.clear();
+          this.iscaughtError = true;
         }
       });
     });
@@ -112,7 +121,10 @@ class Context {
     }
   }
 
-  onEnd():void{
+  onEnd(errorMessage?:string):void{
+    if(errorMessage){
+      console.error(errorMessage);
+    }
     console.log(`-- ${this.id}の処理を完了しました --`);
   }
 }

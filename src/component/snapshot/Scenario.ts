@@ -80,7 +80,7 @@ class Scenario {
         redirect
       };
     }catch(e){
-      console.error(e);
+      throw new ScenarioError(`ページの読み込みに失敗しました。\n  ${url}\nに対するBasic認証が正しいか確認してください。`);
     }
     // afterLoaded ページ読み込み完了後
     await (async ()=>{
