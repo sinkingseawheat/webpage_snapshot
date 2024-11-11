@@ -67,6 +67,9 @@ class PageResult {
   getURL(){
     return this.url;
   }
+  getIndexOfURL(){
+    return this.indexOfURL;
+  }
   async updateLinksFromRequestedURL(targetRequest:Request){
     // リダイレクト後であればリダイレクト前の一番最初にリクエストしたURLを、リダイレクト無しであればそのままのURLを使用する
     const requestedURLInPage = await getRedirectStatusFromRequest(targetRequest, false);

@@ -79,8 +79,6 @@ class Context {
         this.scenarios.push(new Scenario(this.note.createPageResult(url), page, otherOption));
       }
     });
-    this.scenarioQueue.on('completed',(result)=>{
-    })
     this.scenarioQueue.on('idle', async ()=>{
       await (async ()=>{
         if(this.iscaughtError){
@@ -110,7 +108,8 @@ class Context {
     this.scenarios.forEach((scenario)=>{
       this.scenarioQueue.add(async ()=>{
         try{
-          return await scenario.start();
+          const result = await scenario.start();
+          await this.note.writePageResult(result);
         }catch(e){
           console.error(e);
           this.scenarioQueue.clear();

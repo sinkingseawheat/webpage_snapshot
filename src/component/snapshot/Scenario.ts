@@ -22,9 +22,7 @@ class Scenario {
     private option: Omit<ScenerioOption, "urlsToOpen">,
   ){
   }
-  async start():Promise<{
-    url:string,
-  }>{
+  async start(){
     const url = this.pageResult.getURL();
     console.log(`-------`);
     console.log(`次のページ単体の処理を開始しました: ${url}`);
@@ -114,7 +112,8 @@ class Scenario {
     await this.page.close({reason:'全てのシナリオが終了したため、ページをクローズ'});
     console.log(`次のページ単体の処理を完了しました:${url}`);
     return {
-      url
+      indexOfURL: this.pageResult.getIndexOfURL(),
+      pageResultRecord: this.pageResult.record,
     };
   }
 }

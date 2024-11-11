@@ -135,8 +135,8 @@ class Note{
     if(context===null){
       throw new NoteError(`無効なcontextが渡されました。init()が完了しているか確認してください`);
     }
-    const pageQueue = new PQueue({concurrency:3});
-    pageQueue.on('idle',async ()=>{
+    const notRequestedQueue = new PQueue({concurrency:3});
+    notRequestedQueue.on('idle',async ()=>{
       await this.write();
       console.log(`処理結果を保存しました`);
       await fs.unlink(path.join(this.occupiedDirectoryPath, DOT_FILE_NAME));
@@ -145,7 +145,7 @@ class Note{
     // 保存前に未リクエストのURLについて、リクエストして必要ならアーカイブする
     for( const [requestURL, result] of  this.mainResult.links.entries()){
       if(result.response?.responseURL !== null){continue;}
-      pageQueue.add(async ()=>{
+      notRequestedQueue.add(async ()=>{
         await requestNotRequestedButInPage(await context.newPage(), requestURL, result, this.fileArchive);
       });
     }
@@ -184,24 +184,26 @@ class Note{
     }
     await fileHandleMain.write(JSON.stringify(recordMain, null, '\t'));
     await fileHandleMain.close();
-    // ページごとの結果
-    for await(const [indexOfURL, record] of this.pageResults){
-      const fileHandle = await fs.open(this.getPageResultPath(indexOfURL,'page.json'), 'ax');
-      const jsonStored:Pick<PageResultRecord,'firstRequested'|'URLRequestedFromPage'|'URLExtracted'> = {
-        firstRequested: record['firstRequested'],
-        URLRequestedFromPage: record['URLRequestedFromPage'],
-        URLExtracted: record['URLExtracted'],
-      };
-      fileHandle.write(JSON.stringify(jsonStored, null, '\t'));
-      await fileHandle.close();
-      // キャプチャを格納
-      for(const capture of record['PageCapture'] ?? []){
-        await fs.writeFile(this.getPageResultPath(indexOfURL,`capture_${capture['name']}.jpg`), capture["buffer"], {flag:'ax'});
-      }
-      // DOMテキストを格納
-      if(record['DOM']?.source !== undefined){
-        await fs.writeFile(this.getPageResultPath(indexOfURL,'document_object_model.txt'), record['DOM'].source, {flag:'ax'});
-      }
+  }
+
+  async writePageResult(arg:{indexOfURL:IndexOfURL, pageResultRecord:PageResultRecord}){
+    const {indexOfURL, pageResultRecord} = arg;
+    // ページJSONを書き込み
+    const fileHandle = await fs.open(this.getPageResultPath(indexOfURL,'page.json'), 'ax');
+    const jsonStored:Pick<PageResultRecord,'firstRequested'|'URLRequestedFromPage'|'URLExtracted'> = {
+      firstRequested: pageResultRecord['firstRequested'],
+      URLRequestedFromPage: pageResultRecord['URLRequestedFromPage'],
+      URLExtracted: pageResultRecord['URLExtracted'],
+    };
+    fileHandle.write(JSON.stringify(jsonStored, null, '\t'));
+    await fileHandle.close();
+    // キャプチャを格納
+    for(const capture of pageResultRecord['PageCapture'] ?? []){
+      await fs.writeFile(this.getPageResultPath(indexOfURL,`capture_${capture['name']}.jpg`), capture["buffer"], {flag:'ax'});
+    }
+    // DOMテキストを格納
+    if(pageResultRecord['DOM']?.source !== undefined){
+      await fs.writeFile(this.getPageResultPath(indexOfURL,'document_object_model.txt'), pageResultRecord['DOM'].source, {flag:'ax'});
     }
   }
 }
