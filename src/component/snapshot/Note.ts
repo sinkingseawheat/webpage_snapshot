@@ -70,6 +70,8 @@ export type WrittenURLs = Required<PageResultRecord>['URLExtracted'];
 /** 処理開始時に作成され、処理完了時に削除されるファイル */
 const DOT_FILE_NAME = '.running' as const;
 
+const directoryStoringResult = path.join(process.cwd(),`./_data/result`);
+
 class Note{
   /** ページごとの結果にインデックスを付与したもの */
   private pageResults:Map<IndexOfURL, PageResultRecord> = new Map();
@@ -105,7 +107,7 @@ class Note{
       links: _links,
     }
     const [ymd, hash] = identifier.contextId.split('-');
-    this.occupiedDirectoryPath = path.join(process.cwd(),`./_data/result/${identifier.apiType}/${ymd}/${hash}`);
+    this.occupiedDirectoryPath = path.join(directoryStoringResult,`${identifier.apiType}/${ymd}/${hash}`);
   }
 
   private getPageResultPath = (indexOfURL:IndexOfURL, suffix:string) => path.join(this.occupiedDirectoryPath, indexOfURL, suffix);
