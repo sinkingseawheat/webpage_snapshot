@@ -3,7 +3,7 @@ import fs from 'fs/promises';
 
 import type { BrowserContext, Request } from 'playwright';
 import { ValidURL, ScenarioFormFields } from "./FormData";
-import type { BrowserContextPickedFormFields } from "@/component/headlessBrowser/FormData";
+import type { BrowserContextPickedFormFields } from "./FormData";
 import { PageResult, type PageResultRecord } from './PageResult';
 import { FileArchive } from './FileArchive';
 import { type IndexOfURL, isIndexOfURL, type Entries } from '@/utility/Types';

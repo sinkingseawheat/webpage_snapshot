@@ -2,7 +2,8 @@ import { RandomString } from '@/utility/RandomString';
 
 import type { Browser } from 'playwright';
 
-import type { BrowserContextPickedFormFields, ResponseData } from '@/component/headlessBrowser/FormData';
+import type { BrowserContextPickedFormFields } from "../snapshot/FormData";
+import type { ResponseData } from "../snapshot/FormData";
 
 import { Context } from '@/component/headlessBrowser/Context';
 
