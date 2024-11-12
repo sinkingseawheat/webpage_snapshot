@@ -53,7 +53,7 @@ const InputForm:React.FC<{}> = ()=>{
       throw new Error(`localstorageが満杯です`)
     }
     try{
-      const response = await fetch('/api/snapshot', {
+      const response = await fetch('/api/snapshot/post', {
         'method': 'POST',
         'cache': 'no-store',
         'body':JSON.stringify(data),
