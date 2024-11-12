@@ -10,7 +10,6 @@ export default async function handler(
 ){
   if(req.method==='GET'){
     res.status(200).json({
-      status:'OK',
       id:'',
       validURLs:[],
       message:'正常に受信しました',
@@ -25,15 +24,13 @@ export default async function handler(
       console.error(e);
       res.writeHead(400, {'Content-Type': 'application/json'});
       res.end(JSON.stringify({
-        status:'NG',
         message:'無効なパラメータが送信されました',
       }));
     }
   }else{
-    res.writeHead(400, {'Content-Type': 'application/json'});
-    res.end(JSON.stringify({
-      status:'NG',
-      message:'GET/POSTのみ許可されています',
-    }));
+    res.setHeader('Allow', ['GET']);
+    res.status(405).json({
+      message: 'Method Not Allowed'
+    });
   }
 }

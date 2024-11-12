@@ -10,12 +10,10 @@ type ScenarioFormFields = typeof scenarioDefaultFormFieldValue;
 
 /* エンドユーザへのレスポンス */
 type ResponseData = {
-  status: 'OK';
   id: string;
   validURLs: ValidURL[];
   message: string;
 } | {
-  status: 'NG';
   message: string;
 };
 export type { ResponseData };
