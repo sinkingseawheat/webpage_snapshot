@@ -1,17 +1,24 @@
 import { Dispatch, SetStateAction } from "react";
+import { useRouter } from "next/router";
 
-const PullDownOfContextId:React.FC<{
-  contextIds:string[],
-  setContextIds:Dispatch<SetStateAction<string[]>>,
-  selectedId:string,
-  setSelected:Dispatch<SetStateAction<string>>
-}> = ({contextIds, setContextIds, selectedId, setSelected})=>{
+import { useEffect } from "react";
+
+const PullDownOfContextId:React.FC<{contextIds:string[], setContextIds:Dispatch<SetStateAction<string[]>>}> = ({contextIds, setContextIds})=>{
+
+  useEffect(()=>{
+    handlePulldownClick(setContextIds)
+  }, []);
+
+  const router = useRouter();
 
   return (
     <>
       <select
         onChange={(e)=>{
-          setSelected(e.target.value);
+          const contextId = e.target.value;
+          if(contextId !== ''){
+            router.push(`/snapshot/${e.target.value}`);
+          }
         }}
         onClick={(e)=>{
           handlePulldownClick(setContextIds);

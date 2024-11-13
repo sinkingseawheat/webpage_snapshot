@@ -35,7 +35,29 @@ export default async function handler(
   }
 }
 
+const DIRECTORY_STORING_RESULT = path.join(process.cwd(), './_data/result/snapshot');
+
 async function getContextIds(){
+  const rv:string[] = [];
+  try{
+    for (const dirent of await readdir(DIRECTORY_STORING_RESULT, {withFileTypes:true})){
+      if(dirent.isDirectory() && /^\d{8}$/.test(dirent.name)){
+        const parentPath = dirent.path || dirent.parentPath;
+        for(const childDirent of await readdir(path.join(parentPath, dirent.name), {withFileTypes:true})){
+          if(childDirent.isDirectory() && childDirent.name.length === 16){
+            rv.push(`${dirent.name}-${childDirent.name}`);
+          }
+        }
+      }
+    }
+  }catch(e){
+    console.error(e);
+  }finally{
+    return rv;
+  }
+}
+
+async function getresultRoot(){
   const rv:string[] = [];
   try{
     const directoryStoredResult = path.join(process.cwd(), './_data/result/snapshot');

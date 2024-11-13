@@ -1,40 +1,29 @@
-import PullDownOfContextId from "./PullDownOfContextId";
+
 import MainResultOutput from "./MainResultOutput";
 import PageResultOutput from "./PageResultOutput";
 
+import Link from "next/link";
+
 import { useState, useEffect } from "react";
 
-const Output:React.FC<{}> = ()=>{
-
-  const [contextIds, setContextIds] = useState(['']);
-  const [selectedId, setSelected] = useState('');
-
-  const propContextIds = {
-    contextIds,
-    setContextIds,
-    selectedId,
-    setSelected,
-  }
-
-  /* Todo: MainResultOutputとPageResultOutputは、contextIdsの更新時は再レンダリングを抑止する */
+const Output:React.FC<{
+  selectedId:string,
+  indexOfURL:string
+}> = ({selectedId, indexOfURL})=>{
 
   return (
     <>
-      <div>
-        <PullDownOfContextId
-          {...propContextIds}
+        {
+        /^\d{3}$/.test(indexOfURL) ?
+        <PageResultOutput
+          selectedId={selectedId}
+          indexOfURL={indexOfURL}
         />
-      </div>
-      <div>
+        :
         <MainResultOutput
           selectedId={selectedId}
         />
-      </div>
-      <div>
-        <PageResultOutput
-          selectedId={selectedId}
-        />
-      </div>
+      }
     </>
   );
 }

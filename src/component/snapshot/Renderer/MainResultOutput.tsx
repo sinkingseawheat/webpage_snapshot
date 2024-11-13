@@ -1,16 +1,30 @@
 import path from 'path';
+import { useEffect } from 'react';
 
-const directoryStored = path.join(process.cwd(), './_data/result/snapshot');
+const ROOT_DIRECTORY = `/api/snapshot/sendFile`;
 
 const MainResultOutput:React.FC<{
   selectedId:string
 }> = ({selectedId})=>{
-  return (<>
-  </>);
-}
+  const getPath = (relativePath:string)=>{
+    return path.join(ROOT_DIRECTORY, selectedId.split('-').join('/') ,relativePath);
+  }
 
-async function getResult(selectedId:string){
-  const directoryRootPath = path.join(directoryStored, selectedId.split('-').join('/'));
+  useEffect(()=>{
+    (async ()=>{
+      try{
+        const response = await fetch(getPath('__main.json'));
+        const json = await response.json();
+        console.log(json);
+      }catch(e){
+        console.error(e);
+      }
+    })();
+  },[]);
+
+  return (<>
+    mainResultです。
+  </>);
 }
 
 export default MainResultOutput;
