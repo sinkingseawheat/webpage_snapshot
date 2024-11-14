@@ -2,10 +2,6 @@
 import MainResultOutput from "./MainResultOutput";
 import PageResultOutput from "./PageResultOutput";
 
-import Link from "next/link";
-
-import { useState, useEffect } from "react";
-
 const Output:React.FC<{
   selectedId:string,
   indexOfURL:string

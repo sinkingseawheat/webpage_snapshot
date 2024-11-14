@@ -55,7 +55,7 @@ export type LinksItem = {
 
 
 /** リクエスト全体に共通する結果 */
-type MainResultRecord = {
+export type MainResultRecord = {
   formData:Omit<ScenarioFormFields & BrowserContextPickedFormFields, 'urlsToOpen'>,
   /** アプリのversion。package.jsonから取得 */
   version:string|null,
