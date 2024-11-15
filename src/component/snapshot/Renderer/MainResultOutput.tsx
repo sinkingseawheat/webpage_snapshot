@@ -2,6 +2,7 @@ import path from 'path';
 import { useEffect, useState } from 'react';
 
 import { TargetURLs } from './TargetURLs';
+import { FormFieldSource } from './FormFieldSource';
 
 import style from '@/styles/snapshot/Output.module.scss';
 
@@ -32,12 +33,11 @@ const MainResultOutput:React.FC<{
   return (<section>
     <h4>URL</h4>
     <div className={style.table}>
-      {/* (new TargetURLs(mainResultJSON,{selectedId})).getPageSource() */}
       <TargetURLs {...{mainResultJSON, selectedId}} />
     </div>
     <h4>FormData</h4>
     <div className={style.table}>
-      {(new FormFieldSource(mainResultJSON)).getPageSource()}
+      <FormFieldSource {...{mainResultJSON}} />
     </div>
     <div className={style.table}></div>
     <h4>リンクリスト</h4>
@@ -49,44 +49,6 @@ const MainResultOutput:React.FC<{
 
 
 
-class FormFieldSource {
-  public isValid:boolean = true;
-  private dataArray:any[][]=[];
-  constructor(mainResultJSON:any){
-    const {formData} = mainResultJSON ?? {};
-    if(formData === undefined){
-      this.isValid = false;
-      return;
-    }
-    for(const [key, value] of Object.entries(formData) ){
-      this.dataArray.push([key, value]);
-    }
-  }
-  public getPageSource(){
-    if(!this.isValid){return '';}
-    return (
-      <table>
-        <thead>
-          <tr>
-            <th>プロパティ</th>
-            <th>値</th>
-          </tr>
-        </thead>
-        <tbody>
-        {this.dataArray.map((rowData)=>{
-        return (<tr key={rowData[0]}>
-          {rowData.map((cellData,index)=>{
-            return (
-              <td key={index}>{cellData}</td>
-            )
-          })}
-        </tr>);
-      })}
-        </tbody>
-      </table>
-      );
-  }
-}
 
 // Todo: 型定義は後で考える
 class LinkLists {
