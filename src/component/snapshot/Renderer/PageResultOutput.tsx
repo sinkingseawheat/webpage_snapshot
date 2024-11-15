@@ -60,32 +60,29 @@ const PageResultOutput:React.FC<{
   return (<>
     <p className={`${style.headingLv4} ${style['u-mt']}`}>「<span>{pageIndex}</span>　<strong>{pageName}</strong>」の結果です。</p>
     <section>
-      <h4></h4>
-      <section>
-        <h5 className={style.headingLv3}>リダイレクト</h5>
-        <div className={style.table}>
-          {(new RedirectStatus(resultJSON)).getPageSource()}
-        </div>
-      </section>
-      <section>
-        <h5>キャプチャ</h5>
-        <div className={style.l_2column}>
-          <figure>
-            <img src={getPath(`${indexOfURL}/capture_fullpageColorSchemeIsLight.jpg`)} alt="" />
-            <figcaption>prefers-color-scheme: light</figcaption>
-          </figure>
-          <figure>
-            <img src={getPath(`${indexOfURL}/capture_fullpageColorSchemeIsDark.jpg`)} alt="" />
-            <figcaption>prefers-color-scheme: dark</figcaption>
-          </figure>
-        </div>
-      </section>
-      <section>
-        <h5>画像（SVG含む）</h5>
-        <div>
-        {(new ImageDescription(resultJSON, getPath)).getPageSource()}
-        </div>
-      </section>
+      <h5 className={style.headingLv3}>リダイレクト</h5>
+      <div className={style.table}>
+        {(new RedirectStatus(resultJSON)).getPageSource()}
+      </div>
+    </section>
+    <section>
+      <h5 className={style.headingLv3}>キャプチャ</h5>
+      <div className={style.l_2column}>
+        <figure>
+          <img src={getPath(`${indexOfURL}/capture_fullpageColorSchemeIsLight.jpg`)} alt="" />
+          <figcaption>prefers-color-scheme: light</figcaption>
+        </figure>
+        <figure>
+          <img src={getPath(`${indexOfURL}/capture_fullpageColorSchemeIsDark.jpg`)} alt="" />
+          <figcaption>prefers-color-scheme: dark</figcaption>
+        </figure>
+      </div>
+    </section>
+    <section>
+      <h5 className={style.headingLv3}>画像（SVG含む）</h5>
+      <div>
+      {(new ImageDescription(resultJSON, getPath)).getPageSource()}
+      </div>
     </section>
     </>
   );
