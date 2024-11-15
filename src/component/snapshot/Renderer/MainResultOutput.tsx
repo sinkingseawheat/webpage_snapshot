@@ -69,20 +69,21 @@ const MainResultOutput:React.FC<{
   }
 
   return (<>
+    <p className={`${style.headingLv4} ${style['u-mt']}`}>メインの結果です。</p>
   <section>
-    <h4 className={style.headingLv4}>URL</h4>
+    <h5 className={style.headingLv4}>URL</h5>
     <div className={style.table}>
       <TargetURLs {...{targetURLs, links, selectedId}} />
     </div>
     </section>
     <section>
-    <h4 className={style.headingLv4}>FormData</h4>
+    <h5 className={style.headingLv4}>FormData</h5>
     <div className={style.table}>
       <FormFieldSource {...{formData}} />
     </div>
     </section>
     <section>
-    <h4 className={style.headingLv4}>リンクリスト</h4>
+    <h5 className={style.headingLv4}>リンクリスト</h5>
     <div className={style.table}>
       <LinkLists  {...{targetURLs, links}} />
     </div>
