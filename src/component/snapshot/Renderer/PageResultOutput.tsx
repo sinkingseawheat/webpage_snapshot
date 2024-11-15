@@ -201,12 +201,14 @@ class ImageDescription{
   }
 
   public getPageSource = ()=>{
-    if(!this.isValid){return '';}
+    if(!this.isValid){
+      return <></>;
+    }
     return (
-      <div>
+      <>
       {this.dataArray.map((item, index)=>{
         const {tagName, requestURL, responseURL, hash, contentType, contentLength} = item;
-        if(!/^image\//.test(contentType)){return (<></>);}
+        if(!/^image\//.test(contentType)){return null;}
         const archiveItem = (()=>{
           for(const [url, value] of Object.entries(this.archiveList)){
             if(requestURL === url){
@@ -216,7 +218,7 @@ class ImageDescription{
         })();
         if(archiveItem === undefined){
           console.log(`archiveItemが見つかりませんでした`)
-          return (<></>);
+          return null;
         }
         const archiveIndex = archiveItem['index'];
         const query = `contentType=${encodeURIComponent(archiveItem['contentType'])}`;
@@ -243,8 +245,8 @@ class ImageDescription{
               </div>
             </div>
         );
-      })}
-      </div>
+      }).filter((jsxElm)=>jsxElm!==null)}
+      </>
     );
   }
 }
