@@ -1,9 +1,7 @@
 import path from 'path';
 import { useEffect, useState } from 'react';
 
-import Link from 'next/link';
-
-import { getResponseFormRequestURL } from './sub/getResponseFormRequestURL';
+import { TargetURLs } from './TargetURLs';
 
 import style from '@/styles/snapshot/Output.module.scss';
 
@@ -34,7 +32,8 @@ const MainResultOutput:React.FC<{
   return (<section>
     <h4>URL</h4>
     <div className={style.table}>
-      {(new TargetURLs(mainResultJSON,{selectedId})).getPageSource()}
+      {/* (new TargetURLs(mainResultJSON,{selectedId})).getPageSource() */}
+      <TargetURLs {...{mainResultJSON, selectedId}} />
     </div>
     <h4>FormData</h4>
     <div className={style.table}>
@@ -48,61 +47,7 @@ const MainResultOutput:React.FC<{
   </section>);
 }
 
-// Todo: 型定義は後で考える
-class TargetURLs {
-  public isValid:boolean = true;
-  private dataArray:any[][]=[];
-  constructor(mainResultJSON:any,option?:{[k:string]:any}){
-    const targetURLs = mainResultJSON?.targetURLs;
-    const links = mainResultJSON?.links;
-    if(targetURLs === undefined || links === undefined){
-      this.isValid = false;
-      return;
-    }
-    targetURLs.forEach((url:any)=>{
-      const rowData:any[] = []
-      rowData.push(url[0]); // index
-      rowData.push(url[1]); // requestURL
-      const response = getResponseFormRequestURL(links, url[1]);
-      rowData.push(response['responseURL'] === url[1] ? '最初のリクエストと一致' : response['responseURL']); // responseURL
-      rowData.push(response['status']); // status
-      rowData.push(<Link href={`/snapshot/${option?.selectedId?.split('-').join('/')}/${url[0]}`}>ページ詳細へ</Link>);
-      this.dataArray.push(rowData);
-    });
-  }
-  public getPageSource = ()=>{
-    if(!this.isValid){return '';}
-    return (<table>
-      <thead>
-        <tr>
-          <th>番号</th>
-          <th className={style['table__data--url']}>最初にリクエストしたURL</th>
-          <th className={style['table__data--url']}>最後に受け取ったURL</th>
-          <th>レスポンスステータス</th>
-          <th>ページ詳細を見るリンク</th>
-        </tr>
-      </thead>
-      <tbody>
-      {this.dataArray.map((rowData)=>{
-        return (<tr key={rowData[1]}>
-          {rowData.map((cellData,index)=>{
-            return (
-              <td key={index} className={style[this.getCellClassName(index)]}>{cellData}</td>
-            )
-          })}
-        </tr>);
-      })}
-    </tbody>
-    </table>);
-  }
-  private getCellClassName(index:number){
-    if(index===1 || index===2){
-      return 'table__data--url'
-    }else{
-      return '';
-    }
-  }
-}
+
 
 class FormFieldSource {
   public isValid:boolean = true;

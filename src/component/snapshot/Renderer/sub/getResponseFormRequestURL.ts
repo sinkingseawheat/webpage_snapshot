@@ -1,4 +1,5 @@
-export function getResponseFormRequestURL(links:any[], requestURL:string){
+import type { LinksItem } from "../../Note";
+export function getResponseFormRequestURL(links:(LinksItem&{requestURL:string})[], requestURL:string){
   if(links === undefined){
     return null;
   }
