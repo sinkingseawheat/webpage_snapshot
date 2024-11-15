@@ -24,3 +24,6 @@ export type IndexOfURL = string & {
 export const isIndexOfURL = (arg: string): arg is IndexOfURL => {
   return /^\d+$/.test(arg);
 };
+/** 処理開始時に作成され、処理完了時に削除されるファイル */
+
+export const DOT_FILE_WHILE_PROCESSING = '.running' as const;

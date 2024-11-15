@@ -4,14 +4,10 @@ import Link from 'next/link';
 import { type IndexOfURL, isIndexOfURL } from '@/utility/Types';
 
 const TargetURLs:React.FC<{
-  mainResultJSON:any,
+  targetURLs:any,
+  links:any,
   selectedId:string,
-}> = ({mainResultJSON,selectedId})=>{
-  const targetURLs = mainResultJSON?.targetURLs;
-  const links = mainResultJSON?.links;
-  if(targetURLs === undefined || links === undefined){
-    return undefined;
-  }
+}> = ({targetURLs, links, selectedId})=>{
   const dataArray:{
     index: IndexOfURL,
     requestURL: string,

@@ -6,7 +6,7 @@ import { ValidURL, ScenarioFormFields } from "./FormData";
 import type { BrowserContextPickedFormFields } from "./FormData";
 import { PageResult, type PageResultRecord } from './PageResult';
 import { FileArchive } from './FileArchive';
-import { type IndexOfURL, isIndexOfURL, type Entries } from '@/utility/Types';
+import { type IndexOfURL, isIndexOfURL, type Entries, DOT_FILE_WHILE_PROCESSING } from '@/utility/Types';
 import { VERSION } from '@/utility/getVersion';
 import PQueue from 'p-queue';
 
@@ -67,9 +67,6 @@ export type MainResultRecord = {
 
 export type WrittenURLs = Required<PageResultRecord>['URLExtracted'];
 
-/** 処理開始時に作成され、処理完了時に削除されるファイル */
-const DOT_FILE_NAME = '.running' as const;
-
 const directoryStoringResult = path.join(process.cwd(),`./_data/result`);
 
 class Note{
@@ -118,7 +115,7 @@ class Note{
       promises.push(fs.mkdir(this.getPageResultPath(indexOfURL,''), {recursive:true}));
     }
     await Promise.all(promises)
-    await fs.writeFile(path.join(this.occupiedDirectoryPath, DOT_FILE_NAME),'');
+    await fs.writeFile(path.join(this.occupiedDirectoryPath, DOT_FILE_WHILE_PROCESSING),'');
 
     // ファイルのアーカイブ
     this.fileArchive = new FileArchive(this.occupiedDirectoryPath, this.mainResult.links);
@@ -143,7 +140,7 @@ class Note{
     notRequestedQueue.on('idle',async ()=>{
       await this.write();
       console.log(`処理結果を保存しました`);
-      await fs.unlink(path.join(this.occupiedDirectoryPath, DOT_FILE_NAME));
+      await fs.unlink(path.join(this.occupiedDirectoryPath, DOT_FILE_WHILE_PROCESSING));
       onAllScenarioEnd();
     });
     // 保存前に未リクエストのURLについて、リクエストして必要ならアーカイブする

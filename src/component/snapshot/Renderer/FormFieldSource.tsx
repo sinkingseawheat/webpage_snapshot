@@ -1,10 +1,5 @@
-import { type IndexOfURL, isIndexOfURL } from '@/utility/Types';
 
-const FormFieldSource:React.FC<{mainResultJSON:any}> = ({mainResultJSON})=>{
-  const formData:{[k:string]:string} = mainResultJSON?.formData;
-  if(formData === undefined){
-    return undefined;
-  }
+const FormFieldSource:React.FC<{formData:{[k:string]:string}}> = ({formData})=>{
   return (
     <table>
       <thead>
