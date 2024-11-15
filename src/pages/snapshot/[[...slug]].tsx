@@ -41,7 +41,10 @@ const SnapShot:React.FC<{}> = ()=>{
         {
         (!contextIds.includes(selectedId)) ?
           /* contextIdsの初回ロードが未完了の場合は何も表示しない */
-          <>{contextIds[0]==='' ? '' : <p>存在しないIDが指定されました：{`${selectedId}`}</p>}</>
+          <>{(contextIds[0]==='' || selectedId === undefined) ?
+              ''
+              : <p>存在しないIDが指定されました：{`${selectedId}`}</p>
+          }</>
           : <Output {...{selectedId, indexOfURL}} />
         }
       </section>

@@ -3,7 +3,9 @@ import { useEffect, useState } from 'react';
 
 import Link from 'next/link';
 
-import style from '@/styles/snapshot/FormInput.module.scss';
+import { getResponseFormRequestURL } from './sub/getResponseFormRequestURL';
+
+import style from '@/styles/snapshot/Output.module.scss';
 
 const ROOT_DIRECTORY = `/api/snapshot/sendFile`;
 
@@ -13,16 +15,14 @@ const MainResultOutput:React.FC<{
   const getPath = (relativePath:string)=>{
     return path.join(ROOT_DIRECTORY, selectedId.split('-').join('/') ,relativePath);
   }
-
   const [mainResultJSON, setMainResultJSON] = useState(null);
-
-
 
   useEffect(()=>{
     (async ()=>{
       try{
         const response = await fetch(getPath('__main.json'));
         const json = await response.json();
+        console.log(json)
         setMainResultJSON(json);
       }catch(e){
         console.error(e);
@@ -31,18 +31,21 @@ const MainResultOutput:React.FC<{
   }, [selectedId]);
 
 
-  return (<>
-    <h2>URL</h2>
+  return (<section>
+    <h4>URL</h4>
     <div className={style.table}>
-        {(new TargetURLs(mainResultJSON,{selectedId})).getTable()}
+      {(new TargetURLs(mainResultJSON,{selectedId})).getPageSource()}
     </div>
-    <h2>FormData</h2>
+    <h4>FormData</h4>
+    <div className={style.table}>
+      {(new FormFieldSource(mainResultJSON)).getPageSource()}
+    </div>
     <div className={style.table}></div>
-    <h2>リンクリスト</h2>
+    <h4>リンクリスト</h4>
     <div className={style.table}>
-      {(new LinkLists(mainResultJSON)).getTable()}
+      {(new LinkLists(mainResultJSON)).getPageSource()}
     </div>
-  </>);
+  </section>);
 }
 
 // Todo: 型定義は後で考える
@@ -60,18 +63,14 @@ class TargetURLs {
       const rowData:any[] = []
       rowData.push(url[0]); // index
       rowData.push(url[1]); // requestURL
-      for(const linkItem of links){
-        if(linkItem.requestURL === url[1]){
-          const {response} = linkItem;
-          rowData.push(response['responseURL'] === url[1] ? '最初のリクエストと一致' : response['responseURL']); // responseURL
-          rowData.push(response['status']); // status
-        }
-      }
+      const response = getResponseFormRequestURL(links, url[1]);
+      rowData.push(response['responseURL'] === url[1] ? '最初のリクエストと一致' : response['responseURL']); // responseURL
+      rowData.push(response['status']); // status
       rowData.push(<Link href={`/snapshot/${option?.selectedId}/${url[0]}`}>ページ詳細へ</Link>);
       this.dataArray.push(rowData);
     });
   }
-  public getTable = ()=>{
+  public getPageSource = ()=>{
     if(!this.isValid){return '';}
     return (<table>
       <thead>
@@ -105,6 +104,44 @@ class TargetURLs {
   }
 }
 
+class FormFieldSource {
+  public isValid:boolean = true;
+  private dataArray:any[][]=[];
+  constructor(mainResultJSON:any){
+    const {formData} = mainResultJSON ?? {};
+    if(formData === undefined){
+      this.isValid = false;
+      return;
+    }
+    for(const [key, value] of Object.entries(formData) ){
+      this.dataArray.push([key, value]);
+    }
+  }
+  public getPageSource(){
+    if(!this.isValid){return '';}
+    return (
+      <table>
+        <thead>
+          <tr>
+            <th>プロパティ</th>
+            <th>値</th>
+          </tr>
+        </thead>
+        <tbody>
+        {this.dataArray.map((rowData)=>{
+        return (<tr key={rowData[0]}>
+          {rowData.map((cellData,index)=>{
+            return (
+              <td key={index}>{cellData}</td>
+            )
+          })}
+        </tr>);
+      })}
+        </tbody>
+      </table>
+      );
+  }
+}
 
 // Todo: 型定義は後で考える
 class LinkLists {
@@ -128,7 +165,6 @@ class LinkLists {
       rowData.push(link['requestURL']); //requestURL
       const responseURL = link?.['response']?.['responseURL'] ?? '無し';
       rowData.push(responseURL===link['requestURL'] ? 'リクエストURLと一致' : responseURL); //responseURL
-      // const indexOfRequestURL = listOfRequestURL.get(link['requestURL']);
       const linkSourceIndex:string[] = link['linkSourceIndex'];
       for(const IndexOfURL of this.tHeadData){
         rowData.push(linkSourceIndex.includes(IndexOfURL) ? '●' : '×');
@@ -136,7 +172,7 @@ class LinkLists {
       this.dataArray.push(rowData);
     });
   }
-  public getTable = ()=>{
+  public getPageSource = ()=>{
     if(!this.isValid){return '';}
     return (
       <table>

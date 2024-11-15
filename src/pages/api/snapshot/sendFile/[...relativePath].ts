@@ -17,6 +17,7 @@ export default async function handler(
 ){
   if(req.method==='GET'){
     try{
+      const {contentType: _queryContentType} = req.query;
       const _relativePath = req.query.relativePath;
       if(_relativePath === undefined || typeof _relativePath === 'string'){
         throw new Error(`${req.query.relativePath}は文字列の配列でなければいけません`)
@@ -25,8 +26,12 @@ export default async function handler(
       const absolutePath = path.join(DIRECTORY_STORING_RESULT, relativePath);
       const fileState = await stat(absolutePath);
       if(!fileState.isDirectory()){
-        const buffer = await readFile(absolutePath,{encoding:null});
-        res.status(200).end(buffer);
+        const body = await readFile(absolutePath,{encoding:null});
+        if(typeof _queryContentType === 'string'){
+          const queryContentType = decodeURIComponent(_queryContentType);
+          res.setHeader('Content-Type', queryContentType);
+        }
+        res.status(200).end(body);
         return;
       }
     }catch(e){

@@ -107,3 +107,13 @@ a {
     color-scheme: dark;
   }
 }
+
+img{max-width: 100%;}
+
+table {
+  border-collapse: collapse;
+  th, td{
+    border:1px solid rgb(var(--foreground-rgb));
+    padding: .5em;
+  }
+}
