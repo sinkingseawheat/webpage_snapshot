@@ -68,20 +68,26 @@ const MainResultOutput:React.FC<{
     </p></>);
   }
 
-  return (<section>
-    <h4>URL</h4>
+  return (<>
+  <section>
+    <h4 className={style.headingLv4}>URL</h4>
     <div className={style.table}>
       <TargetURLs {...{targetURLs, links, selectedId}} />
     </div>
-    <h4>FormData</h4>
+    </section>
+    <section>
+    <h4 className={style.headingLv4}>FormData</h4>
     <div className={style.table}>
       <FormFieldSource {...{formData}} />
     </div>
-    <h4>リンクリスト</h4>
+    </section>
+    <section>
+    <h4 className={style.headingLv4}>リンクリスト</h4>
     <div className={style.table}>
       <LinkLists  {...{targetURLs, links}} />
     </div>
-  </section>);
+  </section>
+  </>);
 }
 
 

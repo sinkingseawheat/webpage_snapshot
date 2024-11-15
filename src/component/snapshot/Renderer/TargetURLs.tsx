@@ -47,7 +47,7 @@ const TargetURLs:React.FC<{
         <td className={style['table__data--url']}>{requestURL}</td>
         <td className={style['table__data--url']}>{responseURL}</td>
         <td>{status}</td>
-        <td><Link href={linkHref}>ページ詳細へ</Link></td>
+        <td><Link className={style.textLink} href={linkHref}>ページ詳細へ</Link></td>
       </tr>);
     })}
   </tbody>

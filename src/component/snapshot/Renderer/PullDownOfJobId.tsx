@@ -1,3 +1,4 @@
+import style from '@/styles/snapshot/Output.module.scss';
 import { Dispatch, SetStateAction } from "react";
 import { useRouter } from "next/router";
 
@@ -11,7 +12,8 @@ const PullDownOfJobId:React.FC<{jobIds:string[], setJobIds:Dispatch<SetStateActi
 
   const router = useRouter();
   return (
-    <>
+    <section>
+      <h4 className={style.headingLv3}>選択されたjobId</h4>
       <select
         value={selectedId}
         onChange={(e)=>{
@@ -34,7 +36,7 @@ const PullDownOfJobId:React.FC<{jobIds:string[], setJobIds:Dispatch<SetStateActi
           return (<option key={jobId} value={jobId}>{jobId}</option>);
         })}
       </select>
-    </>
+    </section>
   )
 }
 

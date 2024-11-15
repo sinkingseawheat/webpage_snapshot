@@ -61,7 +61,7 @@ const PageResultOutput:React.FC<{
     <section>
       <h4><span>{pageIndex}</span>　<span>{pageName}</span></h4>
       <section>
-        <h5>リダイレクト</h5>
+        <h5 className={style.headingLv3}>リダイレクト</h5>
         <div className={style.table}>
           {(new RedirectStatus(resultJSON)).getPageSource()}
         </div>

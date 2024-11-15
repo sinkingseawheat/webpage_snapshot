@@ -1,6 +1,7 @@
 import dynamic from "next/dynamic";
 import Output from "@/component/snapshot/Renderer/Output";
 import PullDownOfJobId from "@/component/snapshot/Renderer/PullDownOfJobId";
+import style from '@/styles/snapshot/FormInput.module.scss'
 
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
@@ -30,13 +31,13 @@ const SnapShot:React.FC<{}> = ()=>{
 
   return (
     <section>
-      <h2 className="p_header -lv2">ウェブページの一括取得ツール</h2>
+      <h2 className={style.headingLv1}>ウェブページの一括取得ツール</h2>
       <section>
-        <h3 className="p_header -lv3">入力欄</h3>
+        <h3 className={style.headingLv2}>入力欄</h3>
         <InputForm />
       </section>
       <section>
-        <h3 className="p_header -lv3">出力欄</h3>
+        <h3 className={style.headingLv2}>出力欄</h3>
       <div>
         <PullDownOfJobId {...{jobIds, setJobIds, selectedId}} />
       </div>

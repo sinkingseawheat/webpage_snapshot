@@ -1,4 +1,4 @@
-
+@use "./common.module";
 .table {
   margin-top: 1rem;
   overflow: auto;
@@ -53,4 +53,12 @@
 .imageItem__Block02{}
 .imageItem__table{
   width: 100%;
+  table-layout: fixed;
+  word-break: break-all;
+  th{
+    width: 15em;
+  }
+}
+.textLink{
+  text-decoration: underline;
 }
