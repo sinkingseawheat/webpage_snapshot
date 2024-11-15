@@ -105,8 +105,8 @@ class RedirectStatus{
       return;
     }
     this.dataArray.push({
-      requestURL:response.responseURL,
-      status:response.status,
+      requestURL:response?.responseURL || '',
+      status:response?.status || 0,
     });
     if(!Array.isArray(redirect?.transition)){
       this.isValid = false;
@@ -186,7 +186,7 @@ class ImageDescription{
           contentType: response?.['contentType'],
           contentLength: response?.['contentLength'],
         }
-      });
+      } as any);
     }
     for(const [requestURL, value] of dataMap){
       this.dataArray.push({

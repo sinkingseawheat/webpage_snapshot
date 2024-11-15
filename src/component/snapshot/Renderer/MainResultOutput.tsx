@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 
 import { TargetURLs } from './TargetURLs';
 import { FormFieldSource } from './FormFieldSource';
+import { LinkLists } from './LinkLists';
+import { type IndexOfURL, isIndexOfURL } from '@/utility/Types';
 
 import style from '@/styles/snapshot/Output.module.scss';
 
@@ -11,7 +13,7 @@ import { DOT_FILE_WHILE_PROCESSING } from '@/utility/Types';
 type MainResultJSON = {
   formData:{[k:string]:any},
   version:string,
-  targetURLs:any[],
+  targetURLs:[IndexOfURL, string][],
   links:any[],
 }
 
@@ -69,7 +71,7 @@ const MainResultOutput:React.FC<{
   return (<section>
     <h4>URL</h4>
     <div className={style.table}>
-      <TargetURLs {...{targetURLs, links,selectedId}} />
+      <TargetURLs {...{targetURLs, links, selectedId}} />
     </div>
     <h4>FormData</h4>
     <div className={style.table}>
@@ -77,70 +79,10 @@ const MainResultOutput:React.FC<{
     </div>
     <h4>リンクリスト</h4>
     <div className={style.table}>
-      {(new LinkLists(mainResultJSON)).getPageSource()}
+      <LinkLists  {...{targetURLs, links}} />
     </div>
   </section>);
 }
 
-class LinkLists {
-  public isValid:boolean = true;
-  private dataArray:any[][]=[];
-  private tHeadData:string[]=[];
-  constructor(mainResultJSON:any){
-    const listOfRequestURL:Map<string,string> = new Map();
-    const targetURLs:[string,string] = mainResultJSON?.targetURLs;
-    const links:any[] = mainResultJSON?.links;
-    if(targetURLs === undefined || links === undefined){
-      this.isValid = false;
-      return;
-    }
-    targetURLs.forEach((targetURL)=>{
-      listOfRequestURL.set(targetURL[1], targetURL[0]);
-      this.tHeadData.push(targetURL[0]);
-    });
-    links.forEach((link:any)=>{
-      const rowData:any[] = []
-      rowData.push(link['requestURL']); //requestURL
-      const responseURL = link?.['response']?.['responseURL'] ?? '無し';
-      rowData.push(responseURL===link['requestURL'] ? 'リクエストURLと一致' : responseURL); //responseURL
-      const linkSourceIndex:string[] = link['linkSourceIndex'];
-      for(const IndexOfURL of this.tHeadData){
-        rowData.push(linkSourceIndex.includes(IndexOfURL) ? '●' : '×');
-      }
-      this.dataArray.push(rowData);
-    });
-  }
-  public getPageSource = ()=>{
-    if(!this.isValid){return '';}
-    return (
-      <table>
-        <thead>
-          <tr>
-            <th>最初にリクエストしたURL</th>
-            <th>最後に受け取ったURL</th>
-            {this.tHeadData.map((data) => (<th key={data} className={style['table__data--indexOfURL']}>{data}</th>))}
-          </tr>
-        </thead>
-        <tbody>
-          {this.dataArray.map((rowData:any[])=>{
-            return (<tr key={rowData[0]}>
-              {rowData.map((cellData,index)=>{
-                return (
-                  <td key={index} className={style[this.getCellClassName(index)]}>{cellData}</td>
-                )
-              })}
-            </tr>);
-          })}
-        </tbody>
-    </table>);
-  }
-  private getCellClassName(index:number){
-    if(index===0 || index===1){
-      return 'table__data--url'
-    }else{
-      return 'table__data--indexOfURL';
-    }
-  }
-}
 
 export default MainResultOutput;
