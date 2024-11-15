@@ -13,8 +13,8 @@ const PullDownOfJobId:React.FC<{jobIds:string[], setJobIds:Dispatch<SetStateActi
   const router = useRouter();
   return (
     <section>
-      <h4 className={style.headingLv3}>選択されたjobId</h4>
-      <select
+      <h4 className={`${style.headingLv3} ${style['u-mt']}`}>選択されたjobId</h4>
+      <select className={style.jobIdSelect}
         value={selectedId}
         onChange={(e)=>{
           const jobId = e.target.value;
