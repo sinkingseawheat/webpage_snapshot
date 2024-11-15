@@ -1,6 +1,6 @@
 import dynamic from "next/dynamic";
 import Output from "@/component/snapshot/Renderer/Output";
-import PullDownOfContextId from "@/component/snapshot/Renderer/PullDownOfContextId";
+import PullDownOfJobId from "@/component/snapshot/Renderer/PullDownOfJobId";
 
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
@@ -9,7 +9,7 @@ const InputForm = dynamic(import("@/component/snapshot/Renderer/InputForm"), {ss
 
 const SnapShot:React.FC<{}> = ()=>{
 
-  const [contextIds, setContextIds] = useState(['']);
+  const [jobIds, setJobIds] = useState(['']);
 
   const router = useRouter();
 
@@ -36,12 +36,12 @@ const SnapShot:React.FC<{}> = ()=>{
       <section>
         <h3 className="p_header -lv3">出力欄</h3>
       <div>
-        <PullDownOfContextId {...{contextIds, setContextIds}} />
+        <PullDownOfJobId {...{jobIds, setJobIds}} />
       </div>
         {
-        (!contextIds.includes(selectedId)) ?
-          /* contextIdsの初回ロードが未完了の場合は何も表示しない */
-          <>{(contextIds[0]==='' || selectedId === undefined) ?
+        (!jobIds.includes(selectedId)) ?
+          /* jobIdsの初回ロードが未完了の場合は何も表示しない */
+          <>{(jobIds[0]==='' || selectedId === undefined) ?
               ''
               : <p>存在しないIDが指定されました：{`${selectedId}`}</p>
           }</>

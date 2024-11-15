@@ -30,7 +30,7 @@ class Context {
   constructor(
     formData:ScenarioFormFields & BrowserContextPickedFormFields,
     apiType:string,
-    private contextId:string,
+    private jobId:string,
   ){
     const {urlsToOpen ,...optionsToNote} = formData;
     this.browser = null;
@@ -41,7 +41,7 @@ class Context {
       this.soption.urlsToOpen,
       {
         apiType: apiType,
-        contextId: contextId,
+        jobId: jobId,
       },
     );
     this.scenarioQueue = new PQueue({concurrency:3,throwOnTimeout:true});
@@ -130,7 +130,7 @@ class Context {
   onAllScenarioEnd(context:BrowserContext):void{
     if(context !== null){
       context.close().finally(()=>{
-        console.log(`-- ${this.contextId}の処理を完了しました --`);
+        console.log(`-- ${this.jobId}の処理を完了しました --`);
         // broser.contextが0の状態で起動したまま、Context["request"]を繰り返すとChromeのスレッドが増殖していくのでちゃんと閉じる
         if(this.browser !== null && this.browser.contexts().length === 0){
           this.browser.close().finally(()=>{

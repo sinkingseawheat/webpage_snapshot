@@ -7,8 +7,8 @@ export default async function handler(
   req:NextApiRequest,
   res:NextApiResponse<
   {
-    type: 'contextId'
-    contextIds: string[],
+    type: 'jobId'
+    jobIds: string[],
   } | {
     error: string
   }
@@ -17,11 +17,11 @@ export default async function handler(
   if(req.method==='GET'){
     const {type} = req.query;
     switch(type){
-      case 'contextIds':
-        const contextIds = await getContextIds();
+      case 'jobIds':
+        const jobIds = await getJobIds();
         res.status(200).json({
-          type:'contextId',
-          contextIds,
+          type:'jobId',
+          jobIds,
         });
         break;
       default:
@@ -37,7 +37,7 @@ export default async function handler(
 
 const DIRECTORY_STORING_RESULT = path.join(process.cwd(), './_data/result/snapshot');
 
-async function getContextIds(){
+async function getJobIds(){
   const rv:string[] = [];
   try{
     for (const dirent of await readdir(DIRECTORY_STORING_RESULT, {withFileTypes:true})){

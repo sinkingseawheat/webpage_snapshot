@@ -86,7 +86,7 @@ class Note{
     urlsToOpen: ValidURL[],
     identifier:{
       apiType:string,
-      contextId:string,
+      jobId:string,
     }
   ){
     const _targetURLs:typeof this.mainResult["targetURLs"] = new Map();
@@ -106,7 +106,7 @@ class Note{
       targetURLs: _targetURLs,
       links: _links,
     }
-    const [ymd, hash] = identifier.contextId.split('-');
+    const [ymd, hash] = identifier.jobId.split('-');
     this.occupiedDirectoryPath = path.join(directoryStoringResult,`${identifier.apiType}/${ymd}/${hash}`);
   }
 

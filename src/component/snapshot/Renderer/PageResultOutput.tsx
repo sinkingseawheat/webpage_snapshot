@@ -203,8 +203,8 @@ class ImageDescription{
   public getPageSource = ()=>{
     if(!this.isValid){return '';}
     return (
-      <>
-      {this.dataArray.map((item)=>{
+      <div>
+      {this.dataArray.map((item, index)=>{
         const {tagName, requestURL, responseURL, hash, contentType, contentLength} = item;
         if(!/^image\//.test(contentType)){return (<></>);}
         const archiveItem = (()=>{
@@ -221,7 +221,7 @@ class ImageDescription{
         const archiveIndex = archiveItem['index'];
         const query = `contentType=${encodeURIComponent(archiveItem['contentType'])}`;
         return (
-            <div key={requestURL} className={style.imageItem}>
+            <div key={requestURL + index} className={style.imageItem}>
               <div className={style.imageItem__Block01}>
                 <div className={style.imageItem__tagName}>{tagName}</div>
                 <div className={style.imageItem__preview}><img src={this.getPath(`archive/${archiveIndex}?${query}`)} alt="" /></div>
@@ -244,7 +244,7 @@ class ImageDescription{
             </div>
         );
       })}
-      </>
+      </div>
     );
   }
 }

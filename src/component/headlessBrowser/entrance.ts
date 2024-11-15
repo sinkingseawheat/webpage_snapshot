@@ -29,14 +29,14 @@ class Entrance {
   }
   async request(formData: FormData, apiType: string): Promise<ResponseData>{
     // Contextにデータを送信
-    const contextId = this.randomString.getUniqueRandomString();
-    const context = new Context(formData, apiType, contextId);
+    const jobId = this.randomString.getUniqueRandomString();
+    const context = new Context(formData, apiType, jobId);
     const resultInitiation = await context.init();
-    this.contextsPending.set(contextId, context);
+    this.contextsPending.set(jobId, context);
     this.check();
     return {
       status: 'OK',
-      id: contextId,
+      id: jobId,
       message: 'キューに挿入完了しました',
       ...resultInitiation,
     };
@@ -55,13 +55,13 @@ class Entrance {
       if(value === undefined){
         break;
       }
-      const [contextId, context] = value;
-      console.log(`-- ${contextId}の処理を開始しました --`);
+      const [jobId, context] = value;
+      console.log(`-- ${jobId}の処理を開始しました --`);
       const result = context.start();
-      this.contextsPending.delete(contextId);
+      this.contextsPending.delete(jobId);
       if(result.isStarted === false){
         console.log(result.message);
-        console.log(`${contextId}のリクエストはキャンセルされました`);
+        console.log(`${jobId}のリクエストはキャンセルされました`);
         break;
       }
       this.numberOfNowRunningContext++;

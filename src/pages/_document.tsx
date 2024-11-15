@@ -19,8 +19,8 @@ export default function Document() {
             <aside>
               <nav className="c_homePrimaryNav" aria-label="ツール一覧">
                 <ul className="c_homePrimaryNav__list">
-                  <li className="c_homePrimaryNav__item"><Link href="/">ダッシュボード</Link></li>
-                  <li className="c_homePrimaryNav__item"><Link href="/snapshot">ページを丸ごとダウンロード</Link></li>
+                  <li className="c_homePrimaryNav__item"><Link href="/">TOP（作成中）</Link></li>
+                  <li className="c_homePrimaryNav__item"><Link href="/snapshot">ページの現状を記録</Link></li>
                 </ul>
               </nav>
             </aside>
