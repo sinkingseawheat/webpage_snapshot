@@ -3,17 +3,17 @@ import { useRouter } from "next/router";
 
 import { useEffect } from "react";
 
-const PullDownOfJobId:React.FC<{jobIds:string[], setJobIds:Dispatch<SetStateAction<string[]>>}> = ({jobIds, setJobIds})=>{
+const PullDownOfJobId:React.FC<{jobIds:string[], setJobIds:Dispatch<SetStateAction<string[]>>, selectedId:string}> = ({jobIds, setJobIds, selectedId})=>{
 
   useEffect(()=>{
     handlePulldownClick(setJobIds)
   }, []);
 
   const router = useRouter();
-
   return (
     <>
       <select
+        value={selectedId}
         onChange={(e)=>{
           const jobId = e.target.value;
           if(jobId !== ''){

@@ -16,7 +16,6 @@ const SnapShot:React.FC<{}> = ()=>{
   const [ymd, randomString ,_indexOfURL] = router.query.slug || [];
 
   const selectedId = (ymd ?? '') + '-' + (randomString ?? '');
-  console.log(selectedId)
 
   const indexOfURL = (()=>{
     if(/^\d{3}$/.test(_indexOfURL)){
@@ -39,7 +38,7 @@ const SnapShot:React.FC<{}> = ()=>{
       <section>
         <h3 className="p_header -lv3">出力欄</h3>
       <div>
-        <PullDownOfJobId {...{jobIds, setJobIds}} />
+        <PullDownOfJobId {...{jobIds, setJobIds, selectedId}} />
       </div>
         {
         (!jobIds.includes(selectedId)) ?
