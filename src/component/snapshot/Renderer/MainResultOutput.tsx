@@ -1,53 +1,20 @@
-import path from 'path';
-import { useEffect, useState } from 'react';
+
 
 import { TargetURLs } from './TargetURLs';
 import { FormFieldSource } from './FormFieldSource';
 import { LinkLists } from './LinkLists';
-import { type IndexOfURL, isIndexOfURL } from '@/utility/Types';
+import {type MainResultJSON} from './Output'
+
+import { setGetPath } from './sub/setGetPath';
 
 import style from '@/styles/snapshot/Output.module.scss';
 
-import { DOT_FILE_WHILE_PROCESSING } from '@/utility/Types';
-
-type MainResultJSON = {
-  formData:{[k:string]:any},
-  version:string,
-  targetURLs:[IndexOfURL, string][],
-  links:any[],
-}
-
-const ROOT_DIRECTORY = `/api/snapshot/sendFile`;
 
 const MainResultOutput:React.FC<{
-  selectedId:string
-}> = ({selectedId})=>{
-  const getPath = (relativePath:string)=>{
-    return path.join(ROOT_DIRECTORY, selectedId.split('-').join('/') ,relativePath);
-  }
-  const [mainResultJSON, setMainResultJSON] = useState<undefined|null|MainResultJSON>();
-
-  let errorMessage = '';
-
-  useEffect(()=>{
-    (async ()=>{
-      try{
-        const response = await fetch(getPath('__main.json'));
-        const json = await response.json();
-        console.log(json)
-        setMainResultJSON(json);
-      }catch(e){
-        console.error(e);
-        const response = await fetch(getPath(DOT_FILE_WHILE_PROCESSING));
-        if(response.status === 200){
-          errorMessage = `${selectedId}はまだ処理中です。`;
-        }else{
-          errorMessage = `${getPath('__main.json')}の読み込みに失敗しました。データが壊れている可能性があります`
-        }
-        setMainResultJSON(null);
-      }
-    })();
-  }, [selectedId]);
+  selectedId:string,
+  mainResultJSON:undefined|null|MainResultJSON,
+  errorMessage:string,
+}> = ({selectedId, mainResultJSON, errorMessage})=>{
 
   if(mainResultJSON === undefined){
     return <>ロード中です</>;
@@ -56,6 +23,8 @@ const MainResultOutput:React.FC<{
   if(mainResultJSON === null){
     return <>{errorMessage}</>
   }
+
+  const getPath = setGetPath(selectedId);
 
   const { formData, version, targetURLs, links } = mainResultJSON;
   if( formData === undefined || version === undefined || targetURLs === undefined || links === undefined ){
