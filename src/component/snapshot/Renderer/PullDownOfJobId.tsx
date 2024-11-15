@@ -17,7 +17,7 @@ const PullDownOfJobId:React.FC<{jobIds:string[], setJobIds:Dispatch<SetStateActi
         onChange={(e)=>{
           const jobId = e.target.value;
           if(jobId !== ''){
-            router.push(`/snapshot/${e.target.value}`);
+            router.push(`/snapshot/${e.target.value.split('-').join('/')}`);
           }
         }}
         onClick={(e)=>{

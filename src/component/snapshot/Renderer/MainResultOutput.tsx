@@ -66,7 +66,7 @@ class TargetURLs {
       const response = getResponseFormRequestURL(links, url[1]);
       rowData.push(response['responseURL'] === url[1] ? '最初のリクエストと一致' : response['responseURL']); // responseURL
       rowData.push(response['status']); // status
-      rowData.push(<Link href={`/snapshot/${option?.selectedId}/${url[0]}`}>ページ詳細へ</Link>);
+      rowData.push(<Link href={`/snapshot/${option?.selectedId?.split('-').join('/')}/${url[0]}`}>ページ詳細へ</Link>);
       this.dataArray.push(rowData);
     });
   }

@@ -13,7 +13,10 @@ const SnapShot:React.FC<{}> = ()=>{
 
   const router = useRouter();
 
-  const [selectedId, _indexOfURL] = router.query.slug || [];
+  const [ymd, randomString ,_indexOfURL] = router.query.slug || [];
+
+  const selectedId = (ymd ?? '') + '-' + (randomString ?? '');
+  console.log(selectedId)
 
   const indexOfURL = (()=>{
     if(/^\d{3}$/.test(_indexOfURL)){
@@ -41,9 +44,9 @@ const SnapShot:React.FC<{}> = ()=>{
         {
         (!jobIds.includes(selectedId)) ?
           /* jobIdsの初回ロードが未完了の場合は何も表示しない */
-          <>{(jobIds[0]==='' || selectedId === undefined) ?
+          <>{(jobIds[0]==='' || selectedId === '-') ?
               ''
-              : <p>存在しないIDが指定されました：{`${selectedId}`}</p>
+              : <p>存在しないIDが指定されました：{`${ymd}-${randomString}`}</p>
           }</>
           : <Output {...{selectedId, indexOfURL}} />
         }
