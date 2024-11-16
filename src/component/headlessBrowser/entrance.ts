@@ -35,7 +35,6 @@ class Entrance {
     this.contextsPending.set(jobId, context);
     this.check();
     return {
-      status: 'OK',
       id: jobId,
       message: 'キューに挿入完了しました',
       ...resultInitiation,
