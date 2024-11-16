@@ -17,7 +17,7 @@ const Output:React.FC<{
 
   useEffect(()=>{
     (async ()=>{
-      const {jsonData, errorMessage: errorMessageOfMainResult} = await getJSONData({selectedId, relativeJSONPath:'__main.json'});
+      const {jsonData, errorMessage: errorMessageOfMainResult} = await getJSONData({selectedId, relativeJSONPath:'main.json'});
       setMainResultJSON(jsonData)
       setErrorMessageOfMainResult(errorMessageOfMainResult)
     })()

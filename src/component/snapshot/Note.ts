@@ -156,7 +156,7 @@ class Note{
 
   async write(){
     // 全体の結果
-    const fileHandleMain = await fs.open(this.occupiedDirectoryPath+'/__main.json','ax');
+    const fileHandleMain = await fs.open(this.occupiedDirectoryPath+'/main.json','ax');
     const recordMain:Partial<{[k in keyof MainResultRecord]:any}> = {}
     for (const [name, value] of Object.entries(this.mainResult) as Entries<typeof this.mainResult>){
       switch(name){

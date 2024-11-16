@@ -29,7 +29,7 @@ const MainResultOutput:React.FC<{
   const { formData, version, targetURLs, links } = mainResultJSON;
   if( formData === undefined || version === undefined || targetURLs === undefined || links === undefined ){
     return (<><p>
-      {getPath('__main.json')}のデータフォーマットが壊れているか、ファイルが存在しません。<br/>
+      {getPath('main.json')}のデータフォーマットが壊れているか、ファイルが存在しません。<br/>
       formData: {formData === undefined ? '未定義です' : '問題ありません'}<br/>
       version: {version === undefined ? '未定義です' : '問題ありません'}<br/>
       targetURLs: {targetURLs === undefined ? '未定義です' : '問題ありません'}<br/>

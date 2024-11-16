@@ -14,7 +14,7 @@ const RedirectStatus:React.FC<{
     status:number,
   }[] = []
   if(response === null){
-    return (<>__main.jsonに含まれていないURL{`${url}`}が指定されたため、処理を続行できません</>);
+    return (<>main.jsonに含まれていないURL{`${url}`}が指定されたため、処理を続行できません</>);
   }
   dataArray.push({
     requestURL:response?.responseURL || '',
