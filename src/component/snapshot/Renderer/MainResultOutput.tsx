@@ -5,7 +5,7 @@ import { FormFieldSource } from './FormFieldSource';
 import { LinkLists } from './LinkLists';
 import {type MainResultJSON} from './Output'
 
-import { setGetPath } from './sub/setGetPath';
+import { setGetPathToSendFile } from './sub/setGetPathToSendFile';
 
 import style from '@/styles/snapshot/Output.module.scss';
 
@@ -13,18 +13,18 @@ import style from '@/styles/snapshot/Output.module.scss';
 const MainResultOutput:React.FC<{
   selectedId:string,
   mainResultJSON:undefined|null|MainResultJSON,
-  errorMessage:string,
-}> = ({selectedId, mainResultJSON, errorMessage})=>{
+  errorMessageOfMainResult:string,
+}> = ({selectedId, mainResultJSON, errorMessageOfMainResult})=>{
 
   if(mainResultJSON === undefined){
     return <>ロード中です</>;
   }
 
   if(mainResultJSON === null){
-    return <>{errorMessage}</>
+    return <>{errorMessageOfMainResult}</>
   }
 
-  const getPath = setGetPath(selectedId);
+  const getPath = setGetPathToSendFile(selectedId);
 
   const { formData, version, targetURLs, links } = mainResultJSON;
   if( formData === undefined || version === undefined || targetURLs === undefined || links === undefined ){

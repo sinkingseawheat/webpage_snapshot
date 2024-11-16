@@ -20,13 +20,13 @@ const Output:React.FC<{
 }> = ({selectedId, indexOfURL})=>{
 
   const [mainResultJSON, setMainResultJSON] = useState<undefined | null | MainResultJSON>(undefined);
-  const [errorMessage, setErrorMessage] = useState<string>('');
+  const [errorMessageOfMainResult, setErrorMessageOfMainResult] = useState<string>('');
 
   useEffect(()=>{
     (async ()=>{
-      const {jsonData, errorMessage} = await getJSONData({selectedId, relativeJSONPath:'__main.json'});
+      const {jsonData, errorMessage: errorMessageOfMainResult} = await getJSONData({selectedId, relativeJSONPath:'__main.json'});
       setMainResultJSON(jsonData)
-      setErrorMessage(errorMessage)
+      setErrorMessageOfMainResult(errorMessageOfMainResult)
     })()
   }, [selectedId]);
 
@@ -34,10 +34,10 @@ const Output:React.FC<{
     <>
       {
         /^\d{3}$/.test(indexOfURL) ?
-        <PageResultOutput {...{selectedId, indexOfURL, mainResultJSON}}/>
+        <PageResultOutput {...{selectedId, indexOfURL, mainResultJSON, errorMessageOfMainResult}}/>
         :
         <MainResultOutput
-        {...{selectedId, indexOfURL, mainResultJSON, errorMessage}}
+        {...{selectedId, indexOfURL, mainResultJSON, errorMessageOfMainResult}}
         />
       }
     </>

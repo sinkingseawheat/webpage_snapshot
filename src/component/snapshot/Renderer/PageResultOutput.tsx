@@ -4,58 +4,34 @@ import path from "path";
 import { getResponseFormRequestURL } from "./sub/getResponseFormRequestURL";
 import style from '@/styles/snapshot/Output.module.scss'
 
-const ROOT_DIRECTORY = `/api/snapshot/sendFile`;
-
+import { getJSONData } from './sub/getJSONData';
+import { setGetPathToSendFile } from "./sub/setGetPathToSendFile";
 
 const PageResultOutput:React.FC<{
-  selectedId:string,
-  indexOfURL:string,
-}> = ({selectedId, indexOfURL})=>{
-  const getPath = (()=>{
-    const rootPath = path.join(ROOT_DIRECTORY, selectedId.split('-').join('/'));
-    return (relativePath:string) => path.join(rootPath, relativePath);
-  })();
-  const [resultJSON, setResultJSON] = useState<{mainResult:any,pageResult:any,archiveList:any}>({
-    mainResult:null,
-    pageResult:null,
-    archiveList:null,
-  });
+  selectedId: string,
+  indexOfURL: string,
+  mainResultJSON: any,
+  errorMessageOfMainResult: string,
+}> = ({selectedId, indexOfURL, mainResultJSON, errorMessageOfMainResult})=>{
 
-  console.log(resultJSON);
+  const getPath = setGetPathToSendFile(selectedId);
 
   useEffect(()=>{
     (async ()=>{
-      try{
-        const [
-          responseMainResult,
-          responsePageResult,
-          responseArchiveList,
-        ] = await Promise.all([
-          fetch(getPath('__main.json')),
-          fetch(getPath(`${indexOfURL}/page.json`)),
-          fetch(getPath(`archive/__list.json`)),
-        ]);
-        const [
-          mainResult,
-          pageResult,
-          archiveList
-        ] = await Promise.all([
-          responseMainResult.json(),
-          responsePageResult.json(),
-          responseArchiveList.json(),
-        ]);
-        setResultJSON({
-          mainResult,
-          pageResult,
-          archiveList,
-        })
-      }catch(e){
-        console.error(e);
-      }
+      const [
+        pageData,
+        archiveData,
+      ] = await Promise.all([
+        getJSONData({selectedId, relativeJSONPath:`${indexOfURL}/page.json`}),
+        getJSONData({selectedId, relativeJSONPath:`archive/__list.json`}),
+      ]);
+      const {jsonData:pageResultJSON, errorMessage} = await getJSONData({selectedId, relativeJSONPath:`${indexOfURL}/page.json`});
+      setMainResultJSON(jsonData)
+      setErrorMessage(errorMessage)
     })();
   }, [selectedId, indexOfURL]);
 
-  const [pageIndex, pageName] = resultJSON?.mainResult?.targetURLs?.find((targetURL:[string,string])=>{return targetURL[0]===indexOfURL}) || [];
+  const [pageIndex, pageName] = mainResult?.targetURLs?.find((targetURL:[string,string])=>{return targetURL[0]===indexOfURL}) || [];
 
   return (<>
     <p className={`${style.headingLv4} ${style['u-mt']}`}>「<span>{pageIndex}</span>　<strong>{pageName}</strong>」の結果です。</p>

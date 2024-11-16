@@ -1,4 +1,4 @@
-import { setGetPath } from './setGetPath';
+import { setGetPathToSendFile } from './setGetPathToSendFile';
 import { DOT_FILE_WHILE_PROCESSING } from '@/utility/Types';
 
 /* Todo: JSONデータの型をナローイング */
@@ -10,7 +10,7 @@ export const getJSONData = async (args:{
   errorMessage:string
 }> => {
   const { selectedId, relativeJSONPath } = args;
-  const getPath = setGetPath(selectedId);
+  const getPath = setGetPathToSendFile(selectedId);
   let jsonData = null;
   let errorMessage = '';
   try{
