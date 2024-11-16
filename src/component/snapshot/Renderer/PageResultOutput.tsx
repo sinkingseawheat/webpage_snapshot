@@ -21,28 +21,20 @@ const PageResultOutput:React.FC<{
   const [pageResultJSON, setPageResultJSON] = useState<undefined|null|PageResultJSON>(undefined);
   const [errorMessageOfPageResult, setErrorMessageOfPageResult] = useState<string>('');
 
-  const [archiveListJSON, setArchiveListJSON] = useState<undefined|null|{[k:string]:{index:number,contentType:string}}>(undefined);
-  const [errorMessagearchiveList, setErrorMessagearchiveList] = useState<string>('');
-
   useEffect(()=>{
     (async ()=>{
       const [
         pageData,
-        archiveData,
       ] = await Promise.all([
         getJSONData({selectedId, relativeJSONPath:`${indexOfURL}/page.json`}),
-        getJSONData({selectedId, relativeJSONPath:`archive/__list.json`}),
       ]);
       const {jsonData:pageResultJSON, errorMessage:errorMessageOfPageResult} = pageData;
-      const {jsonData:archiveListJSON, errorMessage:errorMessageOfArchiveList} = archiveData;
       setPageResultJSON(pageResultJSON);
       setErrorMessageOfPageResult(errorMessageOfPageResult);
-      setArchiveListJSON(archiveListJSON);
-      setErrorMessagearchiveList(errorMessageOfArchiveList);
     })();
   }, [selectedId, indexOfURL]);
 
-  if(mainResultJSON === undefined || pageResultJSON === undefined || archiveListJSON === undefined){
+  if(mainResultJSON === undefined || pageResultJSON === undefined){
     return <>ロード中です</>;
   }
 
@@ -88,7 +80,7 @@ const PageResultOutput:React.FC<{
         links: mainResultJSON['links'],
         urlExtracted: pageResultJSON['URLExtracted'],
         urlRequestedFromPage: pageResultJSON['URLRequestedFromPage'],
-        archiveListJSON
+        listOfArchives: mainResultJSON['listOfArchives'],
        }}/>
       </div>
     </section>

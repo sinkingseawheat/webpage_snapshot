@@ -17,6 +17,11 @@ export type MainResultJSON = {
     source:'requestedFromPage'|'extracted',
     linkSourceIndex:IndexOfURL[],
   }[];
+  listOfArchives:{
+    requestURL:string,
+    index:number,
+    contentType:string,
+  }[]
 };
 
 export type PageResultJSON = {

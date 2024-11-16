@@ -63,6 +63,8 @@ export type MainResultRecord = {
   targetURLs:Map<ValidURL, IndexOfURL>,
   /** 各ページで読み込んだ、または設定されたリンクとそのレスポンス結果を格納する。keyは最初にリクエストしたURL。updateLinksで更新する */
   links:Map<string, LinksItem>,
+  /** アーカイブしたファイルのrequestURLとそれに紐づくindex。ファイルは名前をindexにリネームして格納している。 */
+  listOfArchives:Map<string, {index:number, contentType:string}>,
 };
 
 export type WrittenURLs = Required<PageResultRecord>['URLExtracted'];
@@ -102,6 +104,7 @@ class Note{
       version: VERSION ?? null,
       targetURLs: _targetURLs,
       links: _links,
+      listOfArchives: new Map()
     }
     const [ymd, hash] = identifier.jobId.split('-');
     this.occupiedDirectoryPath = path.join(directoryStoringResult,`${identifier.apiType}/${ymd}/${hash}`);
@@ -117,7 +120,7 @@ class Note{
     await Promise.all(promises)
 
     // ファイルのアーカイブ
-    this.fileArchive = new FileArchive(this.occupiedDirectoryPath, this.mainResult.links);
+    this.fileArchive = new FileArchive(this.occupiedDirectoryPath, this.mainResult.links, this.mainResult.listOfArchives);
     await this.fileArchive.init();
   }
 
@@ -152,8 +155,6 @@ class Note{
   }
 
   async write(){
-    // アーカイブしたファイルのリストを書き込む
-    await this.fileArchive.finish();
     // 全体の結果
     const fileHandleMain = await fs.open(this.occupiedDirectoryPath+'/__main.json','ax');
     const recordMain:Partial<{[k in keyof MainResultRecord]:any}> = {}
@@ -177,6 +178,16 @@ class Note{
               linkSourceIndex:Array.from(response['linkSourceIndex']),
             })
           }
+          break;
+          case 'listOfArchives':
+            recordMain[name] = [];
+            for( const [requestURL, obj] of this.mainResult['listOfArchives'] ){
+              recordMain[name].push({
+                requestURL,
+                index:obj['index'],
+                contentType:obj['contentType'],
+              })
+            }
           break;
         default:
           recordMain[name] = value;

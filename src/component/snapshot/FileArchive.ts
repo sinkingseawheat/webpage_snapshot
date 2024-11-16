@@ -13,11 +13,11 @@ class FileArchiveError extends Error {
 class FileArchive{
   private storeDirectory:string;
   private counter:number = 1;
-  private listOfFile:Map<string, {index:number, contentType:string}> = new Map();
   private state:'created'|'initiated'|'closed' = 'created';
   constructor(
     occupiedDirectoryPath:string,
     private links:Note["mainResult"]["links"],
+    private listOfFile:Map<string, {index:number, contentType:string}> = new Map(),
   ){
     this.storeDirectory = path.join(occupiedDirectoryPath, '/archive');
   }
@@ -57,20 +57,6 @@ class FileArchive{
     await fileHandle.write(buffer);
     await fileHandle.close();
     return null;
-  }
-  async finish():Promise<void>{
-    if(this.state !== 'initiated'){
-      throw new Error(`closeに失敗しました。${this.state}がinitiatedではありません`)
-    }
-    const targetPath = path.join(this.storeDirectory, '__list.json');
-    const fileHandle = await fs.open(targetPath, 'ax');
-    const serializableList:{[k:string]:{index:number,contentType:string}} = {};
-    for( const [requestURL, obj] of this.listOfFile ){
-      serializableList[requestURL] = obj;
-    }
-    await fileHandle.write(JSON.stringify(serializableList, null, '\t'));
-    await fileHandle.close();
-    this.state = 'closed';
   }
 }
 
