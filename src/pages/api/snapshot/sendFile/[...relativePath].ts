@@ -35,8 +35,15 @@ export default async function handler(
         return;
       }
     }catch(e){
-      console.error(e);
-      res.status(404).end({message:`Can't Get File`});
+      if((e as any).code === 'ENOENT'){
+        res.status(404).json({
+          message: `Can't Get File`
+        });
+      }else{
+        res.status(400).json({
+          message: `ServerError`
+        });
+      }
     }
   }else{
     res.setHeader('Allow', ['GET']);

@@ -3,10 +3,9 @@ import { useEffect, useState } from 'react';
 
 import MainResultOutput from "./MainResultOutput";
 import PageResultOutput from "./PageResultOutput";
-import { DOT_FILE_WHILE_PROCESSING } from '@/utility/Types';
 import { type IndexOfURL, isIndexOfURL } from '@/utility/Types';
 
-import { setGetPath } from './sub/setGetPath';
+import { getJSONData } from './sub/getJSONData';
 
 export type MainResultJSON = {
   formData:{[k:string]:any},
@@ -19,29 +18,16 @@ const Output:React.FC<{
   selectedId:string,
   indexOfURL:string,
 }> = ({selectedId, indexOfURL})=>{
-  const getPath = setGetPath(selectedId);
-  const [mainResultJSON, setMainResultJSON] = useState<undefined|null|MainResultJSON>();
 
-  let errorMessage = '';
+  const [mainResultJSON, setMainResultJSON] = useState<undefined | null | MainResultJSON>(undefined);
+  const [errorMessage, setErrorMessage] = useState<string>('');
 
   useEffect(()=>{
     (async ()=>{
-      try{
-        const response = await fetch(getPath('__main.json'));
-        const json = await response.json();
-        console.log(json)
-        setMainResultJSON(json);
-      }catch(e){
-        console.error(e);
-        const response = await fetch(getPath(DOT_FILE_WHILE_PROCESSING));
-        if(response.status === 200){
-          errorMessage = `${selectedId}はまだ処理中です。`;
-        }else{
-          errorMessage = `${getPath('__main.json')}の読み込みに失敗しました。データが壊れている可能性があります`
-        }
-        setMainResultJSON(null);
-      }
-    })();
+      const {jsonData, errorMessage} = await getJSONData({selectedId, relativeJSONPath:'__main.json'});
+      setMainResultJSON(jsonData)
+      setErrorMessage(errorMessage)
+    })()
   }, [selectedId]);
 
   return (
