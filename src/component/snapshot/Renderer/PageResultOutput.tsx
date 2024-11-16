@@ -7,14 +7,50 @@ import style from '@/styles/snapshot/Output.module.scss'
 import { getJSONData } from './sub/getJSONData';
 import { setGetPathToSendFile } from "./sub/setGetPathToSendFile";
 
+import { type MainResultJSON } from "./Output";
+
+export type PageResultJSON = {
+  firstRequested:{
+    url: string,
+    redirect:{
+      count: number,
+      transition:{
+        url: string,
+        status: number,
+      }[]
+    }
+  },
+  URLRequestedFromPage:{
+    requestedURLs:string[]
+  },
+  URLExtracted:({
+    relURL:string[],
+    absURL:(string|null)[]
+  } & ({
+    type:'DOM_Attribute',
+    tagName:string,
+  } | {
+    type:'fromCascadingStyleSheets',
+    href:string|null,
+  } | {
+    type:'styleAttribute',
+  }))
+}
+
 const PageResultOutput:React.FC<{
   selectedId: string,
   indexOfURL: string,
-  mainResultJSON: any,
+  mainResultJSON: undefined | null | MainResultJSON,
   errorMessageOfMainResult: string,
 }> = ({selectedId, indexOfURL, mainResultJSON, errorMessageOfMainResult})=>{
 
   const getPath = setGetPathToSendFile(selectedId);
+
+  const [pageResultJSON, setPageResultJSON] = useState<undefined|null|PageResultJSON>(undefined);
+  const [errorMessageOfPageResult, setErrorMessageOfPageResult] = useState<string>('');
+
+  const [archiveListJSON, setArchiveListJSON] = useState<undefined|null|{[k:string]:{index:number,contentType:string}}>(undefined);
+  const [errorMessagearchiveList, setErrorMessagearchiveList] = useState<string>('');
 
   useEffect(()=>{
     (async ()=>{
@@ -25,13 +61,28 @@ const PageResultOutput:React.FC<{
         getJSONData({selectedId, relativeJSONPath:`${indexOfURL}/page.json`}),
         getJSONData({selectedId, relativeJSONPath:`archive/__list.json`}),
       ]);
-      const {jsonData:pageResultJSON, errorMessage} = await getJSONData({selectedId, relativeJSONPath:`${indexOfURL}/page.json`});
-      setMainResultJSON(jsonData)
-      setErrorMessage(errorMessage)
+      const {jsonData:pageResultJSON, errorMessage:errorMessageOfPageResult} = pageData;
+      const {jsonData:archiveListJSON, errorMessage:errorMessageOfArchiveList} = archiveData;
+      setPageResultJSON(pageResultJSON);
+      setErrorMessageOfPageResult(errorMessageOfPageResult),
+      setArchiveListJSON(archiveListJSON)
+      setErrorMessagearchiveList(errorMessageOfArchiveList),
     })();
   }, [selectedId, indexOfURL]);
 
-  const [pageIndex, pageName] = mainResult?.targetURLs?.find((targetURL:[string,string])=>{return targetURL[0]===indexOfURL}) || [];
+  if(mainResultJSON === undefined || pageResultJSON === undefined || archiveListJSON === undefined){
+    return <>ロード中です</>;
+  }
+
+  if(mainResultJSON === null){
+    return <>{errorMessageOfMainResult}</>
+  }
+
+  if(pageResultJSON === null){
+    return <>{errorMessageOfPageResult}</>
+  }
+
+  const [pageIndex, pageName] = mainResultJSON.targetURLs?.find((targetURL)=>{return targetURL[0]===indexOfURL}) || [];
 
   return (<>
     <p className={`${style.headingLv4} ${style['u-mt']}`}>「<span>{pageIndex}</span>　<strong>{pageName}</strong>」の結果です。</p>
