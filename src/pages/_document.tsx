@@ -8,14 +8,10 @@ export default function Document() {
       <Head />
       <body>
         <div className="l_homeLayout">
-          <div className="l_homeLayout__header">
-            <header>
-              <section>
-                <h1>Webページの調査ツール</h1>
-              </section>
-            </header>
-          </div>
           <div className="l_homeLayout__aside">
+            <section>
+              <h1>Webページの調査ツール</h1>
+            </section>
             <aside>
               <nav className="c_homePrimaryNav" aria-label="ツール一覧">
                 <ul className="c_homePrimaryNav__list">
@@ -24,16 +20,12 @@ export default function Document() {
                 </ul>
               </nav>
             </aside>
+            <address>
+              <a href="https://github.com/SinkingSeaWheat/website_snapshot" className="href" target="_blank">このツールのGitHubページへ移動する</a>
+            </address>
           </div>
           <div className="l_homeLayout__main">
             <Main />
-          </div>
-          <div className="l_homeLayout__footer">
-            <footer>
-              <address>
-                <a href="https://github.com/SinkingSeaWheat/website_snapshot" className="href" target="_blank">GitHub</a>
-              </address>
-            </footer>
           </div>
         </div>
         <NextScript />
