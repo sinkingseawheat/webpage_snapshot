@@ -171,7 +171,6 @@ class Note{
         case 'links':
           recordMain[name] = []
           for(const [requestURL, linksItem] of value){
-            console.log(requestURL)
             const { responseURL, status, contentType, contentLength, shaHash } = linksItem["response"] ?? {};
             recordMain[name].push({
               requestURL: requestURL,

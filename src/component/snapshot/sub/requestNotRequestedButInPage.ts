@@ -65,12 +65,19 @@ export const requestNotRequestedButInPage = async (page:Page, requestURL:string,
         console.error(e);
         console.log('強制終了します')
         process.exit(-1);
+      }else if(e.message.indexOf('net::ERR_FAILED') !== -1){
+        console.log(`[net::ERR_FAILED] ${requestURL}`);
+        result.response = null;
       }else{
         result.response = null;
+        console.error((e as any).message);
       }
+    }else{
+      console.error(e);
+      result.response = null;
     }
   }finally{
-    console.log(`${requestURL}の処理が終了しました`)
+    console.log(`抽出したURL:「${requestURL}」のリクエスト処理が終了しました`)
     await page.close();
   }
 }
