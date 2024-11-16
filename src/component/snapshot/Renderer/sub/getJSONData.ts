@@ -1,5 +1,5 @@
 import { setGetPathToSendFile } from './setGetPathToSendFile';
-import { DOT_FILE_WHILE_PROCESSING } from '@/utility/Types';
+import { DOT_FILE_WHILE_PROCESSING } from '@/utility/types/types';
 
 /* Todo: JSONデータの型をナローイング */
 export const getJSONData = async (args:{

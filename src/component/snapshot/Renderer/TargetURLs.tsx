@@ -1,7 +1,7 @@
 import { getResponseFormRequestURL } from './sub/getResponseFormRequestURL';
 import style from '@/styles/snapshot/Output.module.scss';
 import Link from 'next/link';
-import { type IndexOfURL, isIndexOfURL } from '@/utility/Types';
+import { type IndexOfURL, isIndexOfURL } from '@/utility/types/types';
 
 const TargetURLs:React.FC<{
   targetURLs:any,

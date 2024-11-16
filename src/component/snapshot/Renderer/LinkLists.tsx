@@ -1,5 +1,5 @@
 import style from '@/styles/snapshot/Output.module.scss';
-import { type IndexOfURL, isIndexOfURL } from '@/utility/Types';
+import { type IndexOfURL, isIndexOfURL } from '@/utility/types/types';
 
 const LinkLists:React.FC<{
   targetURLs:[IndexOfURL, string][],

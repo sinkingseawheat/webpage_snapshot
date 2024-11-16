@@ -6,7 +6,7 @@ import { ValidURL, ScenarioFormFields } from "./FormData";
 import type { BrowserContextPickedFormFields } from "./FormData";
 import { PageResult, type PageResultRecord } from './PageResult';
 import { FileArchive } from './FileArchive';
-import { type IndexOfURL, isIndexOfURL, type Entries, DOT_FILE_WHILE_PROCESSING } from '@/utility/Types';
+import { type IndexOfURL, isIndexOfURL, type Entries, DOT_FILE_WHILE_PROCESSING } from '@/utility/types/types';
 import { VERSION } from '@/utility/getVersion';
 import PQueue from 'p-queue';
 

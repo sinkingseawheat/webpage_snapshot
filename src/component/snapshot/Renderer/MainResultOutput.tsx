@@ -3,7 +3,7 @@
 import { TargetURLs } from './TargetURLs';
 import { FormFieldSource } from './FormFieldSource';
 import { LinkLists } from './LinkLists';
-import {type MainResultJSON} from './Output'
+import { type MainResultJSON } from '@/utility/types/json';
 
 import { setGetPathToSendFile } from './sub/setGetPathToSendFile';
 

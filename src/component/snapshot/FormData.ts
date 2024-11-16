@@ -1,7 +1,7 @@
 import type { BrowserContextOptions, Page, ViewportSize } from "playwright";
 
-import type { Entries, ValidURL } from "@/utility/Types";
-import {isValidURL} from "@/utility/Types";
+import type { Entries, ValidURL } from "@/utility/types/types";
+import {isValidURL} from "@/utility/types/types";
 
 import { scenarioDefaultFormFieldValue } from './Renderer/InputForm';
 

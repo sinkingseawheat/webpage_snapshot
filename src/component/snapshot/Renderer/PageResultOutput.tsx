@@ -1,41 +1,13 @@
 import { useState, useEffect } from "react";
-import path from "path";
-
 import { getResponseFormRequestURL } from "./sub/getResponseFormRequestURL";
 import style from '@/styles/snapshot/Output.module.scss'
+
+import { RedirectStatus } from "./RedirectStatus";
 
 import { getJSONData } from './sub/getJSONData';
 import { setGetPathToSendFile } from "./sub/setGetPathToSendFile";
 
-import { type MainResultJSON } from "./Output";
-
-export type PageResultJSON = {
-  firstRequested:{
-    url: string,
-    redirect:{
-      count: number,
-      transition:{
-        url: string,
-        status: number,
-      }[]
-    }
-  },
-  URLRequestedFromPage:{
-    requestedURLs:string[]
-  },
-  URLExtracted:({
-    relURL:string[],
-    absURL:(string|null)[]
-  } & ({
-    type:'DOM_Attribute',
-    tagName:string,
-  } | {
-    type:'fromCascadingStyleSheets',
-    href:string|null,
-  } | {
-    type:'styleAttribute',
-  }))
-}
+import { PageResultJSON, type MainResultJSON } from '@/utility/types/json';
 
 const PageResultOutput:React.FC<{
   selectedId: string,
@@ -115,61 +87,6 @@ const PageResultOutput:React.FC<{
   );
 }
 
-class RedirectStatus{
-  public isValid:boolean = true;
-  private dataArray:{requestURL:string,status:number}[]=[];
-  constructor(resultJSON:any){
-    const links = resultJSON?.mainResult?.links;
-    const {url, redirect} = resultJSON?.pageResult?.firstRequested ?? {};
-    if(url===undefined || redirect===undefined){
-      this.isValid = false;
-      return;
-    }
-    const response = getResponseFormRequestURL(links, url);
-    if(response === undefined){
-      this.isValid = false;
-      return;
-    }
-    this.dataArray.push({
-      requestURL:response?.responseURL || '',
-      status:response?.status || 0,
-    });
-    if(!Array.isArray(redirect?.transition)){
-      this.isValid = false;
-      return;
-    }
-    for(const state of redirect.transition){
-      this.dataArray.push({
-        requestURL: state.url,
-        status: state.status
-      });
-    }
-    // リダイレクトは最初のリクエストが上、最後のレスポンスが下に掲載させる
-    this.dataArray.reverse();
-  }
-
-  public getPageSource = ()=>{
-    if(!this.isValid){return '';}
-    return (<table>
-      <thead>
-        <tr>
-          <th>リクエストしたURL</th>
-          <th>ステータス</th>
-        </tr>
-      </thead>
-      <tbody>
-      {this.dataArray.map((rowData)=>{
-        return (
-          <tr key={rowData.requestURL}>
-            <td>{rowData.requestURL}</td>
-            <td>{rowData.status}</td>
-          </tr>
-        );
-      })}
-    </tbody>
-    </table>);
-  }
-}
 
 class ImageDescription{
   public isValid:boolean = true;
