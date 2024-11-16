@@ -1,5 +1,5 @@
-import type { LinksItem } from "../../Note";
-export function getResponseFormRequestURL(links:(LinksItem&{requestURL:string})[], requestURL:string){
+import type { MainResultJSON } from "@/utility/types/json";
+export function getResponseFormRequestURL(links:MainResultJSON["links"], requestURL:string){
   if(links === undefined){
     return null;
   }
