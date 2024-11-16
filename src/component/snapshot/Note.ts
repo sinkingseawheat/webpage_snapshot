@@ -6,7 +6,7 @@ import { ValidURL, ScenarioFormFields } from "./FormData";
 import type { BrowserContextPickedFormFields } from "./FormData";
 import { PageResult, type PageResultRecord } from './PageResult';
 import { FileArchive } from './FileArchive';
-import { type IndexOfURL, isIndexOfURL, type Entries, DOT_FILE_WHILE_PROCESSING } from '@/utility/types/types';
+import { type IndexOfURL, isIndexOfURL, type Entries, DOT_FILE_PROCESS_COMPLETED } from '@/utility/types/types';
 import { VERSION } from '@/utility/getVersion';
 import PQueue from 'p-queue';
 
@@ -115,7 +115,6 @@ class Note{
       promises.push(fs.mkdir(this.getPageResultPath(indexOfURL,''), {recursive:true}));
     }
     await Promise.all(promises)
-    await fs.writeFile(path.join(this.occupiedDirectoryPath, DOT_FILE_WHILE_PROCESSING),'');
 
     // ファイルのアーカイブ
     this.fileArchive = new FileArchive(this.occupiedDirectoryPath, this.mainResult.links);
@@ -140,7 +139,7 @@ class Note{
     notRequestedQueue.on('idle',async ()=>{
       await this.write();
       console.log(`処理結果を保存しました`);
-      await fs.unlink(path.join(this.occupiedDirectoryPath, DOT_FILE_WHILE_PROCESSING));
+      await fs.writeFile(path.join(this.occupiedDirectoryPath, DOT_FILE_PROCESS_COMPLETED), '');
       onAllScenarioEnd();
     });
     // 保存前に未リクエストのURLについて、リクエストして必要ならアーカイブする

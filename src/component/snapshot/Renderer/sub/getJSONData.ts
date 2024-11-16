@@ -1,5 +1,5 @@
 import { setGetPathToSendFile } from './setGetPathToSendFile';
-import { DOT_FILE_WHILE_PROCESSING } from '@/utility/types/types';
+import { DOT_FILE_PROCESS_COMPLETED } from '@/utility/types/types';
 
 /* Todo: JSONデータの型をナローイング */
 export const getJSONData = async (args:{
@@ -14,10 +14,9 @@ export const getJSONData = async (args:{
   let jsonData = null;
   let errorMessage = '';
   try{
-    const responseOfIsRunning = await fetch(getPath(DOT_FILE_WHILE_PROCESSING));
-    if(responseOfIsRunning.ok){
-      errorMessage = `Not Finished:${selectedId}はまだ処理中です。もしくは異常終了したため結果が得られませんでした`;
-    }else{
+    // Todo:JSONをFetchするごとにリクエストが発生してしまうので、キャッシュ機構を持たせる。
+    const responseOfHasFinished = await fetch(getPath(DOT_FILE_PROCESS_COMPLETED));
+    if(responseOfHasFinished.ok){
       const response = await fetch(getPath(relativeJSONPath));
       if(response.ok){
         jsonData = await response.json();
@@ -29,6 +28,8 @@ export const getJSONData = async (args:{
           errorMessage = `Not Found:${getPath(relativeJSONPath)}の読み込みに失敗しました。原因は不明です status:${response.status}`;
         }
       }
+    }else{
+      errorMessage = `Not Finished:${selectedId}はまだ処理中です。もしくは異常終了したため結果が得られませんでした`;
     }
   }catch(e){
     errorMessage = `Something Wrong:${getPath(relativeJSONPath)}へのFetch時にエラーが発生しました。原因は不明です。`
