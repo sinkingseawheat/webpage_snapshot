@@ -7,13 +7,11 @@ export type MainResultJSON = {
   targetURLs: [IndexOfURL, string][];
   links: {
     requestURL:string,
-    response:{
-      responseURL: string|null,
-      status: number,
-      contentType: string,
-      contentLength: number,
-      shaHash: string
-    },
+    responseURL: string|null,
+    status: number,
+    contentType: string,
+    contentLength: number,
+    shaHash: string,
     source:'requestedFromPage'|'extracted',
     linkSourceIndex:IndexOfURL[],
   }[];

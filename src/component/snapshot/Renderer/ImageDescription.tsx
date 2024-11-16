@@ -24,7 +24,7 @@ const ImageDescription:React.FC<{
   const dataMap:Map<string,{
     tagName?:string,
     responseURL?:string|null,
-    hash?:string,
+    shaHash?:string,
     contentType?:string,
     contentLength?:number,
   }> = new Map();
@@ -44,21 +44,21 @@ const ImageDescription:React.FC<{
     }
   }
   for(const [requestURL, value] of dataMap){
-    const response = getResponseFormRequestURL(links, requestURL);
+    const {responseURL, shaHash, contentType, contentLength} = getResponseFormRequestURL(links, requestURL) ?? {};
     dataMap.set(requestURL, {
       ...value,
       ...{
-        responseURL: response?.['responseURL'],
-        hash: response?.['shaHash'],
-        contentType: response?.['contentType'],
-        contentLength: response?.['contentLength'],
+        responseURL,
+        shaHash,
+        contentType,
+        contentLength,
       }
     });
   }
   return (<>{
     Array.from(dataMap).map(([
       requestURL,
-      {tagName, responseURL, hash, contentType, contentLength}]
+      {tagName, responseURL, shaHash, contentType, contentLength}]
     )=>{
       // 画像のみを残す
       if( contentType===undefined || !/^image\//.test(contentType)){return null;}
@@ -87,7 +87,7 @@ const ImageDescription:React.FC<{
             <tbody>
               <tr><th>URL（リクエスト）</th><td>{requestURL}</td></tr>
               <tr><th>URL（取得先）</th><td>{requestURL === responseURL ? '上と同じ' : responseURL}</td></tr>
-              <tr><th>ハッシュ（sha-256）</th><td>{hash ?? `レスポンス無し`}</td></tr>
+              <tr><th>ハッシュ（sha-256）</th><td>{shaHash ?? `レスポンス無し`}</td></tr>
               <tr><th>Content-Type</th><td>{contentType ?? `レスポンス無し`}</td></tr>
               <tr><th>Content-Length</th><td>{
               contentLength === -1 || contentLength === undefined ?

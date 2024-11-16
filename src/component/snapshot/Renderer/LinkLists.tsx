@@ -1,15 +1,16 @@
 import style from '@/styles/snapshot/Output.module.scss';
 import { type IndexOfURL, isIndexOfURL } from '@/utility/types/types';
+import type { MainResultJSON } from '@/utility/types/json';
 
 const LinkLists:React.FC<{
   targetURLs:[IndexOfURL, string][],
-  links:any,
+  links:MainResultJSON["links"],
 }> = ({targetURLs, links})=>{
   const tHeadData = targetURLs.map((url)=>url[0]);
-  const dataArray = links.map((link:any)=>{
+  const dataArray = links.map((link)=>{
     const rowData:string[] = [];
     rowData.push(link['requestURL']); //requestURL
-    const responseURL = link?.['response']?.['responseURL'] ?? '無し';
+    const responseURL = link?.['responseURL'] ?? '無し';
     rowData.push(responseURL===link['requestURL'] ? 'リクエストURLと一致' : responseURL); //responseURL
     const linkSourceIndex:string[] = link['linkSourceIndex'];
     for(const IndexOfURL of tHeadData){

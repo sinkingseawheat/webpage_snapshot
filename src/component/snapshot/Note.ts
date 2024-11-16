@@ -171,12 +171,17 @@ class Note{
           break;
         case 'links':
           recordMain[name] = []
-          for(const [requestURL, response] of value){
+          for(const [requestURL, linksItem] of value){
+            const { responseURL, status, contentType, contentLength, shaHash } = linksItem["response"] ?? {};
             recordMain[name].push({
               requestURL: requestURL,
-              ...response,
-              linkSourceIndex:Array.from(response['linkSourceIndex']),
-            })
+              responseURL,
+              status,
+              contentType,
+              contentLength,
+              shaHash,
+              linkSourceIndex:Array.from(linksItem['linkSourceIndex']),
+          })
           }
           break;
           case 'listOfArchives':

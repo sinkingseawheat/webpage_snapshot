@@ -5,7 +5,7 @@ export function getResponseFormRequestURL(links:MainResultJSON["links"], request
   }
   for(const linkItem of links){
     if(linkItem.requestURL === requestURL){
-      return linkItem.response;
+      return linkItem;
     }
   }
   return null;
