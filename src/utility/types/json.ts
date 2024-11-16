@@ -5,7 +5,18 @@ export type MainResultJSON = {
   formData: { [k: string]: any; };
   version: string;
   targetURLs: [IndexOfURL, string][];
-  links: any[];
+  links: {
+    requestURL:string,
+    response:{
+      responseURL: string|null,
+      status: number,
+      contentType: string,
+      contentLength: number,
+      shaHash: string
+    },
+    source:'requestedFromPage'|'extracted',
+    linkSourceIndex:IndexOfURL[],
+  }[];
 };
 
 export type PageResultJSON = {

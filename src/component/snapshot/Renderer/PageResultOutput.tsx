@@ -36,9 +36,9 @@ const PageResultOutput:React.FC<{
       const {jsonData:pageResultJSON, errorMessage:errorMessageOfPageResult} = pageData;
       const {jsonData:archiveListJSON, errorMessage:errorMessageOfArchiveList} = archiveData;
       setPageResultJSON(pageResultJSON);
-      setErrorMessageOfPageResult(errorMessageOfPageResult),
-      setArchiveListJSON(archiveListJSON)
-      setErrorMessagearchiveList(errorMessageOfArchiveList),
+      setErrorMessageOfPageResult(errorMessageOfPageResult);
+      setArchiveListJSON(archiveListJSON);
+      setErrorMessagearchiveList(errorMessageOfArchiveList);
     })();
   }, [selectedId, indexOfURL]);
 
@@ -61,7 +61,10 @@ const PageResultOutput:React.FC<{
     <section>
       <h5 className={style.headingLv3}>リダイレクト</h5>
       <div className={style.table}>
-        {(new RedirectStatus(resultJSON)).getPageSource()}
+        <RedirectStatus {...{
+          links: mainResultJSON['links'],
+          firstRequested :pageResultJSON['firstRequested']
+        }} />
       </div>
     </section>
     <section>
@@ -80,7 +83,7 @@ const PageResultOutput:React.FC<{
     <section>
       <h5 className={style.headingLv3}>画像（SVG含む）</h5>
       <div>
-      {(new ImageDescription(resultJSON, getPath)).getPageSource()}
+      {/* (new ImageDescription(resultJSON, getPath)).getPageSource() */}
       </div>
     </section>
     </>
