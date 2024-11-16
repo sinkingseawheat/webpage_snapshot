@@ -69,7 +69,7 @@ const ImageDescription:React.FC<{
           <div className={style.imageItem__tagName}>{tagName ?? `タグ名無し`}</div>
           <div className={style.imageItem__preview}>
             {(archiveIndex === null || archiveIndex === undefined) ?
-              <></>
+              <>アーカイブ対象外などの要因で画像を表示できません</>
               : <img src={getPath(`archive/${archiveIndex}?${query}`)} alt="" />
             }
           </div>
