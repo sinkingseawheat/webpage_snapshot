@@ -49,7 +49,7 @@ const PageResultOutput:React.FC<{
   const [pageIndex, pageName] = mainResultJSON.targetURLs?.find((targetURL)=>{return targetURL[0]===indexOfURL}) || [];
 
   return (<>
-    <p className={`${style.headingLv4} ${style['u-mt']}`}>「<span>{pageIndex}</span>　<strong>{pageName}</strong>」の結果です。</p>
+    <p className={`${style.headingLv4} ${style['u-mt--large']}`}>「<span>{pageIndex}</span>　<strong>{pageName}</strong>」の結果です。</p>
     <section>
       <h5 className={style.headingLv3}>リダイレクト</h5>
       <div className={style.table}>
@@ -80,7 +80,6 @@ const PageResultOutput:React.FC<{
         links: mainResultJSON['links'],
         urlExtracted: pageResultJSON['URLExtracted'],
         urlRequestedFromPage: pageResultJSON['URLRequestedFromPage'],
-        listOfArchives: mainResultJSON['listOfArchives'],
        }}/>
       </div>
     </section>

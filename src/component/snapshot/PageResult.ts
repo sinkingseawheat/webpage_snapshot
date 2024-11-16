@@ -4,6 +4,7 @@ import { type IndexOfURL } from '@/utility/types/types';
 import { ValidURL } from "./FormData";
 import type { Note } from './Note';
 import type { FileArchive } from './FileArchive';
+import type { LinksItem } from './Note';
 
 import { getRedirectStatusFromRequest } from './sub/getRedirectStatusFromRequest';
 import { getResponseAndBodyFromRequest } from './sub/getResponseAndBodyFromRequest';
@@ -79,19 +80,21 @@ class PageResult {
       const {body, response} = await getResponseAndBodyFromRequest(targetRequest);
       const linkSourceIndex = new Set<typeof this.indexOfURL>();
       linkSourceIndex.add(this.indexOfURL);
-      this.links.set(requestedURLInPage, {
+      const result:LinksItem = {
         response,
         source: 'requestedFromPage',
         linkSourceIndex,
-      });
+      }
       /* ファイルのアーカイブを開始する */
       if(body !== null){
         await this.fileArchive.archive({
           requestURL:requestedURLInPage,
           buffer: body,
           contentType: response?.contentType || '',
+          result,
         });
       }
+      this.links.set(requestedURLInPage, result);
     }else{
       linksItem.linkSourceIndex.add(this.indexOfURL);
     }

@@ -9,24 +9,15 @@ const ImageDescription:React.FC<{
   links:MainResultJSON["links"],
   urlExtracted:PageResultJSON["URLExtracted"],
   urlRequestedFromPage:PageResultJSON["URLRequestedFromPage"],
-  listOfArchives:MainResultJSON['listOfArchives'],
-}> = ({selectedId, links, urlExtracted, urlRequestedFromPage, listOfArchives})=>{
+}> = ({selectedId, links, urlExtracted, urlRequestedFromPage})=>{
   const getPath = setGetPathToSendFile(selectedId);
-  const getArchiveItem = (requestURL:string)=>{
-    for(const item of listOfArchives){
-      if(requestURL === item.requestURL){
-        const {index, contentType} = item;
-        return {index, contentType};
-      }
-    }
-    return null;
-  }
   const dataMap:Map<string,{
     tagName?:string,
     responseURL?:string|null,
     shaHash?:string,
     contentType?:string,
     contentLength?:number,
+    archiveIndex?:number|null,
   }> = new Map();
   for(const requestURL of urlRequestedFromPage['requestedURLs']){
     dataMap.set(requestURL, {});
@@ -44,7 +35,7 @@ const ImageDescription:React.FC<{
     }
   }
   for(const [requestURL, value] of dataMap){
-    const {responseURL, shaHash, contentType, contentLength} = getResponseFormRequestURL(links, requestURL) ?? {};
+    const {responseURL, shaHash, contentType, contentLength, archiveIndex} = getResponseFormRequestURL(links, requestURL) ?? {};
     dataMap.set(requestURL, {
       ...value,
       ...{
@@ -52,20 +43,21 @@ const ImageDescription:React.FC<{
         shaHash,
         contentType,
         contentLength,
+        archiveIndex,
       }
     });
   }
   return (<>{
     Array.from(dataMap).map(([
       requestURL,
-      {tagName, responseURL, shaHash, contentType, contentLength}]
+      {tagName, responseURL, shaHash, contentType, contentLength, archiveIndex}]
     )=>{
       // 画像のみを残す
       if( contentType===undefined || !/^image\//.test(contentType)){return null;}
-      const archiveItem = getArchiveItem(requestURL);
       const query = (()=>{
-        if(archiveItem !== null){
-          return `contentType=${encodeURIComponent(archiveItem['contentType'])}`;
+        //Todo: 画像がない場合に表示する404画像を作成
+        if(archiveIndex !== null || archiveIndex !== undefined){
+          return `contentType=${encodeURIComponent(contentType)}`;
         }
         else{
           return '';
@@ -76,9 +68,9 @@ const ImageDescription:React.FC<{
         <div className={style.imageItem__Block01}>
           <div className={style.imageItem__tagName}>{tagName ?? `タグ名無し`}</div>
           <div className={style.imageItem__preview}>
-            {archiveItem === null ?
+            {(archiveIndex === null || archiveIndex === undefined) ?
               <></>
-              : <img src={getPath(`archive/${archiveItem['index']}?${query}`)} alt="" />
+              : <img src={getPath(`archive/${archiveIndex}?${query}`)} alt="" />
             }
           </div>
         </div>

@@ -14,12 +14,8 @@ export type MainResultJSON = {
     shaHash: string,
     source:'requestedFromPage'|'extracted',
     linkSourceIndex:IndexOfURL[],
+    archiveIndex:number | null,
   }[];
-  listOfArchives:{
-    requestURL:string,
-    index:number,
-    contentType:string,
-  }[]
 };
 
 export type PageResultJSON = {

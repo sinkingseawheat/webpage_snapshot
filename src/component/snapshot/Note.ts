@@ -51,6 +51,8 @@ export type LinksItem = {
   source:'requestedFromPage'|'extracted',
   /** このURLへのアクセスが発生したページのindex */
   linkSourceIndex: Set<IndexOfURL>,
+  /** アーカイブしたファイルはこのarchiveIndexにファイル名をリネームする */
+  archiveIndex?: number | null
 }
 
 
@@ -63,8 +65,6 @@ export type MainResultRecord = {
   targetURLs:Map<ValidURL, IndexOfURL>,
   /** 各ページで読み込んだ、または設定されたリンクとそのレスポンス結果を格納する。keyは最初にリクエストしたURL。updateLinksで更新する */
   links:Map<string, LinksItem>,
-  /** アーカイブしたファイルのrequestURLとそれに紐づくindex。ファイルは名前をindexにリネームして格納している。 */
-  listOfArchives:Map<string, {index:number, contentType:string}>,
 };
 
 export type WrittenURLs = Required<PageResultRecord>['URLExtracted'];
@@ -104,7 +104,6 @@ class Note{
       version: VERSION ?? null,
       targetURLs: _targetURLs,
       links: _links,
-      listOfArchives: new Map()
     }
     const [ymd, hash] = identifier.jobId.split('-');
     this.occupiedDirectoryPath = path.join(directoryStoringResult,`${identifier.apiType}/${ymd}/${hash}`);
@@ -120,7 +119,7 @@ class Note{
     await Promise.all(promises)
 
     // ファイルのアーカイブ
-    this.fileArchive = new FileArchive(this.occupiedDirectoryPath, this.mainResult.links, this.mainResult.listOfArchives);
+    this.fileArchive = new FileArchive(this.occupiedDirectoryPath);
     await this.fileArchive.init();
   }
 
@@ -172,6 +171,7 @@ class Note{
         case 'links':
           recordMain[name] = []
           for(const [requestURL, linksItem] of value){
+            console.log(requestURL)
             const { responseURL, status, contentType, contentLength, shaHash } = linksItem["response"] ?? {};
             recordMain[name].push({
               requestURL: requestURL,
@@ -180,19 +180,10 @@ class Note{
               contentType,
               contentLength,
               shaHash,
-              linkSourceIndex:Array.from(linksItem['linkSourceIndex']),
+              linkSourceIndex: Array.from(linksItem['linkSourceIndex']),
+              archiveIndex: linksItem['archiveIndex'],
           })
           }
-          break;
-          case 'listOfArchives':
-            recordMain[name] = [];
-            for( const [requestURL, archiveInfo] of this.mainResult['listOfArchives'] ){
-              recordMain[name].push({
-                requestURL,
-                index:archiveInfo['index'],
-                contentType:archiveInfo['contentType'],
-              })
-            }
           break;
         default:
           recordMain[name] = value;

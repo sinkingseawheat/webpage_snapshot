@@ -39,6 +39,7 @@ export const requestNotRequestedButInPage = async (page:Page, requestURL:string,
           requestURL,
           buffer: body,
           contentType: response?.contentType || '',
+          result,
         });
       }
     }
