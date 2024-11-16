@@ -46,7 +46,7 @@ export const getURLInPage = ():WrittenURLs=>{
       type:'DOM_Attribute',
       tagName,
       relURL: Array.from(url).filter((item)=>item!==null),
-      absURL:[],
+      absURLs:[],
     });
   }
   function getURLsFromCSS(sheet:CSSStyleSheet){
@@ -61,7 +61,7 @@ export const getURLInPage = ():WrittenURLs=>{
               type: 'fromCascadingStyleSheets',
               href: rule.parentStyleSheet?.href ?? null,
               relURL: _relURL,
-              absURL:[],
+              absURLs:[],
             });
           }
         }else if(rule.style.background !== ''){
@@ -72,7 +72,7 @@ export const getURLInPage = ():WrittenURLs=>{
               type: 'fromCascadingStyleSheets',
               href: rule.parentStyleSheet?.href ?? null,
               relURL: _relURL,
-              absURL:[],
+              absURLs:[],
             });
           }
         }
@@ -100,7 +100,7 @@ export const getURLInPage = ():WrittenURLs=>{
       rv.push({
         type:'styleAttribute',
         relURL: getURLsFromUrlMethod(backgroundImage),
-        absURL:[],
+        absURLs:[],
       });
     }
   }

@@ -40,7 +40,7 @@ export type PageResultJSON = {
   };
   URLExtracted: ({
     relURL: string[];
-    absURL: (string | null)[];
+    absURLs: (string | null)[];
   } & ({
     type: 'DOM_Attribute';
     tagName: string;

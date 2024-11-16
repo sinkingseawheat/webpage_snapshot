@@ -33,7 +33,7 @@ type PageResultRecord = {
     /** 取得できたURL。相対・ルート相対・#始まりなども含む */
     relURL:string[],
     /** relURLを取得したページのURLを基に絶対パス化 */
-    absURL:(ValidURL|null)[]
+    absURLs:(ValidURL|null)[]
   } & ({
     /** URLの取得元。DOM要素から */
     type:'DOM_Attribute',

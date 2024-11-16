@@ -20,7 +20,7 @@ export const getExtractLinks = async (page:Page, )=>{
           return null;
         }
       })();
-      elmData.absURL.push(absURL);
+      elmData.absURLs.push(absURL);
     }
   }
   return dataFromHeadlessBrowser;

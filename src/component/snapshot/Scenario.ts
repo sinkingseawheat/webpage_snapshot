@@ -99,9 +99,9 @@ class Scenario {
       this.pageResult.record["URLExtracted"] = await getExtractLinks(this.page);
 
       for(const extractedLink of this.pageResult.record["URLExtracted"] || []){
-        for(const absURLItem of extractedLink["absURL"]){
-          if(absURLItem !== null){
-            this.pageResult.updateLinksFromExtractedURL(absURLItem);
+        for(const absURL of extractedLink["absURLs"]){
+          if(absURL !== null){
+            this.pageResult.updateLinksFromExtractedURL(absURL);
           }
         }
       }

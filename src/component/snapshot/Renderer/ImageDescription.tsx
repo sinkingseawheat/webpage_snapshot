@@ -32,14 +32,14 @@ const ImageDescription:React.FC<{
     dataMap.set(requestURL, {});
   }
   for(const extractedItem of urlExtracted ){
-    for(const _url of extractedItem['absURL']){
-      if(_url === null){continue;}
+    for(const absURL of extractedItem['absURLs']){
+      if(absURL === null){continue;}
       if('tagName' in extractedItem){
-        dataMap.set(_url, {
+        dataMap.set(absURL, {
           tagName: extractedItem?.tagName ?? '',
         });
       }else{
-        dataMap.set(_url, {});
+        dataMap.set(absURL, {});
       }
     }
   }
