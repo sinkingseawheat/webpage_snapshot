@@ -44,6 +44,6 @@ export type PageResultJSON = {
     href: string | null;
   } | {
     type: 'styleAttribute';
-  }));
+  }))[];
 };
 
