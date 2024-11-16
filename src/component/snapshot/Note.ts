@@ -186,11 +186,11 @@ class Note{
           break;
           case 'listOfArchives':
             recordMain[name] = [];
-            for( const [requestURL, obj] of this.mainResult['listOfArchives'] ){
+            for( const [requestURL, archiveInfo] of this.mainResult['listOfArchives'] ){
               recordMain[name].push({
                 requestURL,
-                index:obj['index'],
-                contentType:obj['contentType'],
+                index:archiveInfo['index'],
+                contentType:archiveInfo['contentType'],
               })
             }
           break;
