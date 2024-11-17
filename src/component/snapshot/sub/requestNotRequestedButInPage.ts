@@ -2,8 +2,8 @@ import { Page } from "playwright"
 
 import type { LinksItem } from "../Note";
 import { getResponseAndBodyFromRequest } from './getResponseAndBodyFromRequest';
-import { setting } from "@/utility/Setting";
 import { FileArchive } from "../FileArchive";
+import { getResponseByPageGoto } from "./getResponseByPageGoto";
 
 export const requestNotRequestedButInPage = async (page:Page, requestURL:string, result:LinksItem, fileArchive:FileArchive)=>{
   try{
@@ -15,20 +15,8 @@ export const requestNotRequestedButInPage = async (page:Page, requestURL:string,
         route.continue();
       }
     });
-    // Basic認証のアイパスの設定
-    const authEncoded = setting.getBasicAuthorization(requestURL);
-    if(authEncoded !== null){
-      page.setExtraHTTPHeaders({...authEncoded});
-    }
-    // シナリオオプション（referer）はいったん無しで行う。
-    let redirectCount = 0;
-    page.on('response', ()=>{
-      if(redirectCount>=10){
-        throw new Error(`[too many redirects] リダイレクト数が多すぎます`)
-      }
-      redirectCount++;
-    })
-    const pageResponse = await page.goto(requestURL, {waitUntil:'load', timeout:5000});
+
+    const pageResponse = await getResponseByPageGoto(page, requestURL, {});
     if(pageResponse === null){
       result.response = null;
     }else{

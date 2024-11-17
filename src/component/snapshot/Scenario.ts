@@ -7,6 +7,7 @@ import { getRedirectStatusFromRequest } from "./sub/getRedirectStatusFromRequest
 
 import { getCapture } from "./sub_scenario/getCapture";
 import { getExtractLinks } from "./sub_scenario/getExtractLinks";
+import { getResponseByPageGoto } from "./sub/getResponseByPageGoto";
 
 class ScenarioError extends Error {
   static {
@@ -42,33 +43,24 @@ class Scenario {
           (async ()=>{
             await this.pageResult.updateLinksFromRequestedURL(response.request());
           })();
-          recordedItem?.requestedURLs.push(response.url());
+          recordedItem.requestedURLs.push(response.url());
         }
       });
       this.page.on('requestfailed',(request)=>{
         (async ()=>{
           await this.pageResult.updateLinksFromRequestedURL(request);
         })();
-        recordedItem?.requestedURLs.push(request.url());
+        recordedItem.requestedURLs.push(request.url());
         this.URLWaitingForFinish.delete(request.url());
-        // console.log(`request failed ${request.url()}`);
       });
       this.page.on('requestfinished', (request)=>{
         this.URLWaitingForFinish.delete(request.url());
       });
     })();
-
-    // Basic認証のアイパスの設定
-    const authEncoded = setting.getBasicAuthorization(url);
-    if(authEncoded !== null){
-      this.page.setExtraHTTPHeaders({...authEncoded});
-    }
     try {
-      const optionOfPageTransition:Parameters<Page["goto"]>[1] = {
-        ...{waitUntil:'networkidle'},
-        ...this.option,
-      };
-      const response = await this.page.goto(url, optionOfPageTransition);
+      const {referer} = this.option;
+      const gotoOption = (referer === undefined || referer === '') ? undefined : {referer}
+      const response = await getResponseByPageGoto(this.page, url, gotoOption);
       const redirect =
         response === null ?
           null
@@ -77,6 +69,30 @@ class Scenario {
         url,
         redirect
       };
+      // afterLoaded ページ読み込み完了後
+      await (async ()=>{
+
+        // ページのDOM構造を取得
+        if(setting.isAllowedArchiveURL(url)){
+          this.pageResult.record["DOM"] = {
+            source: await this.page.content(),
+          }
+        }
+
+        // リンク要素の抽出
+        this.pageResult.record["URLExtracted"] = await getExtractLinks(this.page);
+
+        for(const extractedLink of this.pageResult.record["URLExtracted"] || []){
+          for(const absURL of extractedLink["absURLs"]){
+            if(absURL !== null){
+              this.pageResult.updateLinksFromExtractedURL(absURL);
+            }
+          }
+        }
+
+        // キャプチャ取得
+        this.pageResult.record["PageCapture"] = await getCapture(this.page);
+      })();
     }catch(e){
       if(e instanceof Error && e.message.indexOf('ERR_INVALID_AUTH_CREDENTIALS') !== -1){
         // ERR_INVALID_AUTH_CREDENTIALSはbasic認証エラーとみなす
@@ -84,37 +100,14 @@ class Scenario {
       }else{
         throw new ScenarioError(`「${url}」のページの読み込みに失敗しました。原因は不明です`);
       }
+    }finally{
+      await this.page.close({reason:'全てのシナリオが終了したため、ページをクローズ'});
+      console.log(`次のページ単体の処理を完了しました:${url}`);
+      return {
+        indexOfURL: this.pageResult.getIndexOfURL(),
+        pageResultRecord: this.pageResult.record,
+      };
     }
-    // afterLoaded ページ読み込み完了後
-    await (async ()=>{
-
-      // ページのDOM構造を取得
-      if(setting.isAllowedArchiveURL(url)){
-        this.pageResult.record["DOM"] = {
-          source: await this.page.content(),
-        }
-      }
-
-      // リンク要素の抽出
-      this.pageResult.record["URLExtracted"] = await getExtractLinks(this.page);
-
-      for(const extractedLink of this.pageResult.record["URLExtracted"] || []){
-        for(const absURL of extractedLink["absURLs"]){
-          if(absURL !== null){
-            this.pageResult.updateLinksFromExtractedURL(absURL);
-          }
-        }
-      }
-
-      // キャプチャ取得
-      this.pageResult.record["PageCapture"] = await getCapture(this.page);
-    })();
-    await this.page.close({reason:'全てのシナリオが終了したため、ページをクローズ'});
-    console.log(`次のページ単体の処理を完了しました:${url}`);
-    return {
-      indexOfURL: this.pageResult.getIndexOfURL(),
-      pageResultRecord: this.pageResult.record,
-    };
   }
 }
 
