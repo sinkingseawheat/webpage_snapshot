@@ -1,5 +1,5 @@
 import { getResponseFormRequestURL } from './sub/getResponseFormRequestURL';
-import style from '@/styles/snapshot/Output.module.scss';
+import style from '@/component/snapshot/Renderer/style/Output.module.scss';
 import Link from 'next/link';
 import { type IndexOfURL, isIndexOfURL } from '@/utility/types/types';
 

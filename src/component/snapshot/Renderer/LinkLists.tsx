@@ -1,4 +1,4 @@
-import style from '@/styles/snapshot/Output.module.scss';
+import style from '@/component/snapshot/Renderer/style/Output.module.scss';
 import { type IndexOfURL, isIndexOfURL } from '@/utility/types/types';
 import type { MainResultJSON } from '@/utility/types/json';
 

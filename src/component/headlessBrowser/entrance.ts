@@ -2,13 +2,13 @@ import { RandomString } from '@/utility/RandomString';
 
 import type { Browser } from 'playwright';
 
-import type { BrowserContextPickedFormFields } from "../snapshot/FormData";
-import type { ResponseData } from "../snapshot/FormData";
+import type { BrowserContextPickedFormFields } from "../snapshot/api/FormData";
+import type { ResponseData } from "../snapshot/api/FormData";
 
 import { Context } from '@/component/headlessBrowser/Context';
 
 // entranceは各APIで共通化したい。フォームデータの判別はBrowserContextはContextクラスで、ScenarioはScenarioクラスで行うようにしたい。
-import type { ScenarioFormFields } from '@/component/snapshot/FormData';
+import type { ScenarioFormFields } from '@/component/snapshot/api/FormData';
 
 class EntranceError extends Error {
   static {

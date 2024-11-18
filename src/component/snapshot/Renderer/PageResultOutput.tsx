@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import style from '@/styles/snapshot/Output.module.scss'
+import style from '@/component/snapshot/Renderer/style/Output.module.scss'
 
 import { RedirectStatus } from "./RedirectStatus";
 import { ImageDescription } from "./ImageDescription";

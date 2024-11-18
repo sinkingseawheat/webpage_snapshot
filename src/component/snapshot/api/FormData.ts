@@ -3,7 +3,7 @@ import type { BrowserContextOptions, Page, ViewportSize } from "playwright";
 import type { Entries, ValidURL } from "@/utility/types/types";
 import {isValidURL} from "@/utility/types/types";
 
-import { scenarioDefaultFormFieldValue } from './Renderer/InputForm';
+import { scenarioDefaultFormFieldValue } from '@/component/snapshot/Renderer/InputForm';
 
 type ScenarioFormFields = typeof scenarioDefaultFormFieldValue;
 

@@ -1,6 +1,6 @@
 import { MainResultJSON } from "@/utility/types/json";
 import { PageResultJSON } from "@/utility/types/json";
-import style from '@/styles/snapshot/Output.module.scss'
+import style from '@/component/snapshot/Renderer/style/Output.module.scss'
 import { getResponseFormRequestURL } from "./sub/getResponseFormRequestURL";
 import { setGetPathToSendFile } from "./sub/setGetPathToSendFile";
 

@@ -7,7 +7,7 @@ import { type MainResultJSON } from '@/utility/types/json';
 
 import { setGetPathToSendFile } from './sub/setGetPathToSendFile';
 
-import style from '@/styles/snapshot/Output.module.scss';
+import style from '@/component/snapshot/Renderer/style/Output.module.scss';
 
 
 const MainResultOutput:React.FC<{

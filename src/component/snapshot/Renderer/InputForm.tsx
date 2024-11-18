@@ -2,9 +2,9 @@
 
 import {useForm } from 'react-hook-form';
 import type { SubmitHandler } from 'react-hook-form';
-import styles from '@/styles/snapshot/FormInput.module.scss';
+import styles from '@/component/snapshot/Renderer/style/FormInput.module.scss';
 
-import { browerContextDefaultFormFieldValue } from "../FormData";
+import { browerContextDefaultFormFieldValue } from '../api/FormData';
 
 // シナリオに関するフォームデータ
 

@@ -1,7 +1,7 @@
 import dynamic from "next/dynamic";
 import Output from "@/component/snapshot/Renderer/Output";
 import PullDownOfJobId from "@/component/snapshot/Renderer/PullDownOfJobId";
-import style from '@/styles/snapshot/FormInput.module.scss'
+import style from '@/component/snapshot/Renderer/style/FormInput.module.scss'
 
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";

@@ -1,12 +1,12 @@
-import type { ScenerioOption, ValidURL } from "@/component/snapshot/FormData";
+import type { ScenerioOption, ValidURL } from "@/component/snapshot/api/FormData";
 import type { Page, BrowserContext } from "playwright";
 import { Note } from "./Note";
 
 import { setting } from "@/utility/Setting";
 import { getRedirectStatusFromRequest } from "./sub/getRedirectStatusFromRequest";
 
-import { getCapture } from "./sub_scenario/getCapture";
-import { getExtractLinks } from "./sub_scenario/getExtractLinks";
+import { getCapture } from "./scenario/getCapture";
+import { getExtractLinks } from "./scenario/getExtractLinks";
 import { getResponseByPageGoto } from "./sub/getResponseByPageGoto";
 
 class ScenarioError extends Error {
