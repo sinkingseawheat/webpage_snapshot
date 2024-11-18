@@ -113,12 +113,17 @@ class Context {
     this.scenarios.forEach((scenario)=>{
       this.scenarioQueue.add(async ()=>{
         try{
-          const result = await scenario.start();
-          await this.note.writePageResult(result);
+          const {indexOfURL, pageResultRecord, responseErrorMessage} = await scenario.start();
+          if(responseErrorMessage === 'ERR_INVALID_AUTH_CREDENTIALS'){
+            // Basic認証に失敗したtargetURLがあったら、全て終了させる
+            console.error(`${scenario.requestURL}の処理を中止しました。Basic認証が誤っていると思われます。サーバーへの負荷を避けるため全てのリクエストを中止します。`);
+            this.scenarioQueue.clear();
+            this.iscaughtError = true;
+          }else{
+            await this.note.writePageResult({indexOfURL, pageResultRecord});
+          }
         }catch(e){
           console.error(e);
-          this.scenarioQueue.clear();
-          this.iscaughtError = true;
         }
       });
     });

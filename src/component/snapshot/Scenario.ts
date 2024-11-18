@@ -17,14 +17,17 @@ class ScenarioError extends Error {
 
 class Scenario {
   public URLWaitingForFinish:Set<string> = new Set();
+  private responseResult!:Awaited<ReturnType<typeof getResponseByPageGoto>>;
+  public requestURL:ValidURL;
   constructor(
     private pageResult: ReturnType<Note["createPageResult"]>,
     private page: Page,
     private option: Omit<ScenerioOption, "urlsToOpen">,
   ){
+    this.requestURL = this.pageResult.getURL();
   }
   async start(){
-    const url = this.pageResult.getURL();
+    const url = this.requestURL;
     console.log(`-------`);
     console.log(`次のページ単体の処理を開始しました: ${url}`);
     // beforeGoto ページ読み込み前
@@ -60,7 +63,8 @@ class Scenario {
     try {
       const {referer} = this.option;
       const gotoOption = (referer === undefined || referer === '') ? undefined : {referer}
-      const response = await getResponseByPageGoto(this.page, url, gotoOption);
+      this.responseResult = await getResponseByPageGoto(this.page, url, gotoOption);
+      const {response, errorMessage} = this.responseResult;
       const redirect =
         response === null ?
           null
@@ -69,43 +73,45 @@ class Scenario {
         url,
         redirect
       };
-      // afterLoaded ページ読み込み完了後
-      await (async ()=>{
+      if(response !== null && errorMessage === ''){
+        // afterLoaded ページ読み込み完了後
+        await (async ()=>{
 
-        // ページのDOM構造を取得
-        if(setting.isAllowedArchiveURL(url)){
-          this.pageResult.record["DOM"] = {
-            source: await this.page.content(),
-          }
-        }
-
-        // リンク要素の抽出
-        this.pageResult.record["URLExtracted"] = await getExtractLinks(this.page);
-
-        for(const extractedLink of this.pageResult.record["URLExtracted"] || []){
-          for(const absURL of extractedLink["absURLs"]){
-            if(absURL !== null){
-              this.pageResult.updateLinksFromExtractedURL(absURL);
+          // ページのDOM構造を取得
+          if(setting.isAllowedArchiveURL(url)){
+            this.pageResult.record["DOM"] = {
+              source: await this.page.content(),
             }
           }
-        }
 
-        // キャプチャ取得
-        this.pageResult.record["PageCapture"] = await getCapture(this.page);
-      })();
-    }catch(e){
-      if(e instanceof Error && e.message.indexOf('ERR_INVALID_AUTH_CREDENTIALS') !== -1){
-        // ERR_INVALID_AUTH_CREDENTIALSはbasic認証エラーとみなす
-        throw new ScenarioError(`ページの読み込みに失敗しました。\n  ${url}\nに対するBasic認証が正しいか確認してください。`);
-      }else{
-        throw new ScenarioError(`「${url}」のページの読み込みに失敗しました。原因は不明です`);
+          // リンク要素の抽出
+          this.pageResult.record["URLExtracted"] = await getExtractLinks(this.page);
+
+          for(const extractedLink of this.pageResult.record["URLExtracted"] || []){
+            for(const absURL of extractedLink["absURLs"]){
+              if(absURL !== null){
+                this.pageResult.updateLinksFromExtractedURL(absURL);
+              }
+            }
+          }
+
+          // キャプチャ取得
+          this.pageResult.record["PageCapture"] = await getCapture(this.page);
+        })();
       }
+    }catch(e){
+      console.error('Scenario["start"]内で未定義のエラーです。再スローします');
+      throw e;
     }finally{
-      await this.page.close({reason:'全てのシナリオが終了したため、ページをクローズ'});
+      if(this.responseResult.errorMessage !== '[too many redirects]'){
+        // [too many redirects]の場合はgetResponseByPageGotで既にクローズ処理を行っている
+        await this.page.close({reason:'全てのシナリオが終了したため、ページをクローズ'});
+      }
       console.log(`次のページ単体の処理を完了しました:${url}`);
       return {
         indexOfURL: this.pageResult.getIndexOfURL(),
         pageResultRecord: this.pageResult.record,
+        responseErrorMessage: this.responseResult.errorMessage,
       };
     }
   }
