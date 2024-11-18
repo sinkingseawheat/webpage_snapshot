@@ -1,14 +1,8 @@
 import { RandomString } from '@/utility/RandomString';
 
-import type { Browser } from 'playwright';
-
-import type { BrowserContextPickedFormFields } from "../snapshot/FormData";
-import type { ResponseData } from "../snapshot/FormData";
+import { type ResponseData, defaultFormFieldValues } from "@/component/snapshot/FormData";
 
 import { Context } from '@/component/headlessBrowser/Context';
-
-// entranceは各APIで共通化したい。フォームデータの判別はBrowserContextはContextクラスで、ScenarioはScenarioクラスで行うようにしたい。
-import type { ScenarioFormFields } from '@/component/snapshot/FormData';
 
 class EntranceError extends Error {
   static {
@@ -16,7 +10,7 @@ class EntranceError extends Error {
   }
 }
 
-type FormData = BrowserContextPickedFormFields & ScenarioFormFields;
+type FormData = typeof defaultFormFieldValues;
 
 class Entrance {
   static MAX_CONTEXT_CONCURRENCY = 1;

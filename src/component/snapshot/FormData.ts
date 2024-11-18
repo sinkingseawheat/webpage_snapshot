@@ -3,10 +3,11 @@ import type { BrowserContextOptions, Page, ViewportSize } from "playwright";
 import type { Entries, ValidURL } from "@/utility/types/types";
 import {isValidURL} from "@/utility/types/types";
 
-import { scenarioDefaultFormFieldValue } from '@/component/snapshot/Renderer/InputForm';
-
-type ScenarioFormFields = typeof scenarioDefaultFormFieldValue;
-
+class FormDataError extends Error {
+  static {
+    this.prototype.name = 'FormDataError';
+  }
+}
 
 /* エンドユーザへのレスポンス */
 type ResponseData = {
@@ -16,19 +17,43 @@ type ResponseData = {
 } | {
   message: string;
 };
-export type { ResponseData };
 
+// シナリオに関するフォームデータ
 
-type ScenerioOption = {
+/** Scenarioに関連するフォームデータのname */
+const scenarioNames = [
+  'urlsToOpen',
+  'referer'
+] as const;
+
+const browserContextNames = [
+  "ignoreHTTPSErrors",
+  "userAgent",
+  "viewportWidth", "viewportHeight",
+] as const;
+
+const Names = [...scenarioNames, ...browserContextNames];
+
+type FormFieldValue = Record<(typeof Names)[number], string|string[]>;
+
+const defaultFormFieldValues = {
+  'urlsToOpen':'',
+  'referer':'',
+  "ignoreHTTPSErrors":'',
+  "userAgent":'',
+  "viewportWidth":'',
+  "viewportHeight":'',
+} satisfies FormFieldValue;
+
+// FormFieldValue -> Option
+
+const deserializeScenerioFormFields = (sFormFields:Pick<FormFieldValue,'urlsToOpen'|'referer'>):
+{
   "urlsToOpen":ValidURL[],
-  /* "scenarioIds":string[], */
   "referer"?:Required<Parameters<Page["goto"]>>[1]["referer"],
-};
-
-const deserializeScenerioFormFields = (sFormFields:ScenarioFormFields):ScenerioOption=>{
-  const rv:ScenerioOption = {
+}=>{
+  const rv:ReturnType<typeof deserializeScenerioFormFields> = {
     urlsToOpen: [],
-    /* scenarioIds: [], */
   };
   const getArray = (arg:string|string[]):string[]=>{
     if(typeof arg === 'string'){
@@ -37,74 +62,62 @@ const deserializeScenerioFormFields = (sFormFields:ScenarioFormFields):ScenerioO
       return arg;
     }
   }
-  for(const [name, value] of Object.entries(sFormFields) as Entries<ScenarioFormFields>){
-    switch(name){
-      case('urlsToOpen'):
-        const _urlsToOpen = getArray(value)
-        .filter(line => !/^\s*$/.test(line))
-        .map(line => line.trim())
-        .filter(line => isValidURL(line));
-        rv.urlsToOpen = Array.from(new Set<ValidURL>(_urlsToOpen)); // 重複削除
-        break;
-      case('referer'):
-        if(isValidURL(value)){
-          rv.referer = value;
-        }
-        break;
-      /* default:
-        throw new FormDataError(`${name}のフォームアイテムは定義されていません`); */
+  const _urlsToOpen = getArray(sFormFields['urlsToOpen'])
+    .filter(line => !/^\s*$/.test(line))
+    .map(line => line.trim())
+    .filter(line => isValidURL(line));
+  const urlsToOpen = Array.from(new Set<ValidURL>(_urlsToOpen));
+
+  const _referer = sFormFields['referer']
+  if(_referer === undefined){
+    return {
+      urlsToOpen,
     }
   }
-  return rv;
+  if(Array.isArray(_referer)){
+    throw new FormDataError(`refererは1つのURLのみ設定可能です`)
+  }
+  const referer = isValidURL(_referer) ? _referer : undefined;
+  return {
+    urlsToOpen,
+    referer
+  };
 }
 
-
-export type { ScenerioOption, ScenarioFormFields, ValidURL }
-export { deserializeScenerioFormFields };
-/* --------------- ブラウザコンテキスト --------------- */
-const bCNames = [
-  "baseURL",
-  "ignoreHTTPSErrors",
-  "userAgent",
-  "viewportWidth", "viewportHeight",
-] as const;
-type BrowserContextPickedFormFields = Record<(typeof bCNames)[number], string>;
-type BroserContextOptionPicked = Pick<BrowserContextOptions, "baseURL" | "ignoreHTTPSErrors" | "userAgent" | "viewport">;
-type BroserContextOptionPicked_viewport = (null | ViewportSize) | undefined;
-const browerContextDefaultFormFieldValue: BrowserContextPickedFormFields = (() => {
-  const temporary = bCNames.map(elm => [elm, '']);
-  return Object.fromEntries(temporary);
-})();
-const deserializeBrowserContextPickedFormFields = (bcFormFields: BrowserContextPickedFormFields): BroserContextOptionPicked => {
-  const rv: Partial<BroserContextOptionPicked> = {};
-  const _viewport: BroserContextOptionPicked_viewport = { width: 0, height: 0 };
-  // react-hook-formは「.」を含めることで深いオブジェクトのフォームデータを作成できるはずが、エラー文言の表示などが上手く設定できないのでとりあえず浅いオブジェクトでデータを受け取る
-  for (const [name, value] of Object.entries(bcFormFields) as Entries<BrowserContextPickedFormFields>) {
-    const nestLevel = name.split('.').length - 1;
-    if (nestLevel === 0) {
-      if (name === 'baseURL' || name === 'userAgent') {
-        rv[name] = value;
-      } else if (name === 'ignoreHTTPSErrors') {
-        rv[name] = (value === 'on' || value === browerContextDefaultFormFieldValue["ignoreHTTPSErrors"]);
-      } else if (name === 'viewportWidth') {
-        _viewport.width = parseInt(value, 10) || 0;
-      } else if (name === 'viewportHeight') {
-        _viewport.height = parseInt(value, 10) || 0;
-      }
-    } else {
-      throw new FormDataError(`${name}のフォームアイテムは定義されていません。ネストを表す「.」は無しのみ許可されています`);
-    }
+const deserializeBrowserContextPickedFormFields = (bcFormFields: Pick<FormFieldValue,'ignoreHTTPSErrors'|'userAgent'|'viewportWidth'|'viewportHeight'>):
+Pick<BrowserContextOptions, "ignoreHTTPSErrors" | "userAgent" | "viewport"> =>
+{
+  const _ignoreHTTPSErrors = bcFormFields['ignoreHTTPSErrors'];
+  const _userAgent = bcFormFields['userAgent'];
+  const _viewportWidth = bcFormFields['viewportWidth'];
+  const _viewportHeight = bcFormFields['viewportHeight'];
+  if(
+    Array.isArray(_ignoreHTTPSErrors)
+    || Array.isArray(_userAgent)
+    || Array.isArray(_viewportWidth)
+    || Array.isArray(_viewportHeight)
+  ){
+    throw new Error(`bcFormFieldsの引数の値に文字列のみです`)
   }
-  // 初期値と一緒または無効な組み合わせの場合は未定義で返す
-  if (_viewport.width !== 0 && _viewport.height !== 0) {
-    rv.viewport = _viewport;
-  }
-  return rv;
+  const ignoreHTTPSErrors = (_ignoreHTTPSErrors === 'on' || _ignoreHTTPSErrors === defaultFormFieldValues['ignoreHTTPSErrors']) ? true : false;
+  const userAgent = _userAgent === '' ? undefined : _userAgent;
+  const viewportWidth = parseInt(_viewportWidth) || 0;
+  const viewportHeight = parseInt(_viewportHeight) || 0;
+  const _viewport = { width:viewportWidth, height:viewportHeight };
+  const viewport = (viewportWidth === 0 || viewportHeight === 0) ? undefined : _viewport;
+  return {
+    ignoreHTTPSErrors,
+    userAgent,
+    viewport,
+  };
 };
-export type { BroserContextOptionPicked, BrowserContextPickedFormFields };
-export { bCNames, browerContextDefaultFormFieldValue, deserializeBrowserContextPickedFormFields };export class FormDataError extends Error {
-    static {
-      this.prototype.name = 'FormDataError';
-    }
-  }
+
+
+export type { ResponseData };
+
+export {
+  defaultFormFieldValues,
+  deserializeScenerioFormFields,
+  deserializeBrowserContextPickedFormFields
+}
 

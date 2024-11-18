@@ -1,7 +1,6 @@
 import type { Request } from 'playwright';
 
-import { type IndexOfURL } from '@/utility/types/types';
-import { ValidURL } from "../FormData";
+import { type IndexOfURL, type ValidURL } from '@/utility/types/types';
 import type { Note } from './Note';
 import type { FileArchive } from './FileArchive';
 import type { LinksItem } from './Note';

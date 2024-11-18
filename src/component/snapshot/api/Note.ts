@@ -2,13 +2,14 @@ import path from 'path';
 import fs from 'fs/promises';
 
 import type { BrowserContext, Request } from 'playwright';
-import { ValidURL, ScenarioFormFields } from "../FormData";
-import type { BrowserContextPickedFormFields } from "../FormData";
+import { ValidURL } from "@/utility/types/types";
 import { PageResult, type PageResultRecord } from './PageResult';
 import { FileArchive } from './FileArchive';
 import { type IndexOfURL, isIndexOfURL, type Entries, DOT_FILE_PROCESS_COMPLETED } from '@/utility/types/types';
 import { VERSION } from '@/utility/getVersion';
 import PQueue from 'p-queue';
+
+import { defaultFormFieldValues } from '@/component/snapshot/FormData';
 
 import { requestNotRequestedButInPage } from './sub/requestNotRequestedButInPage';
 
@@ -58,7 +59,7 @@ export type LinksItem = {
 
 /** リクエスト全体に共通する結果 */
 export type MainResultRecord = {
-  formData:Omit<ScenarioFormFields & BrowserContextPickedFormFields, 'urlsToOpen'>,
+  formData:Omit<typeof defaultFormFieldValues, 'urlsToOpen'>,
   /** アプリのversion。package.jsonから取得 */
   version:string|null,
   /** ヘッドレスブラウザでリクエストするURLとそのindexの紐づけリスト */
@@ -81,11 +82,11 @@ class Note{
   /** ファイルをアーカイブする */
   private fileArchive!:FileArchive;
   constructor(
-    formData:Omit<ScenarioFormFields & BrowserContextPickedFormFields, 'urlsToOpen'>,
+    formData :MainResultRecord["formData"],
     urlsToOpen: ValidURL[],
-    identifier:{
-      apiType:string,
-      jobId:string,
+    identifier: {
+      apiType: string,
+      jobId: string,
     }
   ){
     const _targetURLs:typeof this.mainResult["targetURLs"] = new Map();

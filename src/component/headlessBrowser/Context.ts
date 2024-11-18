@@ -2,10 +2,8 @@ import { chromium } from 'playwright';
 import type { BrowserContextOptions, Browser, BrowserContext } from 'playwright';
 import PQueue from 'p-queue';
 
-import { deserializeBrowserContextPickedFormFields } from "../snapshot/FormData";
-import { deserializeScenerioFormFields } from '@/component/snapshot/FormData';
-import type { BrowserContextPickedFormFields } from "../snapshot/FormData";
-import type { ScenarioFormFields, ScenerioOption, ValidURL } from '@/component/snapshot/FormData';
+import { defaultFormFieldValues ,deserializeScenerioFormFields, deserializeBrowserContextPickedFormFields } from '@/component/snapshot/FormData';
+import { ValidURL } from '@/utility/types/types';
 
 import { Note } from '@/component/snapshot/api/Note';
 import { Scenario } from '@/component/snapshot/api/Scenario';
@@ -21,14 +19,14 @@ class ContextError extends Error {
 
 class Context {
   private bcoption: BrowserContextOptions;
-  private soption: ScenerioOption;
+  private soption: ReturnType<typeof deserializeScenerioFormFields>;
   private scenarioQueue:PQueue;
   private note!:Note;
   private scenarios:Scenario[] = [];
   private iscaughtError:boolean = false;
   private browser!:Browser|null;
   constructor(
-    formData:ScenarioFormFields & BrowserContextPickedFormFields,
+    formData:typeof defaultFormFieldValues,
     apiType:string,
     private jobId:string,
   ){

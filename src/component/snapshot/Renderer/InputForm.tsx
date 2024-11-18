@@ -4,26 +4,7 @@ import {useForm } from 'react-hook-form';
 import type { SubmitHandler } from 'react-hook-form';
 import styles from '@/component/snapshot/Renderer/style/FormInput.module.scss';
 
-import { browerContextDefaultFormFieldValue } from '../FormData';
-
-// シナリオに関するフォームデータ
-
-/** Scenarioに関連するフォームデータのname */
-const sNames = ['urlsToOpen', 'scenarioIds', 'referer'] as const;
-/** Scenarioに関連するフォームデータのデフォルト値 */
-const scenarioDefaultFormFieldValue:Record<typeof sNames[number], string> = (()=>{
-  const temporary = sNames.map((item)=>[item,'']);
-  return Object.fromEntries(temporary);
-})();
-
-type FormData = typeof browerContextDefaultFormFieldValue & typeof scenarioDefaultFormFieldValue;
-
-const defaultValues:Required<FormData> = {
-  ...browerContextDefaultFormFieldValue,
-  ...scenarioDefaultFormFieldValue,
-};
-
-export { scenarioDefaultFormFieldValue };
+import { defaultFormFieldValues } from '@/component/snapshot/FormData';
 
 // レンダラー
 
@@ -34,9 +15,9 @@ const InputForm:React.FC<{}> = ()=>{
     handleSubmit,
     formState:{isValid, isDirty, errors, touchedFields},
   }
-  = useForm<FormData>({
+  = useForm<typeof defaultFormFieldValues>({
     mode:'onTouched',
-    defaultValues: {...defaultValues,   ...{
+    defaultValues: {...defaultFormFieldValues,   ...{
       //Todo: 重い処理ではないと思うが、1回だけ走るようにする予定
       urlsToOpen: localStorage.getItem('snapshot-urlsToOpen') || '',
       viewportWidth: localStorage.getItem('snapshot-viewportWidth') || '',
@@ -44,7 +25,7 @@ const InputForm:React.FC<{}> = ()=>{
     }}
   });
 
-  const onSubmit : SubmitHandler<FormData> = async (data, e) => {
+  const onSubmit : SubmitHandler<typeof defaultFormFieldValues> = async (data, e) => {
     try{
       localStorage.setItem('snapshot-urlsToOpen', data.urlsToOpen);
       window.localStorage.setItem('snapshot-viewportWidth', data.viewportWidth);
@@ -70,7 +51,7 @@ const InputForm:React.FC<{}> = ()=>{
     }
   };
 
-  const FormItemMessage:React.FC<{name:keyof FormData}> = (props) =>{
+  const FormItemMessage:React.FC<{name:keyof typeof defaultFormFieldValues}> = (props) =>{
     const _isErrMessage = !!errors?.[props.name];
     const _errMessage = errors?.[props.name]?.message;
     const _isTouched = touchedFields?.[props.name];
@@ -135,7 +116,7 @@ const InputForm:React.FC<{}> = ()=>{
             <label key={item.value}>
               <input type="radio" value={item.value} {
                 ...register('userAgent')
-              } defaultChecked={item.value === defaultValues?.userAgent} />
+              } defaultChecked={item.value === defaultFormFieldValues?.userAgent} />
               <span className='labelName'>{item.labelName}</span>
             </label>
           );
@@ -146,11 +127,11 @@ const InputForm:React.FC<{}> = ()=>{
         <legend>リファラー</legend>
         {
           [
-            {labelName:'設定なし',value:defaultValues.referer},
+            {labelName:'設定なし',value:defaultFormFieldValues.referer},
           ].map((item)=>{
             return (
               <label key={item.value}>
-                <input type="radio" value={item.value} {...register('referer')} defaultChecked={item.value === defaultValues.referer}/>
+                <input type="radio" value={item.value} {...register('referer')} defaultChecked={item.value === defaultFormFieldValues.referer}/>
                 <span className="labelName">{item.labelName}</span>
               </label>
             );

@@ -1,4 +1,4 @@
-import type { ValidURL } from "../../FormData";
+import { type ValidURL } from "@/utility/types/types";
 import type { Page } from "playwright";
 import { getURLInPage } from "../sub/getURLInPage";
 

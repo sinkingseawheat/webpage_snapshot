@@ -1,4 +1,4 @@
-import type { Page, Response, Frame } from "playwright";
+import type { Page, Frame } from "playwright";
 import { setting } from "@/utility/Setting";
 
 export const getResponseByPageGoto = async (

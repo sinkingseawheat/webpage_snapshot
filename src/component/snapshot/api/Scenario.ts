@@ -1,6 +1,8 @@
-import type { ScenerioOption, ValidURL } from "@/component/snapshot/FormData";
-import type { Page, BrowserContext } from "playwright";
+import { type ValidURL } from "@/utility/types/types";
+import type { Page } from "playwright";
 import { Note } from "./Note";
+
+import { deserializeScenerioFormFields } from "@/component/snapshot/FormData";
 
 import { setting } from "@/utility/Setting";
 import { getRedirectStatusFromRequest } from "./sub/getRedirectStatusFromRequest";
@@ -22,7 +24,7 @@ class Scenario {
   constructor(
     private pageResult: ReturnType<Note["createPageResult"]>,
     private page: Page,
-    private option: Omit<ScenerioOption, "urlsToOpen">,
+    private option: Omit<ReturnType<typeof deserializeScenerioFormFields>, "urlsToOpen">,
   ){
     this.requestURL = this.pageResult.getURL();
   }
