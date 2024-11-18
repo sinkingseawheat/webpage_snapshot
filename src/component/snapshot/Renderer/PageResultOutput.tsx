@@ -7,7 +7,7 @@ import { ImageDescription } from "./ImageDescription";
 import { getJSONData } from './sub/getJSONData';
 import { setGetPathToSendFile } from "./sub/setGetPathToSendFile";
 
-import { PageResultJSON, type MainResultJSON } from '@/utility/types/json';
+import { PageResultJSON, type MainResultJSON } from '@/component/snapshot/JSON';
 
 const PageResultOutput:React.FC<{
   selectedId: string,

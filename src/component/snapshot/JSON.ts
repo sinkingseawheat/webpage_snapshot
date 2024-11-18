@@ -1,4 +1,4 @@
-import type { IndexOfURL } from './types';
+import type { IndexOfURL } from '../../utility/types/types';
 
 
 export type MainResultJSON = {

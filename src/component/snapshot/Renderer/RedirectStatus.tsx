@@ -1,5 +1,5 @@
-import { MainResultJSON } from "@/utility/types/json";
-import { PageResultJSON } from "@/utility/types/json";
+import { MainResultJSON } from "@/component/snapshot/JSON";
+import { PageResultJSON } from "@/component/snapshot/JSON";
 
 import { getResponseFormRequestURL } from "./sub/getResponseFormRequestURL";
 

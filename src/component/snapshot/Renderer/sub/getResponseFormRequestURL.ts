@@ -1,4 +1,4 @@
-import type { MainResultJSON } from "@/utility/types/json";
+import type { MainResultJSON } from "@/component/snapshot/JSON";
 export function getResponseFormRequestURL(links:MainResultJSON["links"], requestURL:string){
   if(links === undefined){
     return null;

@@ -5,7 +5,7 @@ import MainResultOutput from "./MainResultOutput";
 import PageResultOutput from "./PageResultOutput";
 
 import { getJSONData } from './sub/getJSONData';
-import { MainResultJSON } from '@/utility/types/json';
+import { MainResultJSON } from '@/component/snapshot/JSON';
 
 const Output:React.FC<{
   selectedId:string,
