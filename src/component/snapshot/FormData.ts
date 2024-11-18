@@ -18,43 +18,17 @@ type ResponseData = {
   message: string;
 };
 
-// シナリオに関するフォームデータ
-
-/** Scenarioに関連するフォームデータのname */
+// Scenario
 const scenarioNames = [
   'urlsToOpen',
   'referer'
 ] as const;
-
-const browserContextNames = [
-  "ignoreHTTPSErrors",
-  "userAgent",
-  "viewportWidth", "viewportHeight",
-] as const;
-
-const Names = [...scenarioNames, ...browserContextNames];
-
-type FormFieldValue = Record<(typeof Names)[number], string|string[]>;
-
-const defaultFormFieldValues = {
-  'urlsToOpen':'',
-  'referer':'',
-  "ignoreHTTPSErrors":'',
-  "userAgent":'',
-  "viewportWidth":'',
-  "viewportHeight":'',
-} satisfies FormFieldValue;
-
-// FormFieldValue -> Option
-
-const deserializeScenerioFormFields = (sFormFields:Pick<FormFieldValue,'urlsToOpen'|'referer'>):
-{
+const deserializeScenerioFormFields = (
+  sFormFields:Pick<FormFieldValue,'urlsToOpen'|'referer'>
+):{
   "urlsToOpen":ValidURL[],
   "referer"?:Required<Parameters<Page["goto"]>>[1]["referer"],
 }=>{
-  const rv:ReturnType<typeof deserializeScenerioFormFields> = {
-    urlsToOpen: [],
-  };
   const getArray = (arg:string|string[]):string[]=>{
     if(typeof arg === 'string'){
       return arg.split(/\r?\n/)
@@ -84,9 +58,25 @@ const deserializeScenerioFormFields = (sFormFields:Pick<FormFieldValue,'urlsToOp
   };
 }
 
-const deserializeBrowserContextPickedFormFields = (bcFormFields: Pick<FormFieldValue,'ignoreHTTPSErrors'|'userAgent'|'viewportWidth'|'viewportHeight'>):
-Pick<BrowserContextOptions, "ignoreHTTPSErrors" | "userAgent" | "viewport"> =>
-{
+// BrowserContext
+const browserContextNames = [
+  "ignoreHTTPSErrors",
+  "userAgent",
+  "viewportWidth", "viewportHeight",
+] as const;
+const Names = [...scenarioNames, ...browserContextNames];
+type FormFieldValue = Record<(typeof Names)[number], string|string[]>;
+const defaultFormFieldValues = {
+  'urlsToOpen':'',
+  'referer':'',
+  "ignoreHTTPSErrors":'',
+  "userAgent":'',
+  "viewportWidth":'',
+  "viewportHeight":'',
+} satisfies FormFieldValue;
+const deserializeBrowserContextPickedFormFields = (
+  bcFormFields:Pick<FormFieldValue,'ignoreHTTPSErrors'|'userAgent'|'viewportWidth'|'viewportHeight'>
+):Pick<BrowserContextOptions, "ignoreHTTPSErrors" | "userAgent" | "viewport"> =>{
   const _ignoreHTTPSErrors = bcFormFields['ignoreHTTPSErrors'];
   const _userAgent = bcFormFields['userAgent'];
   const _viewportWidth = bcFormFields['viewportWidth'];
@@ -112,9 +102,7 @@ Pick<BrowserContextOptions, "ignoreHTTPSErrors" | "userAgent" | "viewport"> =>
   };
 };
 
-
 export type { ResponseData };
-
 export {
   defaultFormFieldValues,
   deserializeScenerioFormFields,
