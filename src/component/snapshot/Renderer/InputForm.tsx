@@ -4,7 +4,7 @@ import {useForm } from 'react-hook-form';
 import type { SubmitHandler } from 'react-hook-form';
 import styles from '@/component/snapshot/Renderer/style/FormInput.module.scss';
 
-import { browerContextDefaultFormFieldValue } from '../api/FormData';
+import { browerContextDefaultFormFieldValue } from '../FormData';
 
 // シナリオに関するフォームデータ
 

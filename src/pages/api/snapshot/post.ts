@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 
 import { entrance } from "@/component/headlessBrowser/entrance";
 
-import type { ResponseData } from "@/component/snapshot/api/FormData";
+import type { ResponseData } from "@/component/snapshot/FormData";
 
 export default async function handler(
   req:NextApiRequest,

@@ -2,10 +2,10 @@ import { chromium } from 'playwright';
 import type { BrowserContextOptions, Browser, BrowserContext } from 'playwright';
 import PQueue from 'p-queue';
 
-import { deserializeBrowserContextPickedFormFields } from "../snapshot/api/FormData";
-import { deserializeScenerioFormFields } from '@/component/snapshot/api/FormData';
-import type { BrowserContextPickedFormFields } from "../snapshot/api/FormData";
-import type { ScenarioFormFields, ScenerioOption, ValidURL } from '@/component/snapshot/api/FormData';
+import { deserializeBrowserContextPickedFormFields } from "../snapshot/FormData";
+import { deserializeScenerioFormFields } from '@/component/snapshot/FormData';
+import type { BrowserContextPickedFormFields } from "../snapshot/FormData";
+import type { ScenarioFormFields, ScenerioOption, ValidURL } from '@/component/snapshot/FormData';
 
 import { Note } from '@/component/snapshot/api/Note';
 import { Scenario } from '@/component/snapshot/api/Scenario';

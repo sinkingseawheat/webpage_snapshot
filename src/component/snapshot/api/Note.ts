@@ -2,8 +2,8 @@ import path from 'path';
 import fs from 'fs/promises';
 
 import type { BrowserContext, Request } from 'playwright';
-import { ValidURL, ScenarioFormFields } from "./FormData";
-import type { BrowserContextPickedFormFields } from "./FormData";
+import { ValidURL, ScenarioFormFields } from "../FormData";
+import type { BrowserContextPickedFormFields } from "../FormData";
 import { PageResult, type PageResultRecord } from './PageResult';
 import { FileArchive } from './FileArchive';
 import { type IndexOfURL, isIndexOfURL, type Entries, DOT_FILE_PROCESS_COMPLETED } from '@/utility/types/types';
