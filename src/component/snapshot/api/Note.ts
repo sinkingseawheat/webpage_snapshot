@@ -1,15 +1,14 @@
 import path from 'path';
 import fs from 'fs/promises';
 
-import type { BrowserContext, Request } from 'playwright';
+import type { BrowserContext } from 'playwright';
 import { ValidURL } from "@/utility/types/types";
-import { PageResult, type PageResultRecord } from './PageResult';
+import { PageResult } from './PageResult';
 import { FileArchive } from './FileArchive';
 import { type IndexOfURL, isIndexOfURL, type Entries, DOT_FILE_PROCESS_COMPLETED } from '@/utility/types/types';
+import { type PageResultRecord, type MainResultRecord } from '@/component/snapshot/JSON';
 import { VERSION } from '@/utility/getVersion';
 import PQueue from 'p-queue';
-
-import { defaultFormFieldValues } from '@/component/snapshot/FormData';
 
 import { requestNotRequestedButInPage } from './sub/requestNotRequestedButInPage';
 
@@ -20,55 +19,6 @@ class NoteError extends Error{
 }
 
 
-/** 未リクエストの場合はnull。それ以外はオブジェクト */
-type ResponseResult = {
-  /** 通信が完了したらURL入れる。ただし、タイムアウトなどでレスポンスが得られなかったらnull */
-  responseURL: string,
-  /** リクエスト結果 */
-  status: number,
-  /** Content-Type */
-  contentType: string,
-  /** Content-Length */
-  contentLength: number,
-  /** ファイルのハッシュ値 */
-  shaHash:string|null,
-} | {
-  /** 通信が完了したらURL入れる。ただし、タイムアウトなどでレスポンスが得られなかったらnull */
-  responseURL: null,
-  /** リクエスト結果 */
-  status?: number,
-  /** Content-Type */
-  contentType?: string,
-  /** Content-Length */
-  contentLength?: number,
-  /** ファイルのハッシュ値 */
-  shaHash?:string|null,
-} | null;
-
-
-export type LinksItem = {
-  response:ResponseResult,
-  /** ページからのリクエストか、ページから抽出したURLか */
-  source:'requestedFromPage'|'extracted',
-  /** このURLへのアクセスが発生したページのindex */
-  linkSourceIndex: Set<IndexOfURL>,
-  /** アーカイブしたファイルはこのarchiveIndexにファイル名をリネームする */
-  archiveIndex?: number | null
-}
-
-
-/** リクエスト全体に共通する結果 */
-export type MainResultRecord = {
-  formData:Omit<typeof defaultFormFieldValues, 'urlsToOpen'>,
-  /** アプリのversion。package.jsonから取得 */
-  version:string|null,
-  /** ヘッドレスブラウザでリクエストするURLとそのindexの紐づけリスト */
-  targetURLs:Map<ValidURL, IndexOfURL>,
-  /** 各ページで読み込んだ、または設定されたリンクとそのレスポンス結果を格納する。keyは最初にリクエストしたURL。updateLinksで更新する */
-  links:Map<string, LinksItem>,
-};
-
-export type WrittenURLs = Required<PageResultRecord>['URLExtracted'];
 
 const directoryStoringResult = path.join(process.cwd(),`./_data/result`);
 

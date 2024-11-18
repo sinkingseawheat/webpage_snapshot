@@ -3,57 +3,11 @@ import type { Request } from 'playwright';
 import { type IndexOfURL, type ValidURL } from '@/utility/types/types';
 import type { Note } from './Note';
 import type { FileArchive } from './FileArchive';
-import type { LinksItem } from './Note';
+import type { LinksItem, PageResultRecord } from '@/component/snapshot/JSON';
 
 import { getRedirectStatusFromRequest } from './sub/getRedirectStatusFromRequest';
 import { getResponseAndBodyFromRequest } from './sub/getResponseAndBodyFromRequest';
 
-/** ページごとの結果 */
-type PageResultRecord = {
-  'firstRequested'?:{
-    url: ValidURL,
-    redirect:null
-  } | {
-    url: ValidURL,
-    redirect:{
-      count:number|null,
-      transition:{url:string,status:number}[],
-    },
-  },
-  'URLRequestedFromPage'?:{
-    /** ページ内で使用されているURL */
-    requestedURLs:string[],
-  },
-  /** ページのDOM */
-  'DOM'?:{
-    source:string,
-  }
-  /** ページ内に記述されているURL。 */
-  'URLExtracted'?:({
-    /** 取得できたURL。相対・ルート相対・#始まりなども含む */
-    relURL:string[],
-    /** relURLを取得したページのURLを基に絶対パス化 */
-    absURLs:(ValidURL|null)[]
-  } & ({
-    /** URLの取得元。DOM要素から */
-    type:'DOM_Attribute',
-    /** タグ名 */
-    tagName:string,
-  } | {
-    /** URLの取得元。CSSから */
-    type:'fromCascadingStyleSheets',
-    /** CSSファイル。nullの場合はHTMLのインラインstyle */
-    href:string|null,
-  } | {
-    /** URLの取得元。style属性から */
-    type:'styleAttribute',
-  }))[]
-  /** キャプチャ */
-  'PageCapture'?:{
-    name: string,
-    buffer: Buffer,
-  }[]
-};
 
 class PageResult {
   constructor(
@@ -115,4 +69,3 @@ class PageResult {
 }
 
 export { PageResult }
-export type { PageResultRecord }

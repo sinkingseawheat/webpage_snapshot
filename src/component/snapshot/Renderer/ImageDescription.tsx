@@ -1,5 +1,5 @@
 import { MainResultJSON } from "@/component/snapshot/JSON";
-import { PageResultJSON } from "@/component/snapshot/JSON";
+import { PageResultRecordJSON } from "@/component/snapshot/JSON";
 import style from '@/component/snapshot/Renderer/style/Output.module.scss'
 import { getResponseFormRequestURL } from "./sub/getResponseFormRequestURL";
 import { setGetPathToSendFile } from "./sub/setGetPathToSendFile";
@@ -7,8 +7,8 @@ import { setGetPathToSendFile } from "./sub/setGetPathToSendFile";
 const ImageDescription:React.FC<{
   selectedId:string,
   links:MainResultJSON["links"],
-  urlExtracted:PageResultJSON["URLExtracted"],
-  urlRequestedFromPage:PageResultJSON["URLRequestedFromPage"],
+  urlExtracted:PageResultRecordJSON["URLExtracted"],
+  urlRequestedFromPage:PageResultRecordJSON["URLRequestedFromPage"],
 }> = ({selectedId, links, urlExtracted, urlRequestedFromPage})=>{
   const getPath = setGetPathToSendFile(selectedId);
   const dataMap:Map<string,{

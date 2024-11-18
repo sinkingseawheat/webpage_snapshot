@@ -1,6 +1,6 @@
 import { Page } from "playwright"
 
-import type { LinksItem } from "../Note";
+import { type LinksItem } from "@/component/snapshot/JSON";
 import { getResponseAndBodyFromRequest } from './getResponseAndBodyFromRequest';
 import { FileArchive } from "../FileArchive";
 import { getResponseByPageGoto } from "./getResponseByPageGoto";

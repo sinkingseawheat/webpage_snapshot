@@ -7,7 +7,7 @@ import { ImageDescription } from "./ImageDescription";
 import { getJSONData } from './sub/getJSONData';
 import { setGetPathToSendFile } from "./sub/setGetPathToSendFile";
 
-import { PageResultJSON, type MainResultJSON } from '@/component/snapshot/JSON';
+import { PageResultRecordJSON, type MainResultJSON } from '@/component/snapshot/JSON';
 
 const PageResultOutput:React.FC<{
   selectedId: string,
@@ -18,7 +18,7 @@ const PageResultOutput:React.FC<{
 
   const getPath = setGetPathToSendFile(selectedId);
 
-  const [pageResultJSON, setPageResultJSON] = useState<undefined|null|PageResultJSON>(undefined);
+  const [pageResultJSON, setPageResultRecordJSON] = useState<undefined|null|PageResultRecordJSON>(undefined);
   const [errorMessageOfPageResult, setErrorMessageOfPageResult] = useState<string>('');
 
   useEffect(()=>{
@@ -29,7 +29,7 @@ const PageResultOutput:React.FC<{
         getJSONData({selectedId, relativeJSONPath:`${indexOfURL}/page.json`}),
       ]);
       const {jsonData:pageResultJSON, errorMessage:errorMessageOfPageResult} = pageData;
-      setPageResultJSON(pageResultJSON);
+      setPageResultRecordJSON(pageResultJSON);
       setErrorMessageOfPageResult(errorMessageOfPageResult);
     })();
   }, [selectedId, indexOfURL]);

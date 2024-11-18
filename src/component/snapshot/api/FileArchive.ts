@@ -1,8 +1,8 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import type { LinksItem, Note } from './Note';
 import { setting } from '@/utility/Setting';
+import { type LinksItem } from '@/component/snapshot/JSON';
 
 class FileArchiveError extends Error {
   static {

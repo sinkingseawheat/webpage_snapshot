@@ -1,14 +1,14 @@
-import type { WrittenURLs } from '../Note';
+import { type PageResultRecord } from "@/component/snapshot/JSON";
 
 /* ヘッドレスブラウザのみで実行可能。Node.jsのコンテキストでは実行不可 */
 
-export const getURLInPage = ():WrittenURLs=>{
+export const getURLInPage = ():PageResultRecord["URLExtracted"]=>{
   function getURLsFromUrlMethod(cssText:string){
     const rv = cssText.match(/(?<=url\()[^)]+/g) ?? [];
     return rv.map(src=>src.replace(/["']/g,''));
   }
   // ▼ HeadlessBrowser Context
-  const rv:WrittenURLs = [];
+  const rv:PageResultRecord["URLExtracted"] = [];
   // DOM_Attribute
   for(const node of document.querySelectorAll('[href], [src], [srcset], [action], picture, meta[property="og:image"], meta[name="twitter:image"]')){
     const tagName = node.tagName;
@@ -51,7 +51,7 @@ export const getURLInPage = ():WrittenURLs=>{
   }
   function getURLsFromCSS(sheet:CSSStyleSheet){
     const rules = sheet.cssRules;
-    const rvFromCSS:WrittenURLs = []
+    const rvFromCSS:PageResultRecord["URLExtracted"] = []
     for(const rule of rules){
       if(rule instanceof CSSStyleRule){
         if(rule.style.backgroundImage !== ''){
