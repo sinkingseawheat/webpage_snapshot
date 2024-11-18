@@ -19,10 +19,10 @@ const ImageDescription:React.FC<{
     contentLength?:number,
     archiveIndex?:number|null,
   }> = new Map();
-  for(const requestURL of urlRequestedFromPage['requestedURLs']){
+  for(const requestURL of urlRequestedFromPage?.['requestedURLs'] ?? []){
     dataMap.set(requestURL, {});
   }
-  for(const extractedItem of urlExtracted ){
+  for(const extractedItem of urlExtracted ?? [] ){
     for(const absURL of extractedItem['absURLs']){
       if(absURL === null){continue;}
       if('tagName' in extractedItem){

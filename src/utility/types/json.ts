@@ -27,7 +27,7 @@ export type PageResultJSON = {
         url: string;
         status: number;
       }[];
-    };
+    }|null;
   };
   URLRequestedFromPage: {
     requestedURLs: string[];
