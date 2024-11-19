@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 
-import { entrance } from "@/component/headlessBrowser/entrance";
+import { entrance } from "@/component/snapshot/api/entrance";
 
 import type { ResponseData } from "@/component/snapshot/FormData";
 

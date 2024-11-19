@@ -2,7 +2,7 @@ import { RandomString } from '@/utility/RandomString';
 
 import { type ResponseData, defaultFormFieldValues } from "@/component/snapshot/FormData";
 
-import { Context } from '@/component/headlessBrowser/Context';
+import { Context } from '@/component/snapshot/Context';
 
 class EntranceError extends Error {
   static {
