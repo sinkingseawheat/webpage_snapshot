@@ -6,7 +6,7 @@ import { ValidURL } from "@/utility/types/types";
 import { PageResult } from './PageResult';
 import { FileArchive } from './FileArchive';
 import { type IndexOfURL, isIndexOfURL, type Entries, DOT_FILE_PROCESS_COMPLETED } from '@/utility/types/types';
-import { type PageResultRecord, type MainResultRecord } from '@/component/snapshot/JSON';
+import { type PageResultRecord, type MainResultRecord, getPageResultRecordJSON, getMainResultRecordJSON } from '@/component/snapshot/JSON';
 import { VERSION } from '@/utility/getVersion';
 import PQueue from 'p-queue';
 
@@ -26,7 +26,7 @@ class Note{
   /** ページごとの結果にインデックスを付与したもの */
   private pageResults:Map<IndexOfURL, PageResultRecord> = new Map();
   /** リクエスト全体に共通する結果を格納する */
-  private mainResult!:MainResultRecord;
+  private mainResultRecord!:MainResultRecord;
   /** 結果を格納するディレクトリのパス */
   private occupiedDirectoryPath!:string;
   /** ファイルをアーカイブする */
@@ -39,7 +39,7 @@ class Note{
       jobId: string,
     }
   ){
-    const _targetURLs:typeof this.mainResult["targetURLs"] = new Map();
+    const _targetURLs:typeof this.mainResultRecord["targetURLs"] = new Map();
     urlsToOpen.forEach((url, index)=>{
       const indexOfURL = index.toString().padStart(3,'0');
       if(isIndexOfURL(indexOfURL)){
@@ -49,8 +49,8 @@ class Note{
         throw new Error(`${indexOfURL}は数字のみで構成された文字列でなければいけません`);
       }
     });
-    const _links:typeof this.mainResult["links"] = new Map();
-    this.mainResult = {
+    const _links:typeof this.mainResultRecord["links"] = new Map();
+    this.mainResultRecord = {
       formData: formData,
       version: VERSION ?? null,
       targetURLs: _targetURLs,
@@ -75,13 +75,12 @@ class Note{
   }
 
   createPageResult(url:ValidURL){
-    const indexOfURL = this.mainResult.targetURLs.get(url);
+    const indexOfURL = this.mainResultRecord.targetURLs.get(url);
     if(indexOfURL === undefined){
       throw new NoteError(`${url}はtargetURLsに含まれていません`);
     }
-    const pageResultRecord:PageResultRecord = {};
     this.pageResults.set(indexOfURL, pageResultRecord);
-    return new PageResult(url, indexOfURL, this.mainResult.links, pageResultRecord, this.fileArchive);
+    return new PageResult(url, indexOfURL, this.mainResultRecord.links, this.fileArchive);
   }
 
   async archiveNotRequestURL(context:BrowserContext|null, onAllScenarioEnd:()=>void){
@@ -107,39 +106,8 @@ class Note{
   async write(){
     // 全体の結果
     const fileHandleMain = await fs.open(this.occupiedDirectoryPath+'/main.json','ax');
-    const recordMain:Partial<{[k in keyof MainResultRecord]:any}> = {}
-    for (const [name, value] of Object.entries(this.mainResult) as Entries<typeof this.mainResult>){
-      switch(name){
-        case 'formData':
-          recordMain[name] = value;
-          break;
-        case 'targetURLs':
-          recordMain[name] = [];
-          for(const [url, index] of value){
-            recordMain[name].push([index, url]);
-          }
-          break;
-        case 'links':
-          recordMain[name] = []
-          for(const [requestURL, linksItem] of value){
-            const { responseURL, status, contentType, contentLength, shaHash } = linksItem["response"] ?? {};
-            recordMain[name].push({
-              requestURL: requestURL,
-              responseURL,
-              status,
-              contentType,
-              contentLength,
-              shaHash,
-              linkSourceIndex: Array.from(linksItem['linkSourceIndex']),
-              archiveIndex: linksItem['archiveIndex'],
-          })
-          }
-          break;
-        default:
-          recordMain[name] = value;
-      }
-    }
-    await fileHandleMain.write(JSON.stringify(recordMain, null, '\t'));
+    const jsonData = getMainResultRecordJSON(this.mainResult)
+    await fileHandleMain.write(JSON.stringify(jsonData, null, '\t'));
     await fileHandleMain.close();
   }
 
@@ -147,20 +115,16 @@ class Note{
     const {indexOfURL, pageResultRecord} = arg;
     // ページJSONを書き込み
     const fileHandle = await fs.open(this.getPageResultPath(indexOfURL,'page.json'), 'ax');
-    const jsonStored:Pick<PageResultRecord,'firstRequested'|'URLRequestedFromPage'|'URLExtracted'> = {
-      firstRequested: pageResultRecord['firstRequested'],
-      URLRequestedFromPage: pageResultRecord['URLRequestedFromPage'],
-      URLExtracted: pageResultRecord['URLExtracted'],
-    };
-    fileHandle.write(JSON.stringify(jsonStored, null, '\t'));
+    const jsonData = getPageResultRecordJSON(pageResultRecord);
+    fileHandle.write(JSON.stringify(jsonData, null, '\t'));
     await fileHandle.close();
     // キャプチャを格納
-    for(const capture of pageResultRecord['PageCapture'] ?? []){
+    for(const capture of pageResultRecord['pageCapture'] ?? []){
       await fs.writeFile(this.getPageResultPath(indexOfURL,`capture_${capture['name']}.jpg`), capture["buffer"], {flag:'ax'});
     }
     // DOMテキストを格納
-    if(pageResultRecord['DOM']?.source !== undefined){
-      await fs.writeFile(this.getPageResultPath(indexOfURL,'document_object_model.txt'), pageResultRecord['DOM'].source, {flag:'ax'});
+    if(pageResultRecord['DOMtext'] !== '' && pageResultRecord['DOMtext'] !== null){
+      await fs.writeFile(this.getPageResultPath(indexOfURL,'document_object_model.txt'), pageResultRecord['DOMtext'], {flag:'ax'});
     }
     this.pageResults.delete(indexOfURL);
   }

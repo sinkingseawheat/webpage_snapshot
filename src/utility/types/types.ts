@@ -1,7 +1,7 @@
 
-type Entries<T> = (keyof T extends infer U ? (U extends keyof T ? [U,T[U]] : never) : never)[];
+export type Entries<T> = (keyof T extends infer U ? (U extends keyof T ? [U,T[U]] : never) : never)[];
+export type ValueOfMap<T> = T extends Map<any,infer U> ? U : never;
 
-export type {Entries}
 
 
 declare const validURLNominality: unique symbol;
@@ -29,3 +29,12 @@ export const isIndexOfURL = (arg: any): arg is IndexOfURL => {
 
 /** 処理完了後に生成されるファイル。処理が正常に完了しているかを確認できる */
 export const DOT_FILE_PROCESS_COMPLETED = '.completed' as const;
+
+export type ErrorMessage = '' | '[unplanned]' | '[no resopnse]' | '[too many redirects]' | 'net:ERR_FAILED' | 'ERR_INVALID_AUTH_CREDENTIALS' | '[on requestfailed]' | '[request is pending]';
+export function isErrorMessage(args:any):args is ErrorMessage{
+  if(typeof args !== 'string'){return false;}
+  if(['', '[unplanned]', '[no resopnse]', '[too many redirects]', 'net:ERR_FAILED', 'ERR_INVALID_AUTH_CREDENTIALS', '[on requestfailed]', '[request is pending]'].includes(args)){
+    return true;
+  }
+  return false;
+}

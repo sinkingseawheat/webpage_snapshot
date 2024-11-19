@@ -2,7 +2,8 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { setting } from '@/utility/Setting';
-import { type LinksItem } from '@/component/snapshot/JSON';
+import { type MainResultRecord } from '@/component/snapshot/JSON';
+import { ValueOfMap } from '@/utility/types/types';
 
 class FileArchiveError extends Error {
   static {
@@ -31,30 +32,27 @@ class FileArchive{
   async archive(args:{
     requestURL:string,
     buffer:Buffer,
-    contentType:string,
-    result:LinksItem
-  }){
+    contentType:string
+  }):Promise<ValueOfMap<MainResultRecord["links"]>["archiveIndex"]>{
     if(this.state !== 'initiated'){
       throw new FileArchiveError(`archiveに失敗しました。${this.state}がinitiatedではありません`);
     }
-    const {requestURL, buffer, contentType, result} = args;
+    const {requestURL, buffer, contentType} = args;
     if(!setting.isAllowedArchiveURL(requestURL)){
-      result.archiveIndex = null;
      return null;
     }
     const prevState = this.recordOfStartedArchiveURL.get(requestURL);
     if(prevState !== undefined){
-      result.archiveIndex = prevState.index;
-      return null;
+      return prevState.index
     }
     const targetPath = path.join(this.storeDirectory, this.counter.toString());
-    result.archiveIndex = this.counter;
+    const _archiveIndex = this.counter;
     this.recordOfStartedArchiveURL.set(requestURL, {index:this.counter, contentType:contentType});
     this.counter++;
     const fileHandle = await fs.open(targetPath, 'ax');
     await fileHandle.write(buffer);
     await fileHandle.close();
-    return null;
+    return _archiveIndex;
   }
 }
 

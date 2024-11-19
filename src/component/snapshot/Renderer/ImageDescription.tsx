@@ -7,9 +7,9 @@ import { setGetPathToSendFile } from "./sub/setGetPathToSendFile";
 const ImageDescription:React.FC<{
   selectedId:string,
   links:MainResultRecordJSON["links"],
-  urlExtracted:PageResultRecordJSON["URLExtracted"],
-  urlRequestedFromPage:PageResultRecordJSON["URLRequestedFromPage"],
-}> = ({selectedId, links, urlExtracted, urlRequestedFromPage})=>{
+  URLsExtracted:PageResultRecordJSON["URLsExtracted"],
+  URLsRequestedFromPage:PageResultRecordJSON["URLsRequestedFromPage"],
+}> = ({selectedId, links, URLsExtracted, URLsRequestedFromPage})=>{
   const getPath = setGetPathToSendFile(selectedId);
   const dataMap:Map<string,{
     tagName?:string,
@@ -19,10 +19,10 @@ const ImageDescription:React.FC<{
     contentLength?:number,
     archiveIndex?:number|null,
   }> = new Map();
-  for(const requestURL of urlRequestedFromPage?.['requestedURLs'] ?? []){
+  for(const requestURL of URLsRequestedFromPage?.['requestedURLs'] ?? []){
     dataMap.set(requestURL, {});
   }
-  for(const extractedItem of urlExtracted ?? [] ){
+  for(const extractedItem of URLsExtracted ?? [] ){
     for(const absURL of extractedItem['absURLs']){
       if(absURL === null){continue;}
       if('tagName' in extractedItem){

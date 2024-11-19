@@ -5,7 +5,7 @@ import { getURLInPage } from "../sub/getURLInPage";
 export const getExtractLinks = async (page:Page, )=>{
   const dataFromHeadlessBrowser = await page.evaluate(getURLInPage);
   for(const elmData of dataFromHeadlessBrowser){
-    for(const url of elmData.relURL){
+    for(const url of elmData.relURLs){
       const absURL = (()=>{
         try{
           const cssFilePath = (()=>{

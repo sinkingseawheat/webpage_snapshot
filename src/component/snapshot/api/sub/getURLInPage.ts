@@ -2,13 +2,13 @@ import { type PageResultRecord } from "@/component/snapshot/JSON";
 
 /* ヘッドレスブラウザのみで実行可能。Node.jsのコンテキストでは実行不可 */
 
-export const getURLInPage = ():PageResultRecord["URLExtracted"]=>{
+export const getURLInPage = ():PageResultRecord["URLsExtracted"]=>{
   function getURLsFromUrlMethod(cssText:string){
     const rv = cssText.match(/(?<=url\()[^)]+/g) ?? [];
     return rv.map(src=>src.replace(/["']/g,''));
   }
   // ▼ HeadlessBrowser Context
-  const rv:PageResultRecord["URLExtracted"] = [];
+  const rv:PageResultRecord["URLsExtracted"] = [];
   // DOM_Attribute
   for(const node of document.querySelectorAll('[href], [src], [srcset], [action], picture, meta[property="og:image"], meta[name="twitter:image"]')){
     const tagName = node.tagName;
@@ -45,13 +45,13 @@ export const getURLInPage = ():PageResultRecord["URLExtracted"]=>{
     rv.push({
       type:'DOM_Attribute',
       tagName,
-      relURL: Array.from(url).filter((item)=>item!==null),
+      relURLs: Array.from(url).filter((item)=>item!==null),
       absURLs:[],
     });
   }
   function getURLsFromCSS(sheet:CSSStyleSheet){
     const rules = sheet.cssRules;
-    const rvFromCSS:PageResultRecord["URLExtracted"] = []
+    const rvFromCSS:PageResultRecord["URLsExtracted"] = []
     for(const rule of rules){
       if(rule instanceof CSSStyleRule){
         if(rule.style.backgroundImage !== ''){
@@ -60,7 +60,7 @@ export const getURLInPage = ():PageResultRecord["URLExtracted"]=>{
             rvFromCSS.push({
               type: 'fromCascadingStyleSheets',
               href: rule.parentStyleSheet?.href ?? null,
-              relURL: _relURL,
+              relURLs: _relURL,
               absURLs:[],
             });
           }
@@ -71,7 +71,7 @@ export const getURLInPage = ():PageResultRecord["URLExtracted"]=>{
             rvFromCSS.push({
               type: 'fromCascadingStyleSheets',
               href: rule.parentStyleSheet?.href ?? null,
-              relURL: _relURL,
+              relURLs: _relURL,
               absURLs:[],
             });
           }

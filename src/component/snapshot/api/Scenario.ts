@@ -1,8 +1,7 @@
-import { type ValidURL } from "@/utility/types/types";
-import type { Page } from "playwright";
-import { Note } from "./Note";
+import { isValidURL, ValueOfMap, type ValidURL } from "@/utility/types/types";
+import type { Browser, Page, Request } from "playwright";
 
-import { deserializeScenerioFormFields } from "@/component/snapshot/FormData";
+import { deserializeScenerioFormFields, defaultFormFieldValues, deserializeBrowserContextPickedFormFields } from "@/component/snapshot/FormData";
 
 import { setting } from "@/utility/Setting";
 import { getRedirectStatusFromRequest } from "./sub/getRedirectStatusFromRequest";
@@ -10,6 +9,11 @@ import { getRedirectStatusFromRequest } from "./sub/getRedirectStatusFromRequest
 import { getCapture } from "./scenario/getCapture";
 import { getExtractLinks } from "./scenario/getExtractLinks";
 import { getResponseByPageGoto } from "./sub/getResponseByPageGoto";
+import { MainResultRecord, PageResultRecord } from "../JSON";
+import { PageResult } from "./PageResult";
+import { MainResult } from "./MainResutl";
+
+type FormData = typeof defaultFormFieldValues;
 
 class ScenarioError extends Error {
   static {
@@ -18,48 +22,78 @@ class ScenarioError extends Error {
 }
 
 class Scenario {
-  public URLWaitingForFinish:Set<string> = new Set();
   private responseResult!:Awaited<ReturnType<typeof getResponseByPageGoto>>;
   public requestURL:ValidURL;
+  private mainResult: MainResult;
+  private pageResults: PageResult[];
   constructor(
-    private pageResult: ReturnType<Note["createPageResult"]>,
-    private page: Page,
-    private option: Omit<ReturnType<typeof deserializeScenerioFormFields>, "urlsToOpen">,
+    formData:FormData,
+    browser:Browser
   ){
+    this.mainResult = new MainResult();
+    const _browserContextOption = deserializeBrowserContextPickedFormFields(formData);
+    const browserContextOption = (()=>{
+      const _proxy = setting.getProxy();
+      if(_proxy === null){
+        return _browserContextOption;
+      }else{
+        return {
+          ...{
+            proxy: _proxy,
+          },
+          ..._browserContextOption
+        };
+      }
+    })();
+    const {urlsToOpen, ...scenarioOption} = deserializeScenerioFormFields(formData);
     this.requestURL = this.pageResult.getURL();
+    this.pageResult = new PageResult(requestURL, )
   }
   async start(){
     const url = this.requestURL;
+
+    // PageResultに移動
     console.log(`-------`);
     console.log(`次のページ単体の処理を開始しました: ${url}`);
+    let redirectTransition:PageResultRecord["redirectTransition"] = [];
+    const URLsRequestedFromPage:PageResultRecord["URLsRequestedFromPage"] = [];
+    let DOMtext:PageResultRecord["DOMtext"] = '';
+    let URLsExtracted:PageResultRecord["URLsExtracted"] = [];
+    let pageCapture:PageResultRecord["pageCapture"] = [];
+    let storedRequestMap:Map<string,{request:Request, errorMessage:ValueOfMap<MainResultRecord["links"]>["errorMessage"]}> = new Map();
     // beforeGoto ページ読み込み前
     (()=>{
-      const recordedItem:typeof this.pageResult["record"]["URLRequestedFromPage"] = {
-        requestedURLs:[]
-      };
-      this.pageResult.record['URLRequestedFromPage'] = recordedItem;
-      this.page.on('request',(request)=>{
-        this.URLWaitingForFinish.add(request.url());
-      })
-      this.page.on('response', (response)=>{
-        const statusType = Math.floor(response.status() / 100);
-        if(statusType !== 3){
-          // サーバーリダイレクト以外の場合は記録する
-          (async ()=>{
-            await this.pageResult.updateLinksFromRequestedURL(response.request());
-          })();
-          recordedItem.requestedURLs.push(response.url());
-        }
-      });
       this.page.on('requestfailed',(request)=>{
         (async ()=>{
-          await this.pageResult.updateLinksFromRequestedURL(request);
+          const response = await request.response();
+          if(response !== null){
+            const statusType = Math.floor(response.status() / 100);
+            if(statusType !== 3){
+              // サーバーリダイレクト以外の場合は記録する
+              const requestURLFromPage = await getRedirectStatusFromRequest(request, false);
+              storedRequestMap.set(requestURLFromPage, {request, errorMessage:'[on requestfailed]'});
+            }
+          }else{
+            const requestURLFromPage = await getRedirectStatusFromRequest(request, false);
+            storedRequestMap.set(requestURLFromPage, {request, errorMessage:'[no resopnse]'});
+          }
         })();
-        recordedItem.requestedURLs.push(request.url());
-        this.URLWaitingForFinish.delete(request.url());
       });
       this.page.on('requestfinished', (request)=>{
-        this.URLWaitingForFinish.delete(request.url());
+        (async ()=>{
+          const response = await request.response();
+          if(response !== null){
+            const statusType = Math.floor(response.status() / 100);
+            if(statusType !== 3){
+              // サーバーリダイレクト以外の場合は記録する
+              const requestURLFromPage = await getRedirectStatusFromRequest(request, false);
+              storedRequestMap.set(requestURLFromPage, {request, errorMessage:''});
+            }
+          }else{
+            const requestURLFromPage = await getRedirectStatusFromRequest(request, false);
+            storedRequestMap.set(requestURLFromPage, {request, errorMessage:'[no resopnse]'});
+          }
+        })();
       });
     })();
     try {
@@ -67,29 +101,33 @@ class Scenario {
       const gotoOption = (referer === undefined || referer === '') ? undefined : {referer}
       this.responseResult = await getResponseByPageGoto(this.page, url, gotoOption);
       const {response, errorMessage} = this.responseResult;
-      const redirect =
-        response === null ?
-          null
-          : await getRedirectStatusFromRequest(response.request(), true);
-      this.pageResult.record.firstRequested = {
-        url,
-        redirect
-      };
+      // page.on('requestfailed'),page.on('requestfinished')のリスナーによるデータ収集はここで終える。
+      redirectTransition = response === null ? [] : await getRedirectStatusFromRequest(response.request(), true);
+      // MainResultRecord["links"]の更新を行う。
+      const promises = [];
+      for(const [requestURLFromPage, result] of storedRequestMap){
+        if(isValidURL(requestURLFromPage)){
+          URLsRequestedFromPage.push(requestURLFromPage);
+        }
+        // result.errorMessageはrequestURLFromPageではなく、taregetURLに含まれるurlのエラーメッセージ
+        promises.push(this.pageResult.updateLinksFromRequestedURL(requestURLFromPage, result.request, result.errorMessage))
+      }
+      await Promise.all(promises);
       if(response !== null && errorMessage === ''){
         // afterLoaded ページ読み込み完了後
         await (async ()=>{
 
           // ページのDOM構造を取得
           if(setting.isAllowedArchiveURL(url)){
-            this.pageResult.record["DOM"] = {
-              source: await this.page.content(),
-            }
+            DOMtext = await this.page.content();
+          }else{
+            DOMtext = null;
           }
 
           // リンク要素の抽出
-          this.pageResult.record["URLExtracted"] = await getExtractLinks(this.page);
+          URLsExtracted = await getExtractLinks(this.page);
 
-          for(const extractedLink of this.pageResult.record["URLExtracted"] || []){
+          for(const extractedLink of URLsExtracted || []){
             for(const absURL of extractedLink["absURLs"]){
               if(absURL !== null){
                 this.pageResult.updateLinksFromExtractedURL(absURL);
@@ -98,7 +136,7 @@ class Scenario {
           }
 
           // キャプチャ取得
-          this.pageResult.record["PageCapture"] = await getCapture(this.page);
+          pageCapture = await getCapture(this.page);
         })();
       }
     }catch(e){
@@ -112,7 +150,13 @@ class Scenario {
       console.log(`次のページ単体の処理を完了しました:${url}`);
       return {
         indexOfURL: this.pageResult.getIndexOfURL(),
-        pageResultRecord: this.pageResult.record,
+        pageResultRecord: {
+          redirectTransition,
+          URLsRequestedFromPage,
+          DOMtext,
+          URLsExtracted,
+          pageCapture,
+        },
         responseErrorMessage: this.responseResult.errorMessage,
       };
     }

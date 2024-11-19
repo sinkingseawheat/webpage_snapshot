@@ -1,12 +1,13 @@
 import type { Page, Frame } from "playwright";
 import { setting } from "@/utility/Setting";
+import { ErrorMessage } from "@/utility/types/types";
 
 export const getResponseByPageGoto = async (
   page:Page,
   requestURL:string,
   option?:Parameters<Page["goto"]>[1]
 )=>{
-  let errorMessage: '' | '[unplanned]' | '[no resopnse]' | '[too many redirects]' | 'net:ERR_FAILED' | 'ERR_INVALID_AUTH_CREDENTIALS' = '';
+  let errorMessage: ErrorMessage = '';
   try {
     // Basic認証のアイパスの設定
     const authEncoded = setting.getBasicAuthorization(requestURL);

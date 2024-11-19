@@ -1,11 +1,12 @@
 import { Page } from "playwright"
 
-import { type LinksItem } from "@/component/snapshot/JSON";
+import { MainResultRecord } from "@/component/snapshot/JSON";
 import { getResponseAndBodyFromRequest } from './getResponseAndBodyFromRequest';
 import { FileArchive } from "../FileArchive";
 import { getResponseByPageGoto } from "./getResponseByPageGoto";
+import { ValueOfMap } from "@/utility/types/types";
 
-export const requestNotRequestedButInPage = async (page:Page, requestURL:string, result:LinksItem, fileArchive:FileArchive)=>{
+export const requestNotRequestedButInPage = async (page:Page, requestURL:string, result:ValueOfMap<MainResultRecord['links']>, fileArchive:FileArchive)=>{
   try{
     // page["route"]はリダイレクトによる再リクエストには反映されないらしいので、これで問題ないはず
     await page.route('**/*',(route, request)=>{
@@ -20,8 +21,11 @@ export const requestNotRequestedButInPage = async (page:Page, requestURL:string,
     if(pageResponse === null){
       if(errorMessage==='ERR_INVALID_AUTH_CREDENTIALS'){
         result.response = {
-          responseURL: null,
-          status: 401
+          responseURL: requestURL,
+          status: 401,
+          contentType: '',
+          contentLength: null,
+          shaHash: null,
         }
       }else{
         result.response = null;
@@ -30,11 +34,10 @@ export const requestNotRequestedButInPage = async (page:Page, requestURL:string,
       const {body, response} = await getResponseAndBodyFromRequest(pageResponse.request());
       result.response = response;
       if(body !== null){
-        fileArchive.archive({
+        const archiveIndex = fileArchive.archive({
           requestURL,
           buffer: body,
           contentType: response?.contentType || '',
-          result,
         });
       }
     }

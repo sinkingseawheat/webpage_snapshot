@@ -55,7 +55,7 @@ const PageResultOutput:React.FC<{
       <div className={style.table}>
         <RedirectStatus {...{
           links: mainResultJSON['links'],
-          firstRequested :pageResultJSON['firstRequested']
+          redirectTransition :pageResultJSON['redirectTransition']
         }} />
       </div>
     </section>
@@ -78,8 +78,8 @@ const PageResultOutput:React.FC<{
        <ImageDescription {...{
         selectedId,
         links: mainResultJSON['links'],
-        urlExtracted: pageResultJSON['URLExtracted'],
-        urlRequestedFromPage: pageResultJSON['URLRequestedFromPage'],
+        URLsExtracted: pageResultJSON['URLsExtracted'],
+        URLsRequestedFromPage: pageResultJSON['URLsRequestedFromPage'],
        }}/>
       </div>
     </section>

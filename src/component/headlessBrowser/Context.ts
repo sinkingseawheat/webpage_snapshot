@@ -18,63 +18,33 @@ class ContextError extends Error {
 }
 
 class Context {
-  private bcoption: BrowserContextOptions;
-  private soption: ReturnType<typeof deserializeScenerioFormFields>;
+  private browserContextOption: ReturnType<typeof deserializeBrowserContextPickedFormFields>
   private scenarioQueue:PQueue;
   private note!:Note;
   private scenarios:Scenario[] = [];
   private iscaughtError:boolean = false;
   private browser!:Browser|null;
   constructor(
-    formData:typeof defaultFormFieldValues,
-    apiType:string,
+    private formData:typeof defaultFormFieldValues,
+    private apiType:string,
     private jobId:string,
   ){
-    const {urlsToOpen ,...optionsToNote} = formData;
     this.browser = null;
-    this.bcoption = deserializeBrowserContextPickedFormFields(formData);
-    this.soption = deserializeScenerioFormFields(formData);
-    this.note = new Note(
-      optionsToNote,
-      this.soption.urlsToOpen,
-      {
-        apiType: apiType,
-        jobId: jobId,
-      },
-    );
     this.scenarioQueue = new PQueue({concurrency:3,throwOnTimeout:true});
     // 新しいリクエストが来る際にsettingは読み込みなおす
     setting.update();
   }
   async init(){
-    try{
-      await this.note.init();
-    }catch(e){
-      console.error(e);
-      throw new ContextError(`記録用JSONファイルを格納するディレクトリの作成に失敗しました`);
-    }
-    const contextOption = (()=>{
-      const _proxy = setting.getProxy();
-      if(_proxy === null){
-        return this.bcoption;
-      }else{
-        return {
-          ...{
-            proxy: _proxy,
-          },
-          ...this.bcoption
-        };
-      }
-    })();
+    // Todo:entrance側でimportの失敗をcatchする
+    const Scenario = await import(`../${this.apiType}/api/Scenario`);
+    this.scenarios.push(new Scenario(this.formData, this.browser));
     if(this.browser === null){
       this.browser = await chromium.launch({headless:true});
     }
     const context = await this.browser.newContext(contextOption);
-    const {urlsToOpen, ...otherOption} = this.soption;
     if(context !== null){
       const getPromiseItem = async (url:ValidURL)=>{
         const page = await context.newPage();
-        this.scenarios.push(new Scenario(this.note.createPageResult(url), page, otherOption));
       }
       const promises:Promise<void>[] = []
       for (const url of urlsToOpen){

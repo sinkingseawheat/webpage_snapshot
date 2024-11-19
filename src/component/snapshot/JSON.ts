@@ -1,4 +1,4 @@
-import { isValidURL, type IndexOfURL, type ValidURL } from '@/utility/types/types';
+import { isErrorMessage, type ErrorMessage, isValidURL, type IndexOfURL, type ValidURL } from '@/utility/types/types';
 import { defaultFormFieldValues } from './FormData';
 import { isIndexOfURL } from '@/utility/types/types';
 
@@ -17,16 +17,8 @@ type ResponseResult = {
   /** ファイルのハッシュ値 */
   shaHash: string | null,
 } | {
-  /** 通信が完了したらURL入れる。ただし、タイムアウトなどでレスポンスが得られなかったらnull */
-  responseURL: null,
-  /** リクエスト結果 */
-  status: number | null,
-  /** Content-Type */
-  contentType: string | null,
-  /** Content-Length */
-  contentLength: number | null,
-  /** ファイルのハッシュ値 */
-  shaHash: string | null,
+  /** 通信はまだ */
+  responseURL: null
 } | null;
 
 function isResponseResult(args:any):args is ResponseResult{
@@ -44,14 +36,7 @@ function isResponseResult(args:any):args is ResponseResult{
         return true;
       }
     }else if(responseURL === null){
-      if(
-        (status === null || typeof status === 'number')
-        && (contentType === null || typeof contentType === 'string')
-        && (contentLength === null || typeof contentLength === 'number')
-        && (shaHash === null || typeof shaHash === 'string')
-      ){
-        return true;
-      }
+      return true;
     }
     return false;
   }catch(e){
@@ -70,19 +55,19 @@ type LinksItem = {
   /** アーカイブしたファイルはこのarchiveIndexにファイル名をリネームする */
   archiveIndex: number | null,
   /** タイムアウト・Basic認証失敗などのメッセージを格納 */
-  responseMessage: string,
+  errorMessage: ErrorMessage,
 }
 
 function isLinksItem(args:any):args is LinksItem{
   try{
     if(typeof args !== 'object' && args === null){return false;}
-    const {response, source, linkSourceIndex, archiveIndex, responseMessage} = args;
+    const {response, source, linkSourceIndex, archiveIndex, errorMessage} = args;
     if(
       isResponseResult(response)
       && ['requestedFromPage','extracted'].includes(source)
       && linkSourceIndex instanceof Set && Array.from(linkSourceIndex).every((elm)=>isIndexOfURL(elm))
       && (typeof archiveIndex === 'number' || archiveIndex === null)
-      && typeof responseMessage === 'string'
+      && isErrorMessage(errorMessage)
     ){
       return true;
     }
@@ -94,7 +79,7 @@ function isLinksItem(args:any):args is LinksItem{
 }
 
 /** リクエスト全体に共通する結果 */
-type MainResultRecord = {
+export type MainResultRecord = {
   formData: Omit<typeof defaultFormFieldValues, 'urlsToOpen'>,
   /** アプリのversion。package.jsonから取得 */
   version: string | null,
@@ -139,7 +124,7 @@ export type MainResultRecordJSON = {
     source: 'requestedFromPage'|'extracted',
     linkSourceIndex: string[],
     archiveIndex: number | null,
-    responseMessage: string,
+    errorMessage: ErrorMessage,
   }[];
 };
 
@@ -153,7 +138,7 @@ function isMainResultRecordJSON(args:any):args is MainResultRecordJSON{
       && (typeof version === 'string' || version === null)
       && Array.isArray(targetURLs) && targetURLs.every(([k,v])=>(typeof k === 'string' && typeof v === 'string'))
       && Array.isArray(links) && links.every((link)=>{
-        const {requestURL, responseURL, status, contentType, contentLength, shaHash, source, linkSourceIndex, archiveIndex, responseMessage,} = link;
+        const {requestURL, responseURL, status, contentType, contentLength, shaHash, source, linkSourceIndex, archiveIndex, errorMessage,} = link;
         return (
           typeof requestURL === 'string'
           && (typeof responseURL === 'string' || responseURL === null)
@@ -164,7 +149,7 @@ function isMainResultRecordJSON(args:any):args is MainResultRecordJSON{
           && (source === 'requestedFromPage' || source === 'extracted')
           && (Array.isArray(linkSourceIndex) && linkSourceIndex.every((indexOfURL) => typeof indexOfURL === 'string'))
           && (typeof archiveIndex === 'string' || archiveIndex === null)
-          && (typeof responseMessage === 'string')
+          && isErrorMessage(errorMessage)
         );
       })
     ){
@@ -177,7 +162,7 @@ function isMainResultRecordJSON(args:any):args is MainResultRecordJSON{
   }
 }
 
-function getMainResultRecordJSON(record:MainResultRecord):MainResultRecordJSON{
+export function getMainResultRecordJSON(record:MainResultRecord):MainResultRecordJSON{
   const {formData, version, targetURLs:_targetURLs, links:_links} = record
   const targetURLs:[string, string][] = [];
   for(const [url, indexOfURL] of _targetURLs){
@@ -193,11 +178,11 @@ function getMainResultRecordJSON(record:MainResultRecord):MainResultRecordJSON{
     source: 'requestedFromPage'|'extracted',
     linkSourceIndex: string[],
     archiveIndex: number | null,
-    responseMessage: string,
+    errorMessage: ErrorMessage,
   }[] = [];
   for(const [requestURL, linksItem] of _links){
-    const {response, source, linkSourceIndex:_linkSourceIndex, archiveIndex, responseMessage} = linksItem;
-    const {responseURL, status, contentType, contentLength, shaHash,} = response === null ?
+    const {response, source, linkSourceIndex:_linkSourceIndex, archiveIndex, errorMessage} = linksItem;
+    const {responseURL, status, contentType, contentLength, shaHash,} = (response === null || response.responseURL === null) ?
       {responseURL : null, status : null, contentType : null, contentLength : null, shaHash : null,}
       : response;
     const linkSourceIndex:string[] = [];
@@ -215,7 +200,7 @@ function getMainResultRecordJSON(record:MainResultRecord):MainResultRecordJSON{
       source,
       linkSourceIndex,
       archiveIndex,
-      responseMessage,
+      errorMessage,
     })
   }
   return {
@@ -229,20 +214,17 @@ function getMainResultRecordJSON(record:MainResultRecord):MainResultRecordJSON{
 
 
 /** ページごとの結果 */
-type PageResultRecord = {
-  firstRequested: {
-    url: ValidURL,
-    redirect: {
-      url: string, //レスポンスの格納なのでstring型で問題ない
-      status: number
-    }[],
-  }
+export type PageResultRecord = {
+  redirectTransition: {
+    url: string, //レスポンスの格納なのでstring型で問題ない
+    status: number
+  }[]
   /** ページ内で使用されているURL */
-  URLRequestedFromPage: ValidURL[],
+  URLsRequestedFromPage: ValidURL[],
   /** ページのDOM */
   DOMtext: string | null,
   /** ページ内に記述されているURL。 */
-  URLExtracted: URLExtractedItem[],
+  URLsExtracted: URLsExtractedItem[],
   /** キャプチャ */
   pageCapture: {
     name: string,
@@ -253,16 +235,13 @@ type PageResultRecord = {
 function isPageResultRecord(args:any):args is PageResultRecord{
   try{
     if(typeof args !== 'object' && args === null){return false;}
-    const {firstRequested, URLRequestedFromPage, DOMtext, URLExtracted, pageCapture} = args;
-    if(typeof firstRequested !== 'object' && firstRequested === null){return false;}
-    const{url:urlFR, redirect:redirectFR} = firstRequested;
+    const {redirectTransition, URLsRequestedFromPage, DOMtext, URLsExtracted, pageCapture} = args;
+    if(typeof redirectTransition !== 'object' && redirectTransition === null){return false;}
     if(
-      isValidURL(urlFR) && (
-        Array.isArray(redirectFR) && redirectFR.every(transition => (typeof transition?.url === 'string' && typeof transition?.status === 'number'))
-      )
-      && Array.isArray(URLRequestedFromPage) && URLRequestedFromPage.every((url) => isValidURL(url))
+      Array.isArray(redirectTransition) && redirectTransition.every(transition => (typeof transition?.url === 'string' && typeof transition?.status === 'number'))
+      && Array.isArray(URLsRequestedFromPage) && URLsRequestedFromPage.every((url) => isValidURL(url))
       && (typeof DOMtext === 'string' || DOMtext === null)
-      && Array.isArray(URLExtracted) && URLExtracted.every((item) => isURLExtractedItem(item))
+      && Array.isArray(URLsExtracted) && URLsExtracted.every((item) => isURLsExtractedItem(item))
       && Array.isArray(pageCapture) && pageCapture.every((item) => (typeof item?.name === 'string' && item?.buffer instanceof Buffer))
     ){
       return true;
@@ -278,15 +257,12 @@ function isPageResultRecord(args:any):args is PageResultRecord{
 
 /** ページごとの結果のJSON */
 type PageResultRecordJSON = {
-  firstRequested: {
+  redirectTransition: {
     url: string,
-    redirect: {
-      url: string,
-      status: number
-    }[],
-  },
-  URLRequestedFromPage: string[],
-  URLExtracted: URLExtractedItem[]
+    status: number
+  }[],
+  URLsRequestedFromPage: string[],
+  URLsExtracted: URLsExtractedItem[]
 };
 // DOM、pageCaptureはJSONに保存不要
 
@@ -294,15 +270,11 @@ type PageResultRecordJSON = {
 function isPageResultRecordJSON(args:any):args is PageResultRecordJSON{
   try{
     if(typeof args !== 'object' && args === null){return false;}
-    const {firstRequested, URLRequestedFromPage, URLExtracted} = args;
-    if(typeof firstRequested !== 'object' && firstRequested === null){return false;}
-    const{url:urlFR, redirect:redirectFR} = firstRequested;
+    const {redirectTransition, URLsRequestedFromPage, URLsExtracted} = args;
     if(
-      isValidURL(urlFR) && (
-        Array.isArray(redirectFR) && redirectFR.every(transition => (typeof transition?.url === 'string' && typeof transition?.status === 'number'))
-      )
-      && Array.isArray(URLRequestedFromPage) && URLRequestedFromPage.every((url) => typeof url === 'string')
-      && Array.isArray(URLExtracted) && URLExtracted.every((item) => isURLExtractedItem(item))
+      Array.isArray(redirectTransition) && redirectTransition.every(transition => (typeof transition?.url === 'string' && typeof transition?.status === 'number'))
+      && Array.isArray(URLsRequestedFromPage) && URLsRequestedFromPage.every((url) => typeof url === 'string')
+      && Array.isArray(URLsExtracted) && URLsExtracted.every((item) => isURLsExtractedItem(item))
     ){
       return true;
     }
@@ -313,17 +285,17 @@ function isPageResultRecordJSON(args:any):args is PageResultRecordJSON{
   }
 }
 
-function getPageResultRecordJSON(record:PageResultRecord):PageResultRecordJSON{
-  const {firstRequested, URLRequestedFromPage, URLExtracted} = record;
+export function getPageResultRecordJSON(record:PageResultRecord):PageResultRecordJSON{
+  const {redirectTransition, URLsRequestedFromPage, URLsExtracted} = record;
   return {
-    firstRequested,
-    URLRequestedFromPage,
-    URLExtracted,
+    redirectTransition,
+    URLsRequestedFromPage,
+    URLsExtracted,
   }
 }
 
 /** 抽出したURLについてのパラメータ */
-type URLExtractedItem = {
+type URLsExtractedItem = {
   /** DOM要素から取得 */
   type: 'DOM_Attribute',
   /** DOM要素のHTMLタグ名 */
@@ -350,7 +322,7 @@ type URLExtractedItem = {
   absURLs: (ValidURL|null)[],
 };
 
-function isURLExtractedItem(args:any):args is URLExtractedItem{
+function isURLsExtractedItem(args:any):args is URLsExtractedItem{
   try{
     if(typeof args !== 'object' && args === null){return false;}
     const {type, relURLs, absURLs, tagName, href} = args;
@@ -374,7 +346,7 @@ function isURLExtractedItem(args:any):args is URLExtractedItem{
 
 /** 抽出したURLについてのパラメータのJSON */
 // 別途に型を用意しなくてもシリアライズ可能なためコメントアウト
-/* type URLExtractedItemJSON = {
+/* type URLsExtractedItemJSON = {
   type: 'DOM_Attribute',
   tagName: string,
   relURLs: string[],

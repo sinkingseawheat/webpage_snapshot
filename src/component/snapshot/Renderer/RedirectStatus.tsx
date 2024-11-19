@@ -5,9 +5,9 @@ import { getResponseFormRequestURL } from "./sub/getResponseFormRequestURL";
 
 const RedirectStatus:React.FC<{
   links: MainResultRecordJSON["links"],
-  firstRequested: PageResultRecordJSON["firstRequested"]
-}> = ({links, firstRequested})=>{
-  const {url, redirect} = firstRequested;
+  redirectTransition: PageResultRecordJSON["redirectTransition"]
+}> = ({links, redirectTransition})=>{
+  const {url, redirect} = redirectTransition;
   const response = getResponseFormRequestURL(links, url);
   const dataArray:{
     requestURL:string,
