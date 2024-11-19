@@ -9,7 +9,8 @@ declare const validURLNominality: unique symbol;
 type ValidURL = string & {
   [validURLNominality]:never,
 };
-function isValidURL(arg:string):arg is ValidURL{
+function isValidURL(arg:any):arg is ValidURL{
+  if(typeof arg !== 'string'){return false;}
   return URL.canParse(arg);
 }
 
@@ -21,7 +22,8 @@ declare const IndexOfURLNormality: unique symbol;
 export type IndexOfURL = string & {
   IndexOfURLNormality: never;
 };
-export const isIndexOfURL = (arg: string): arg is IndexOfURL => {
+export const isIndexOfURL = (arg: any): arg is IndexOfURL => {
+  if(typeof arg !== 'string'){return false;}
   return /^\d+$/.test(arg);
 };
 

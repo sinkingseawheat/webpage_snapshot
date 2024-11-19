@@ -1,10 +1,10 @@
 import style from '@/component/snapshot/Renderer/style/Output.module.scss';
 import { type IndexOfURL, isIndexOfURL } from '@/utility/types/types';
-import type { MainResultJSON } from '@/component/snapshot/JSON';
+import type { MainResultRecordJSON } from '@/component/snapshot/JSON';
 
 const LinkLists:React.FC<{
   targetURLs:[IndexOfURL, string][],
-  links:MainResultJSON["links"],
+  links:MainResultRecordJSON["links"],
 }> = ({targetURLs, links})=>{
   const tHeadData = targetURLs.map((url)=>url[0]);
   const dataArray = links.map((link)=>{

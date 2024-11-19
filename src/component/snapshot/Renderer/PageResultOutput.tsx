@@ -7,12 +7,12 @@ import { ImageDescription } from "./ImageDescription";
 import { getJSONData } from './sub/getJSONData';
 import { setGetPathToSendFile } from "./sub/setGetPathToSendFile";
 
-import { PageResultRecordJSON, type MainResultJSON } from '@/component/snapshot/JSON';
+import { PageResultRecordJSON, type MainResultRecordJSON } from '@/component/snapshot/JSON';
 
 const PageResultOutput:React.FC<{
   selectedId: string,
   indexOfURL: string,
-  mainResultJSON: undefined | null | MainResultJSON,
+  mainResultJSON: undefined | null | MainResultRecordJSON,
   errorMessageOfMainResult: string,
 }> = ({selectedId, indexOfURL, mainResultJSON, errorMessageOfMainResult})=>{
 

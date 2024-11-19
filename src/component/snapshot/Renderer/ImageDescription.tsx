@@ -1,4 +1,4 @@
-import { MainResultJSON } from "@/component/snapshot/JSON";
+import { MainResultRecordJSON } from "@/component/snapshot/JSON";
 import { PageResultRecordJSON } from "@/component/snapshot/JSON";
 import style from '@/component/snapshot/Renderer/style/Output.module.scss'
 import { getResponseFormRequestURL } from "./sub/getResponseFormRequestURL";
@@ -6,7 +6,7 @@ import { setGetPathToSendFile } from "./sub/setGetPathToSendFile";
 
 const ImageDescription:React.FC<{
   selectedId:string,
-  links:MainResultJSON["links"],
+  links:MainResultRecordJSON["links"],
   urlExtracted:PageResultRecordJSON["URLExtracted"],
   urlRequestedFromPage:PageResultRecordJSON["URLRequestedFromPage"],
 }> = ({selectedId, links, urlExtracted, urlRequestedFromPage})=>{

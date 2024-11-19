@@ -5,20 +5,20 @@ import MainResultOutput from "./MainResultOutput";
 import PageResultOutput from "./PageResultOutput";
 
 import { getJSONData } from './sub/getJSONData';
-import { MainResultJSON } from '@/component/snapshot/JSON';
+import { MainResultRecordJSON } from '@/component/snapshot/JSON';
 
 const Output:React.FC<{
   selectedId:string,
   indexOfURL:string,
 }> = ({selectedId, indexOfURL})=>{
 
-  const [mainResultJSON, setMainResultJSON] = useState<undefined | null | MainResultJSON>(undefined);
+  const [mainResultJSON, setMainResultRecordJSON] = useState<undefined | null | MainResultRecordJSON>(undefined);
   const [errorMessageOfMainResult, setErrorMessageOfMainResult] = useState<string>('');
 
   useEffect(()=>{
     (async ()=>{
       const {jsonData, errorMessage: errorMessageOfMainResult} = await getJSONData({selectedId, relativeJSONPath:'main.json'});
-      setMainResultJSON(jsonData)
+      setMainResultRecordJSON(jsonData)
       setErrorMessageOfMainResult(errorMessageOfMainResult)
     })()
   }, [selectedId]);

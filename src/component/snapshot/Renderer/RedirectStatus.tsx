@@ -1,10 +1,10 @@
-import { MainResultJSON } from "@/component/snapshot/JSON";
+import { MainResultRecordJSON } from "@/component/snapshot/JSON";
 import { PageResultRecordJSON } from "@/component/snapshot/JSON";
 
 import { getResponseFormRequestURL } from "./sub/getResponseFormRequestURL";
 
 const RedirectStatus:React.FC<{
-  links: MainResultJSON["links"],
+  links: MainResultRecordJSON["links"],
   firstRequested: PageResultRecordJSON["firstRequested"]
 }> = ({links, firstRequested})=>{
   const {url, redirect} = firstRequested;

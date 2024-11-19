@@ -3,7 +3,7 @@
 import { TargetURLs } from './TargetURLs';
 import { FormFieldSource } from './FormFieldSource';
 import { LinkLists } from './LinkLists';
-import { type MainResultJSON } from '@/component/snapshot/JSON';
+import { type MainResultRecordJSON } from '@/component/snapshot/JSON';
 
 import { setGetPathToSendFile } from './sub/setGetPathToSendFile';
 
@@ -12,7 +12,7 @@ import style from '@/component/snapshot/Renderer/style/Output.module.scss';
 
 const MainResultOutput:React.FC<{
   selectedId:string,
-  mainResultJSON:undefined|null|MainResultJSON,
+  mainResultJSON:undefined|null|MainResultRecordJSON,
   errorMessageOfMainResult:string,
 }> = ({selectedId, mainResultJSON, errorMessageOfMainResult})=>{
 
