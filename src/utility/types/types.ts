@@ -30,10 +30,21 @@ export const isIndexOfURL = (arg: any): arg is IndexOfURL => {
 /** 処理完了後に生成されるファイル。処理が正常に完了しているかを確認できる */
 export const DOT_FILE_PROCESS_COMPLETED = '.completed' as const;
 
-export type ErrorMessage = '' | '[unplanned]' | '[no resopnse]' | '[too many redirects]' | 'net:ERR_FAILED' | 'ERR_INVALID_AUTH_CREDENTIALS' | '[on requestfailed]' | '[request is pending]';
+const errorMessage = [
+  '',
+  '[unplanned]',
+  '[no resopnse]',
+  '[too many redirects]',
+  'net:ERR_FAILED',
+  'ERR_INVALID_AUTH_CREDENTIALS',
+  '[on requestfailed]',
+  '[request is pending]',
+  '[no responseBody found request from page]',
+] as const;
+export type ErrorMessage = (typeof errorMessage)[number];
 export function isErrorMessage(args:any):args is ErrorMessage{
   if(typeof args !== 'string'){return false;}
-  if(['', '[unplanned]', '[no resopnse]', '[too many redirects]', 'net:ERR_FAILED', 'ERR_INVALID_AUTH_CREDENTIALS', '[on requestfailed]', '[request is pending]'].includes(args)){
+  if([...errorMessage, ''].includes(args)){ // includesはconstの変数に対してはエラーが出て無意味なので、スプレッド構文でstring[]にワイドニングする
     return true;
   }
   return false;

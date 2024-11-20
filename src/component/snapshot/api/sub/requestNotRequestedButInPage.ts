@@ -1,50 +1,59 @@
-import { Page } from "playwright"
+import { Page, BrowserContext } from "playwright"
 
 import { MainResultRecord } from "@/component/snapshot/JSON";
 import { getResponseAndBodyFromRequest } from './getResponseAndBodyFromRequest';
-import { FileArchive } from "../FileArchive";
 import { getResponseByPageGoto } from "./getResponseByPageGoto";
-import { ValueOfMap } from "@/utility/types/types";
+import { ValidURL, ValueOfMap } from "@/utility/types/types";
 
-export const requestNotRequestedButInPage = async (page:Page, requestURL:string, result:ValueOfMap<MainResultRecord['links']>, fileArchive:FileArchive)=>{
+export const requestNotRequestedButInPage = async (args:{
+  browserContext:BrowserContext,
+  requestURLFromPage:ValidURL,
+}):Promise<{
+  updatedLinksItem:Partial<ValueOfMap<MainResultRecord["links"]>>,
+  buffer:Buffer|null,
+}>=>{
+  const rv:Awaited<ReturnType<typeof requestNotRequestedButInPage>> = {
+    updatedLinksItem: {},
+    buffer: null
+  };
+  const {browserContext, requestURLFromPage} = args;
+  const page = await browserContext.newPage();
   try{
     // page["route"]はリダイレクトによる再リクエストには反映されないらしいので、これで問題ないはず
     await page.route('**/*',(route, request)=>{
-      if(request.url() !== requestURL){
+      if(request.url() !== requestURLFromPage){
         route.abort();
       }else{
         route.continue();
       }
     });
 
-    const {response:pageResponse, errorMessage} = await getResponseByPageGoto(page, requestURL, {});
+    const {response:pageResponse, errorMessage} = await getResponseByPageGoto(page, requestURLFromPage, {});
     if(pageResponse === null){
       if(errorMessage==='ERR_INVALID_AUTH_CREDENTIALS'){
-        result.response = {
-          responseURL: requestURL,
+        rv.updatedLinksItem.response = {
+          responseURL: requestURLFromPage,
           status: 401,
           contentType: '',
           contentLength: null,
           shaHash: null,
         }
       }else{
-        result.response = null;
+        rv.updatedLinksItem.response = null;
       }
     }else{
       const {body, response} = await getResponseAndBodyFromRequest(pageResponse.request());
-      result.response = response;
+      rv.updatedLinksItem.response = response;
       if(body !== null){
-        const archiveIndex = fileArchive.archive({
-          requestURL,
-          buffer: body,
-          contentType: response?.contentType || '',
-        });
+        rv.buffer = body;
       }
     }
+    rv.updatedLinksItem.errorMessage = errorMessage;
   }catch(e){
     throw e;
   }finally{
-    console.log(`抽出したURL:「${requestURL}」のリクエスト処理が終了しました`)
+    console.log(`抽出したURL:「${requestURLFromPage}」のリクエスト処理が終了しました`)
     await page.close();
+    return rv;
   }
 }

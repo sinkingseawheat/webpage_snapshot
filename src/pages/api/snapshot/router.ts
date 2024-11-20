@@ -17,7 +17,7 @@ export default async function handler(
   }else if(req.method==='POST'){
     try{
       const deserializedBody = JSON.parse(req.body);
-      const responseData = await entrance.request(deserializedBody, 'snapshot');
+      const responseData = await entrance.request(deserializedBody);
       res.writeHead(200, {'Content-Type': 'application/json'});
       res.end(JSON.stringify(responseData));
     }catch(e){

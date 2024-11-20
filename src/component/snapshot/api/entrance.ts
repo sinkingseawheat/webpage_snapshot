@@ -2,7 +2,7 @@ import { RandomString } from '@/utility/RandomString';
 
 import { type ResponseData, defaultFormFieldValues } from "@/component/snapshot/FormData";
 
-import { Context } from '@/component/snapshot/Context';
+import { Context } from './Context';
 
 class EntranceError extends Error {
   static {
@@ -21,10 +21,10 @@ class Entrance {
     this.contextsPending = new Map();
     this.randomString = new RandomString(16);
   }
-  async request(formData: FormData, apiType: string): Promise<ResponseData>{
+  async request(formData: FormData): Promise<ResponseData>{
     // Contextにデータを送信
     const jobId = this.randomString.getUniqueRandomString();
-    const context = new Context(formData, apiType, jobId);
+    const context = new Context(formData, jobId);
     const resultInitiation = await context.init();
     this.contextsPending.set(jobId, context);
     this.check();
@@ -33,10 +33,6 @@ class Entrance {
       message: 'キューに挿入完了しました',
       ...resultInitiation,
     };
-  }
-  get(id:string):Context|null {
-    const context = this.contextsPending.get(id);
-    return context ?? null;
   }
   check(isNeededDecreaseNumberOfRunning:boolean = false){
     if(isNeededDecreaseNumberOfRunning===true){

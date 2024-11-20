@@ -54,26 +54,19 @@ export const getURLInPage = ():PageResultRecord["URLsExtracted"]=>{
     const rvFromCSS:PageResultRecord["URLsExtracted"] = []
     for(const rule of rules){
       if(rule instanceof CSSStyleRule){
-        if(rule.style.backgroundImage !== ''){
-          const _relURL = getURLsFromUrlMethod(rule.style.backgroundImage);
-          if(_relURL.length!==0){
-            rvFromCSS.push({
-              type: 'fromCascadingStyleSheets',
-              href: rule.parentStyleSheet?.href ?? null,
-              relURLs: _relURL,
-              absURLs:[],
-            });
-          }
-        }else if(rule.style.background !== ''){
-          const _relURL = getURLsFromUrlMethod(rule.style.background);
-          // Todo:ショートハンドの場合でもbackgroundImageに反映されるか確認
-          if(_relURL.length!==0){
-            rvFromCSS.push({
-              type: 'fromCascadingStyleSheets',
-              href: rule.parentStyleSheet?.href ?? null,
-              relURLs: _relURL,
-              absURLs:[],
-            });
+        const cssProperties:(keyof CSSStyleDeclaration)[] = ['backgroundImage', 'background', 'maskImage'];
+        for(const cssProperty of cssProperties){
+          const cssText = rule.style[cssProperty]
+          if(typeof cssText === 'string' && cssText !== ''){
+            const _relURL = getURLsFromUrlMethod(cssText);
+            if(_relURL.length!==0){
+              rvFromCSS.push({
+                type: 'fromCascadingStyleSheets',
+                href: rule.parentStyleSheet?.href ?? null,
+                relURLs: _relURL,
+                absURLs:[],
+              });
+            }
           }
         }
       }else if(rule instanceof CSSImportRule){
@@ -99,7 +92,7 @@ export const getURLInPage = ():PageResultRecord["URLsExtracted"]=>{
     if(backgroundImage){
       rv.push({
         type:'styleAttribute',
-        relURL: getURLsFromUrlMethod(backgroundImage),
+        relURLs: getURLsFromUrlMethod(backgroundImage),
         absURLs:[],
       });
     }

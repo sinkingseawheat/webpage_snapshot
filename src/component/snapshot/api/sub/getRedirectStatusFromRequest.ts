@@ -1,11 +1,12 @@
 import { type Request } from "playwright";
 import { PageResultRecord } from "../../JSON";
+import { ValidURL } from "@/utility/types/types";
 
 async function getRedirectStatusFromRequest(
   targetRequest:Request,
   isNeedTransition:false,
   maxRedirectCount?:number,
-): Promise<string>;
+): Promise<ValidURL>;
 
 async function getRedirectStatusFromRequest(
   targetRequest:Request,

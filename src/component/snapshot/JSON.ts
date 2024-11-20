@@ -54,7 +54,7 @@ type LinksItem = {
   linkSourceIndex: Set<IndexOfURL>,
   /** アーカイブしたファイルはこのarchiveIndexにファイル名をリネームする */
   archiveIndex: number | null,
-  /** タイムアウト・Basic認証失敗などのメッセージを格納 */
+  /** タイムアウト・Basic認証失敗などのメッセージを格納。requestedFromPageの場合はPage、extractedの場合はファイルそのもののエラー */
   errorMessage: ErrorMessage,
 }
 
