@@ -19,7 +19,7 @@ class PageResult {
     const pageResultRecord:PageResultRecord = {
       ...{
         redirectTransition:[],
-        URLsRequestedFromPage:[],
+        URLsRequestFromPage:[],
         DOMtext:null,
         URLsExtracted:[],
         pageCapture:[]
@@ -29,10 +29,19 @@ class PageResult {
     const jsonData = getPageResultRecordJSON(pageResultRecord);
     try{
       await fs.mkdir(path.join(this.occupiedDirectoryPath, this.indexOfURL), {recursive:true});
-      fs.writeFile(path.join(this.occupiedDirectoryPath, this.indexOfURL, 'page.json'), JSON.stringify(jsonData, null, '\t'), {flag:'ax'});
+      await fs.writeFile(path.join(this.occupiedDirectoryPath, this.indexOfURL, 'page.json'), JSON.stringify(jsonData, null, '\t'), {flag:'ax'});
     }catch(e){
       console.error(e);
       throw e;
+    }
+  }
+  async storeCapture(){
+    const {pageCapture} = this.record;
+    if(Array.isArray(pageCapture)){
+      await fs.mkdir(path.join(this.occupiedDirectoryPath, this.indexOfURL), {recursive:true});
+      Promise.all(pageCapture.map(
+        (capture) => fs.writeFile(path.join(this.occupiedDirectoryPath, this.indexOfURL, `${capture.name}`), capture.buffer, {flag:'ax'})
+      ));
     }
   }
 }

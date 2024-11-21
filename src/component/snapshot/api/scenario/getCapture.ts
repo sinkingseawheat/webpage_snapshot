@@ -13,14 +13,14 @@ export const getCapture = async (page:Page)=>{
   await page.emulateMedia({'colorScheme':'light'});
   const screenshotBufferLight = await page.screenshot(option);
   rv.push({
-    name: 'fullpageColorSchemeIsLight',
+    name: 'capture_fullpageColorSchemeIsLight.jpg',
     buffer: screenshotBufferLight,
   });
 
   await page.emulateMedia({'colorScheme':'dark'});
   const screenshotBufferDark = await page.screenshot(option);
   rv.push({
-    name: 'fullpageColorSchemeIsDark',
+    name: 'capture_fullpageColorSchemeIsDark.jpg',
     buffer: screenshotBufferDark,
   });
 

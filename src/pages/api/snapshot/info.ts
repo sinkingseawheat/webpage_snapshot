@@ -1,5 +1,5 @@
 import path from 'path';
-import { readdir } from 'fs/promises';
+import { readdir, mkdir } from 'fs/promises';
 
 import type { NextApiRequest, NextApiResponse } from "next";
 
@@ -40,6 +40,7 @@ const DIRECTORY_STORING_RESULT = path.join(process.cwd(), './_data/result/snapsh
 async function getJobIds(){
   const rv:string[] = [];
   try{
+    await mkdir(DIRECTORY_STORING_RESULT, {recursive:true});
     for (const dirent of await readdir(DIRECTORY_STORING_RESULT, {withFileTypes:true})){
       if(dirent.isDirectory() && /^\d{8}$/.test(dirent.name)){
         const parentPath = dirent.path || dirent.parentPath;

@@ -3,7 +3,7 @@ import { type IndexOfURL, isIndexOfURL } from '@/utility/types/types';
 import type { MainResultRecordJSON } from '@/component/snapshot/JSON';
 
 const LinkLists:React.FC<{
-  targetURLs:[IndexOfURL, string][],
+  targetURLs:[string, string][],
   links:MainResultRecordJSON["links"],
 }> = ({targetURLs, links})=>{
   const tHeadData = targetURLs.map((url)=>url[0]);

@@ -1,12 +1,12 @@
 import { setGetPathToSendFile } from './setGetPathToSendFile';
 import { DOT_FILE_PROCESS_COMPLETED } from '@/utility/types/types';
+import { isMainResultRecordJSON, isPageResultRecordJSON, MainResultRecordJSON, PageResultRecord } from '../../JSON';
 
-/* Todo: JSONデータの型をナローイング */
 export const getJSONData = async (args:{
   selectedId:string,
   relativeJSONPath:string
 }):Promise<{
-  jsonData:any|null,
+  jsonData:any,
   errorMessage:string
 }> => {
   const { selectedId, relativeJSONPath } = args;

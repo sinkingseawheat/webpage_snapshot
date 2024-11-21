@@ -7,18 +7,19 @@ import { ImageDescription } from "./ImageDescription";
 import { getJSONData } from './sub/getJSONData';
 import { setGetPathToSendFile } from "./sub/setGetPathToSendFile";
 
-import { PageResultRecordJSON, type MainResultRecordJSON } from '@/component/snapshot/JSON';
+import { PageResultRecordJSON, type URLsExtractedItem, type MainResultRecordJSON, type MergedResultItem} from '@/component/snapshot/JSON';
+
 
 const PageResultOutput:React.FC<{
   selectedId: string,
   indexOfURL: string,
-  mainResultJSON: undefined | null | MainResultRecordJSON,
+  mainResultRecordJSON: undefined | null | MainResultRecordJSON,
   errorMessageOfMainResult: string,
-}> = ({selectedId, indexOfURL, mainResultJSON, errorMessageOfMainResult})=>{
+}> = ({selectedId, indexOfURL, mainResultRecordJSON, errorMessageOfMainResult})=>{
 
   const getPath = setGetPathToSendFile(selectedId);
 
-  const [pageResultJSON, setPageResultRecordJSON] = useState<undefined|null|PageResultRecordJSON>(undefined);
+  const [pageResultRecordJSON, setPageResultRecordJSON] = useState<undefined|null|PageResultRecordJSON>(undefined);
   const [errorMessageOfPageResult, setErrorMessageOfPageResult] = useState<string>('');
 
   useEffect(()=>{
@@ -28,35 +29,83 @@ const PageResultOutput:React.FC<{
       ] = await Promise.all([
         getJSONData({selectedId, relativeJSONPath:`${indexOfURL}/page.json`}),
       ]);
-      const {jsonData:pageResultJSON, errorMessage:errorMessageOfPageResult} = pageData;
-      setPageResultRecordJSON(pageResultJSON);
+      const {jsonData:pageResultRecordJSON, errorMessage:errorMessageOfPageResult} = pageData;
+      setPageResultRecordJSON(pageResultRecordJSON);
       setErrorMessageOfPageResult(errorMessageOfPageResult);
     })();
   }, [selectedId, indexOfURL]);
 
-  if(mainResultJSON === undefined || pageResultJSON === undefined){
+  if(mainResultRecordJSON === undefined || pageResultRecordJSON === undefined){
     return <>ロード中です</>;
   }
 
-  if(mainResultJSON === null){
+  if(mainResultRecordJSON === null){
     return <>{errorMessageOfMainResult}</>
   }
 
-  if(pageResultJSON === null){
+  if(pageResultRecordJSON === null){
     return <>{errorMessageOfPageResult}</>
   }
 
-  const [pageIndex, pageName] = mainResultJSON.targetURLs?.find((targetURL)=>{return targetURL[0]===indexOfURL}) || [];
+
+  const {targetURLs, links:_links } = mainResultRecordJSON;
+  const links:Map<string, Pick<MergedResultItem,'responseURL'|'status'|'contentType'|'contentLength'|'shaHash'|'source'|'linkSourceIndex'|'archiveIndex'|'errorMessage'>> = new Map();
+  for(const _linksItem of _links){
+    const {requestURL, ...value} = _linksItem
+    links.set(requestURL, value);
+  }
+  const [, targetURL] = targetURLs?.find((targetURL)=>{return targetURL[0]===indexOfURL}) || [];
+
+  const { redirectTransition, URLsRequestFromPage, URLsExtracted} = pageResultRecordJSON;
+  const linksResult = new Map<string, Omit<MergedResultItem,'requestURL'>>();
+  for(const connectedURL of URLsRequestFromPage){
+    const result = links.get(connectedURL);
+    if(result !== undefined){
+      linksResult.set(connectedURL, result);
+    }
+  }
+  for(const list of URLsExtracted){
+    list.absURLs.forEach((url,index)=>{
+      if(url===null){return null};
+      const result:Pick<MergedResultItem,'type'|'tagName'|'href'|'relURL'> = {};
+      if(list.type === 'DOM_Attribute'){
+        result.tagName = list.tagName;
+      }else if(list.type === 'fromCascadingStyleSheets'){
+        result.href = list.href;
+      }
+      const prevResult = linksResult.get(url);
+      linksResult.set(url, {...result, ...prevResult}); //既存の結果を優先してマージ
+    });
+  }
+  const linksResultFlatted = Array.from(linksResult).map(([k,v])=>{
+    return {
+      requestURL:k,
+      ...v
+    }
+  })
+  const linksGroupingByContentType = (links === undefined) ?
+    null
+    : Object.groupBy(linksResultFlatted, (item)=>{
+      const {contentType} = item;
+      if(contentType === null || contentType === undefined){return 'none'}
+      if(/^image/.test(contentType)){return 'image'}
+      if(/^text/.test(contentType)){return 'text'}
+      return 'other'
+    })
 
   return (<>
-    <p className={`${style.headingLv4} ${style['u-mt--large']}`}>「<span>{pageIndex}</span>　<strong>{pageName}</strong>」の結果です。</p>
+    <p className={`${style.headingLv4} ${style['u-mt--large']}`}>「<span>{indexOfURL}</span>　<strong>{targetURL}</strong>」の結果です。</p>
     <section>
       <h5 className={style.headingLv3}>リダイレクト</h5>
       <div className={style.table}>
-        <RedirectStatus {...{
-          links: mainResultJSON['links'],
-          redirectTransition :pageResultJSON['redirectTransition']
-        }} />
+        {
+          targetURL === undefined ?
+          <>{`page.jsonにデータが存在しないため${targetURL}の結果はありません`}</>
+          : <RedirectStatus {...{
+            targetURL,
+            redirectTransition :redirectTransition
+          }} />
+        }
       </div>
     </section>
     <section>
@@ -75,12 +124,14 @@ const PageResultOutput:React.FC<{
     <section>
       <h5 className={style.headingLv3}>画像（SVG含む）</h5>
       <div>
-       <ImageDescription {...{
-        selectedId,
-        links: mainResultJSON['links'],
-        URLsExtracted: pageResultJSON['URLsExtracted'],
-        URLsRequestedFromPage: pageResultJSON['URLsRequestedFromPage'],
-       }}/>
+        {
+          linksGroupingByContentType === null || linksGroupingByContentType['image'] === undefined ?
+          <>画像は検出されませんでした</>
+          : <ImageDescription {...{
+            imageResult:linksGroupingByContentType['image'],
+            getPath,
+          }}/>
+        }
       </div>
     </section>
     </>

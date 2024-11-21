@@ -10,7 +10,6 @@ import { Scenario } from '@/component/snapshot/api/Scenario';
 import { setting } from '@/utility/Setting';
 import { entrance } from './entrance';
 import { MainResult } from './MainResutl';
-import { mkdir } from 'fs/promises';
 
 class ContextError extends Error {
   static {

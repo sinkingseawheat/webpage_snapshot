@@ -12,21 +12,21 @@ import style from '@/component/snapshot/Renderer/style/Output.module.scss';
 
 const MainResultOutput:React.FC<{
   selectedId:string,
-  mainResultJSON:undefined|null|MainResultRecordJSON,
+  mainResultRecordJSON:undefined|null|MainResultRecordJSON,
   errorMessageOfMainResult:string,
-}> = ({selectedId, mainResultJSON, errorMessageOfMainResult})=>{
+}> = ({selectedId, mainResultRecordJSON, errorMessageOfMainResult})=>{
 
-  if(mainResultJSON === undefined){
+  if(mainResultRecordJSON === undefined){
     return <>ロード中です</>;
   }
 
-  if(mainResultJSON === null){
+  if(mainResultRecordJSON === null){
     return <>{errorMessageOfMainResult}</>
   }
 
   const getPath = setGetPathToSendFile(selectedId);
 
-  const { formData, version, targetURLs, links } = mainResultJSON;
+  const { formData, version, targetURLs, links } = mainResultRecordJSON;
   if( formData === undefined || version === undefined || targetURLs === undefined || links === undefined ){
     return (<><p>
       {getPath('main.json')}のデータフォーマットが壊れているか、ファイルが存在しません。<br/>

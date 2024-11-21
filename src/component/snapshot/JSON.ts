@@ -128,7 +128,7 @@ export type MainResultRecordJSON = {
   }[];
 };
 
-function isMainResultRecordJSON(args:any):args is MainResultRecordJSON{
+export function isMainResultRecordJSON(args:any):args is MainResultRecordJSON{
   try{
     if(typeof args !== 'object' && args === null){return false;}
     const {formData, version, targetURLs, links} = args;
@@ -148,7 +148,7 @@ function isMainResultRecordJSON(args:any):args is MainResultRecordJSON{
           && (typeof shaHash === 'string' || shaHash === null)
           && (source === 'requestedFromPage' || source === 'extracted')
           && (Array.isArray(linkSourceIndex) && linkSourceIndex.every((indexOfURL) => typeof indexOfURL === 'string'))
-          && (typeof archiveIndex === 'string' || archiveIndex === null)
+          && (typeof archiveIndex === 'number' || archiveIndex === null)
           && isErrorMessage(errorMessage)
         );
       })
@@ -192,15 +192,15 @@ export function getMainResultRecordJSON(record:MainResultRecord):MainResultRecor
     _linkSourceIndex
     links.push({
       requestURL,
-      responseURL,
-      status,
-      contentType,
-      contentLength,
-      shaHash,
-      source,
-      linkSourceIndex,
-      archiveIndex,
-      errorMessage,
+      responseURL: responseURL ?? null,
+      status: status ?? null,
+      contentType: contentType ?? null,
+      contentLength: contentLength ?? null,
+      shaHash: shaHash ?? null,
+      source: source ?? null,
+      linkSourceIndex: linkSourceIndex ?? null,
+      archiveIndex: archiveIndex ?? null,
+      errorMessage: errorMessage ?? null,
     })
   }
   return {
@@ -220,7 +220,7 @@ export type PageResultRecord = {
     status: number
   }[]
   /** ページ内で使用されているURL */
-  URLsRequestedFromPage: ValidURL[],
+  URLsRequestFromPage: ValidURL[],
   /** ページのDOM */
   DOMtext: string | null,
   /** ページ内に記述されているURL。 */
@@ -235,11 +235,11 @@ export type PageResultRecord = {
 function isPageResultRecord(args:any):args is PageResultRecord{
   try{
     if(typeof args !== 'object' && args === null){return false;}
-    const {redirectTransition, URLsRequestedFromPage, DOMtext, URLsExtracted, pageCapture} = args;
+    const {redirectTransition, URLsRequestFromPage, DOMtext, URLsExtracted, pageCapture} = args;
     if(typeof redirectTransition !== 'object' && redirectTransition === null){return false;}
     if(
       Array.isArray(redirectTransition) && redirectTransition.every(transition => (typeof transition?.url === 'string' && typeof transition?.status === 'number'))
-      && Array.isArray(URLsRequestedFromPage) && URLsRequestedFromPage.every((url) => isValidURL(url))
+      && Array.isArray(URLsRequestFromPage) && URLsRequestFromPage.every((url) => isValidURL(url))
       && (typeof DOMtext === 'string' || DOMtext === null)
       && Array.isArray(URLsExtracted) && URLsExtracted.every((item) => isURLsExtractedItem(item))
       && Array.isArray(pageCapture) && pageCapture.every((item) => (typeof item?.name === 'string' && item?.buffer instanceof Buffer))
@@ -256,24 +256,24 @@ function isPageResultRecord(args:any):args is PageResultRecord{
 
 
 /** ページごとの結果のJSON */
-type PageResultRecordJSON = {
+export type PageResultRecordJSON = {
   redirectTransition: {
     url: string,
     status: number
   }[],
-  URLsRequestedFromPage: string[],
-  URLsExtracted: URLsExtractedItem[]
+  URLsRequestFromPage: string[],
+  URLsExtracted: URLsExtractedItem<string>[]
 };
 // DOM、pageCaptureはJSONに保存不要
 
 
-function isPageResultRecordJSON(args:any):args is PageResultRecordJSON{
+export function isPageResultRecordJSON(args:any):args is PageResultRecordJSON{
   try{
     if(typeof args !== 'object' && args === null){return false;}
-    const {redirectTransition, URLsRequestedFromPage, URLsExtracted} = args;
+    const {redirectTransition, URLsRequestFromPage, URLsExtracted} = args;
     if(
       Array.isArray(redirectTransition) && redirectTransition.every(transition => (typeof transition?.url === 'string' && typeof transition?.status === 'number'))
-      && Array.isArray(URLsRequestedFromPage) && URLsRequestedFromPage.every((url) => typeof url === 'string')
+      && Array.isArray(URLsRequestFromPage) && URLsRequestFromPage.every((url) => typeof url === 'string')
       && Array.isArray(URLsExtracted) && URLsExtracted.every((item) => isURLsExtractedItem(item))
     ){
       return true;
@@ -286,16 +286,16 @@ function isPageResultRecordJSON(args:any):args is PageResultRecordJSON{
 }
 
 export function getPageResultRecordJSON(record:PageResultRecord):PageResultRecordJSON{
-  const {redirectTransition, URLsRequestedFromPage, URLsExtracted} = record;
+  const {redirectTransition, URLsRequestFromPage, URLsExtracted} = record;
   return {
     redirectTransition,
-    URLsRequestedFromPage,
+    URLsRequestFromPage,
     URLsExtracted,
   }
 }
 
 /** 抽出したURLについてのパラメータ */
-type URLsExtractedItem = {
+export type URLsExtractedItem<T=ValidURL> = {
   /** DOM要素から取得 */
   type: 'DOM_Attribute',
   /** DOM要素のHTMLタグ名 */
@@ -303,7 +303,7 @@ type URLsExtractedItem = {
   /** ファイルのURL。相対・ルート相対・data属性・javascript: ・#始まりなど、色々なパターンをそのまま挿入 */
   relURLs: string[],
   /** relURLsについて、targetURLをベースに変換可能であれば絶対パスに変換する。 */
-  absURLs: (ValidURL|null)[],
+  absURLs: (T|null)[],
 } | {
   /** CSSから取得の場合 */
   type: 'fromCascadingStyleSheets',
@@ -312,14 +312,14 @@ type URLsExtractedItem = {
   /** ファイルのURL。相対・ルート相対・data属性・javascript: ・#始まりなど、色々なパターンをそのまま挿入 */
   relURLs: string[],
   /** relURLsについて、targetURLをベースに変換可能であれば絶対パスに変換する。 */
-  absURLs: (ValidURL|null)[],
+  absURLs: (T|null)[],
 } | {
   /** style属性から取得 */
   type: 'styleAttribute',
   /** ファイルのURL。相対・ルート相対・data属性・javascript: ・#始まりなど、色々なパターンをそのまま挿入 */
   relURLs: string[],
   /** relURLsについて、targetURLをベースに変換可能であれば絶対パスに変換する。 */
-  absURLs: (ValidURL|null)[],
+  absURLs: (T|null)[],
 };
 
 function isURLsExtractedItem(args:any):args is URLsExtractedItem{
@@ -344,20 +344,19 @@ function isURLsExtractedItem(args:any):args is URLsExtractedItem{
   }
 }
 
-/** 抽出したURLについてのパラメータのJSON */
-// 別途に型を用意しなくてもシリアライズ可能なためコメントアウト
-/* type URLsExtractedItemJSON = {
-  type: 'DOM_Attribute',
-  tagName: string,
-  relURLs: string[],
-  absURLs: (string|null)[],
-} | {
-  type: 'fromCascadingStyleSheets',
-  href: string|null,
-  relURLs: string[],
-  absURLs: (string|null)[],
-} | {
-  type: 'styleAttribute',
-  relURLs: string[],
-  absURLs: (string|null)[],
-}; */
+export type MergedResultItem = {
+  requestURL:string,
+  type?:'DOM_Attribute'|'fromCascadingStyleSheets'|'styleAttribute',
+  tagName?:string,
+  relURL?:string,
+  href?: string|null,
+  responseURL?: string | null,
+  status?: number | null,
+  contentType?: string | null,
+  contentLength?: number | null,
+  shaHash?: string | null,
+  source?: 'requestedFromPage'|'extracted',
+  linkSourceIndex?: string[],
+  archiveIndex?: number | null,
+  errorMessage?: ErrorMessage,
+}

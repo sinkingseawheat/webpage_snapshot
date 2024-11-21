@@ -85,9 +85,9 @@ class Scenario {
       // MainResultRecord["links"]の更新を行う。
       // page.on('requestfailed'),page.on('requestfinished')のリスナーによるデータ収集はここで終える。
       const promises = [];
-      const URLsRequestedFromPage:PageResultRecord["URLsRequestedFromPage"] = [];
+      const URLsRequestFromPage:PageResultRecord["URLsRequestFromPage"] = [];
       for(const requestURLFromPage of storedResponsesOfRequestURLFromPage.keys()){
-        URLsRequestedFromPage.push(requestURLFromPage);
+        URLsRequestFromPage.push(requestURLFromPage);
       }
       for(const [requestURLFromPage, linksItemOfRequestURLFromPage] of storedResponsesOfRequestURLFromPage){
         if(isValidURL(requestURLFromPage)){
@@ -99,7 +99,7 @@ class Scenario {
           }))
         }
       }
-      this.pageResult.updateRecord({URLsRequestedFromPage});
+      this.pageResult.updateRecord({URLsRequestFromPage});
       await Promise.all(promises);
       if(pageResponse !== null && pageErrorMessage === ''){
         // afterLoaded ページ読み込み完了後
@@ -137,6 +137,7 @@ class Scenario {
         // [too many redirects]の場合はgetResponseByPageGotで既にクローズ処理を行っている
         await page.close({reason:'全てのシナリオが終了したため、ページをクローズ'});
       }
+      await this.pageResult.storeCapture();
       await this.pageResult.dumpJSON();
       console.log(`次のページ単体の処理を完了しました:${this.targetURL}`);
       return {
