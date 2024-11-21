@@ -1,4 +1,4 @@
-import type { Page, Frame } from "playwright";
+import type { Page, Frame, Response } from "playwright";
 import { setting } from "@/utility/Setting";
 import { ErrorMessage } from "@/utility/types/types";
 
@@ -7,7 +7,13 @@ export const getResponseByPageGoto = async (
   requestURL:string,
   option?:Parameters<Page["goto"]>[1]
 )=>{
-  let errorMessage: ErrorMessage = '';
+  const rv:{
+    response:Response | null,
+    errorMessage:ErrorMessage,
+  }={
+    response:null,
+    errorMessage:'',
+  }
   try {
     // Basic認証のアイパスの設定
     const authEncoded = setting.getBasicAuthorization(requestURL);
@@ -15,7 +21,9 @@ export const getResponseByPageGoto = async (
       page.setExtraHTTPHeaders({...authEncoded});
     }
     const redirectCountCheck = new Map<Frame, Map<string, number>>();
+    let isSetRouter = false;
     page.on('framenavigated', (frame)=>{
+      // metaやjavascriptによる無限リダイレクトの抑止
       const targetFrame = redirectCountCheck.get(frame);
       if(targetFrame === undefined){
         redirectCountCheck.set(frame, new Map<string, number>());
@@ -25,44 +33,43 @@ export const getResponseByPageGoto = async (
           targetFrame.set(frame.url(),1);
         }else{
           if(targetURLCount > 2){
-            page.close().then(()=>{
-              console.log(`${page.url()} is closed`);
-              // ここでthrowをするとunhandled Errorが発生するので、標準の「Target page, context or browser has been closed」でエラーを補足する
-            });
-          }else{
-            targetFrame.set(frame.url(), targetURLCount+1);
+            if(isSetRouter===false){
+              rv.errorMessage = '[too many redirects]';
+              page.route('**/*',(router)=>{
+                router.abort();
+              }).then(()=>{
+                console.log(`${requestURL} is redirect loop. Stopped request`)
+              });
+            }
+            isSetRouter = true;
           }
+          targetFrame.set(frame.url(), targetURLCount+1);
         }
       }
     });
     const response = await page.goto(requestURL, {
       ...{
-        timeout: 5_000,
         waitUntil: 'networkidle',
       },
       ...option
     });
-    errorMessage = response === null ? '[no resopnse]' : '';
-    return {
-      response,
-      errorMessage,
-    };
+    if(rv.errorMessage === ''){
+      rv.errorMessage = (response === null) ? '[no resopnse]' : '';
+    }
+    rv.response = response;
+    return rv;
   }catch(e){
-    if(e instanceof Error && e.message.indexOf('Target page, context or browser has been closed')!==-1){
-      errorMessage = '[too many redirects]';
-    }else if(e instanceof Error && e.message.indexOf('net::ERR_FAILED')!==-1){
-      errorMessage = 'net:ERR_FAILED';
+    if(e instanceof Error && e.message.indexOf('net::ERR_FAILED')!==-1){
+      rv.errorMessage = 'net:ERR_FAILED';
     }else if(e instanceof Error && e.message.indexOf('ERR_INVALID_AUTH_CREDENTIALS') !== -1){
       // ERR_INVALID_AUTH_CREDENTIALSはbasic認証エラーとみなす
-      errorMessage = 'ERR_INVALID_AUTH_CREDENTIALS';
+      rv.errorMessage = 'ERR_INVALID_AUTH_CREDENTIALS';
     }else{
       console.error('getResponseByPageGoto内で未定義のエラーです。');
       console.error(e);
-      errorMessage = '[unplanned]';
+      rv.errorMessage = '[unplanned]';
     }
-    return {
-      response: null,
-      errorMessage,
-    };
+    rv.response = null;
+    return rv;
   }
 }

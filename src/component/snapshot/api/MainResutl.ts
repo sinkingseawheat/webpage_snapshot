@@ -89,7 +89,7 @@ class MainResult{
         const {body, response} = request === null ? {body:null, response:null} : await getResponseAndBodyFromRequest(request);
         const archiveIndex = (body !== null) ? await this.archiveFile(requestURLFromPage, body) : null;
         // ページの通信は正常に終了して、ページからのリクエストが失敗してresponse.bodyが無い場合のみ表示されるエラーメッセージ。
-        const _errorMessage = (body !== null) ? '' : '[no responseBody found request from page]';
+        const _errorMessage = (body !== null) ? '' : errorMessage;
         this.record.links.set(requestURLFromPage, {
           response,
           source: 'requestedFromPage',

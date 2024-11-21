@@ -134,10 +134,7 @@ class Scenario {
       console.error('Scenario["start"]内で未定義のエラーです。再スローします');
       throw e;
     }finally{
-      if(this.responseResultInPage.errorMessage !== '[too many redirects]'){
-        // [too many redirects]の場合はgetResponseByPageGotで既にクローズ処理を行っている
-        await page.close({reason:'全てのシナリオが終了したため、ページをクローズ'});
-      }
+      await page.close({reason:'全てのシナリオが終了したため、ページをクローズ'});
       await this.pageResult.storeCapture();
       await this.pageResult.dumpJSON();
       console.log(`次のページ単体の処理を完了しました:${this.targetURL}`);
