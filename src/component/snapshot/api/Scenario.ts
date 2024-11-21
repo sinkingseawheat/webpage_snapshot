@@ -130,6 +130,7 @@ class Scenario {
         })();
       }
     }catch(e){
+      console.error(e);
       console.error('Scenario["start"]内で未定義のエラーです。再スローします');
       throw e;
     }finally{
