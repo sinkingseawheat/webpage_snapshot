@@ -50,14 +50,17 @@ class Scenario {
         if(statusType !== 3){
           // サーバーリダイレクト以外の場合は記録する
           const requestURLFromPage = await getRedirectStatusFromRequest(request, false);
+          if(isFailed===true && storedResponsesOfRequestURLFromPage.get(requestURLFromPage) !== undefined){return}
           storedResponsesOfRequestURLFromPage.set(requestURLFromPage, {request, errorMessage: isFailed ? '[on requestfailed]' : ''});
         }
       }else{
         const requestURLFromPage = await getRedirectStatusFromRequest(request, false);
+        if(isFailed===true && storedResponsesOfRequestURLFromPage.get(requestURLFromPage) !== undefined){return}
         storedResponsesOfRequestURLFromPage.set(requestURLFromPage, {request, errorMessage:'[no resopnse]'});
       }
     }
     page.on('requestfailed',(request)=>{
+      console.log(`${request.url()} is failed`);
       (async ()=>{
         await handleRequestFinished(request, true);
       })();
