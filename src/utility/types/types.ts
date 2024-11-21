@@ -40,6 +40,7 @@ const errorMessage = [
   '[on requestfailed]',
   '[request is pending]',
   '[no responseBody found request from page]',
+  '[no need to request url]',
 ] as const;
 export type ErrorMessage = (typeof errorMessage)[number];
 export function isErrorMessage(args:any):args is ErrorMessage{

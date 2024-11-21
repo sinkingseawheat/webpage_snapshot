@@ -3,7 +3,7 @@ import { Page, BrowserContext } from "playwright"
 import { MainResultRecord } from "@/component/snapshot/JSON";
 import { getResponseAndBodyFromRequest } from './getResponseAndBodyFromRequest';
 import { getResponseByPageGoto } from "./getResponseByPageGoto";
-import { ValidURL, ValueOfMap } from "@/utility/types/types";
+import {type ErrorMessage, type ValidURL, type ValueOfMap } from "@/utility/types/types";
 
 export const requestNotRequestedButInPage = async (args:{
   browserContext:BrowserContext,
@@ -28,7 +28,11 @@ export const requestNotRequestedButInPage = async (args:{
       }
     });
 
-    const {response:pageResponse, errorMessage} = await getResponseByPageGoto(page, requestURLFromPage, {});
+    const textNoNeedRequest:ErrorMessage = '[no need to request url]';
+    const isNeedRequest = !/^javascript:/.test(requestURLFromPage) && !/^data:/.test(requestURLFromPage);
+    const {response:pageResponse, errorMessage} = isNeedRequest ?
+      await getResponseByPageGoto(page, requestURLFromPage, {})
+      : {response:null, errorMessage:textNoNeedRequest};
     if(pageResponse === null){
       if(errorMessage==='ERR_INVALID_AUTH_CREDENTIALS'){
         rv.updatedLinksItem.response = {
