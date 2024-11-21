@@ -60,7 +60,7 @@ export const getResponseByPageGoto = async (
     return rv;
   }catch(e){
     if(e instanceof Error && e.message.indexOf('net::ERR_FAILED')!==-1){
-      rv.errorMessage = 'net:ERR_FAILED';
+      rv.errorMessage = 'net::ERR_FAILED';
     }else if(e instanceof Error && e.message.indexOf('ERR_INVALID_AUTH_CREDENTIALS') !== -1){
       // ERR_INVALID_AUTH_CREDENTIALSはbasic認証エラーとみなす
       rv.errorMessage = 'ERR_INVALID_AUTH_CREDENTIALS';

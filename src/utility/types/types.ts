@@ -35,7 +35,7 @@ const errorMessage = [
   '[unplanned]',
   '[no resopnse]',
   '[too many redirects]',
-  'net:ERR_FAILED',
+  'net::ERR_FAILED',
   'ERR_INVALID_AUTH_CREDENTIALS',
   '[on requestfailed]',
   '[request is pending]',
