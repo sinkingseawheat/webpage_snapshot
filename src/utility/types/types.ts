@@ -41,6 +41,7 @@ const errorMessage = [
   '[request is pending]',
   '[no responseBody found request from page]',
   '[no need to request url]',
+  '[TimeoutError]',
 ] as const;
 export type ErrorMessage = (typeof errorMessage)[number];
 export function isErrorMessage(args:any):args is ErrorMessage{

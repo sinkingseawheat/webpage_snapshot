@@ -64,6 +64,13 @@ export const getResponseByPageGoto = async (
     }else if(e instanceof Error && e.message.indexOf('ERR_INVALID_AUTH_CREDENTIALS') !== -1){
       // ERR_INVALID_AUTH_CREDENTIALSはbasic認証エラーとみなす
       rv.errorMessage = 'ERR_INVALID_AUTH_CREDENTIALS';
+    }else if(e instanceof Error && e.name === 'TimeoutError'){
+      rv.errorMessage = '[TimeoutError]';
+    }else if(e instanceof Error){
+      console.error('---')
+      console.error(e)
+      console.error(`${e.name}----${e.message}`);
+      rv.errorMessage = '[unplanned]';
     }else{
       console.error('getResponseByPageGoto内で未定義のエラーです。');
       console.error(e);

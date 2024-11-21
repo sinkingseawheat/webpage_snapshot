@@ -43,34 +43,34 @@ class Scenario {
     const storedResponsesOfRequestURLFromPage:Map<ValidURL,{request:Request, errorMessage:ValueOfMap<MainResultRecord["links"]>["errorMessage"]}> = new Map();
     // beforeGoto ページ読み込み前
     // ページを読み込み時に発生するネットワークアクセスを記録
-    const handleRequestFinished = async (request:Request, isFailed:boolean):Promise<void> => {
-      const response = await request.response();
-      if(response !== null){
-        const statusType = Math.floor(response.status() / 100);
-        if(statusType !== 3){
-          // サーバーリダイレクト以外の場合は記録する
+    try {
+      const handleRequestFinished = async (request:Request, isFailed:boolean):Promise<void> => {
+        const response = await request.response();
+        if(response !== null){
+          const statusType = Math.floor(response.status() / 100);
+          if(statusType !== 3){
+            // サーバーリダイレクト以外の場合は記録する
+            const requestURLFromPage = await getRedirectStatusFromRequest(request, false);
+            if(isFailed===true && storedResponsesOfRequestURLFromPage.get(requestURLFromPage) !== undefined){return}
+            storedResponsesOfRequestURLFromPage.set(requestURLFromPage, {request, errorMessage: isFailed ? '[on requestfailed]' : ''});
+          }
+        }else{
           const requestURLFromPage = await getRedirectStatusFromRequest(request, false);
           if(isFailed===true && storedResponsesOfRequestURLFromPage.get(requestURLFromPage) !== undefined){return}
-          storedResponsesOfRequestURLFromPage.set(requestURLFromPage, {request, errorMessage: isFailed ? '[on requestfailed]' : ''});
+          storedResponsesOfRequestURLFromPage.set(requestURLFromPage, {request, errorMessage:'[no resopnse]'});
         }
-      }else{
-        const requestURLFromPage = await getRedirectStatusFromRequest(request, false);
-        if(isFailed===true && storedResponsesOfRequestURLFromPage.get(requestURLFromPage) !== undefined){return}
-        storedResponsesOfRequestURLFromPage.set(requestURLFromPage, {request, errorMessage:'[no resopnse]'});
       }
-    }
-    page.on('requestfailed',(request)=>{
-      console.log(`${request.url()} is failed`);
-      (async ()=>{
-        await handleRequestFinished(request, true);
-      })();
-    });
-    page.on('requestfinished', (request)=>{
-      (async ()=>{
-        await handleRequestFinished(request, false);
-      })();
-    });
-    try {
+      page.on('requestfailed',(request)=>{
+        console.log(`${request.url()} is failed`);
+        (async ()=>{
+          await handleRequestFinished(request, true);
+        })();
+      });
+      page.on('requestfinished', (request)=>{
+        (async ()=>{
+          await handleRequestFinished(request, false);
+        })();
+      });
       const {referer} = this.otherScenarioOption;
       const gotoOption = (referer === undefined || referer === '') ? undefined : {referer}
       this.responseResultInPage = await getResponseByPageGoto(page, this.targetURL, gotoOption);
@@ -133,9 +133,16 @@ class Scenario {
         })();
       }
     }catch(e){
-      console.error(e);
-      console.error('Scenario["start"]内で未定義のエラーです。再スローします');
-      throw e;
+      if(e instanceof Error && e.message.indexOf('Target page, context or browser has been closed')!==-1){
+        this.responseResultInPage = {
+          response:null,
+          errorMessage:'[no resopnse]'
+        }
+      }else{
+        console.error(e);
+        console.error('Scenario["start"]内で未定義のエラーです。再スローします');
+        throw e;
+      }
     }finally{
       await page.close({reason:'全てのシナリオが終了したため、ページをクローズ'});
       await this.pageResult.storeCapture();
