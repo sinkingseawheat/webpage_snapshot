@@ -2,12 +2,12 @@ import { type MergedResultItem } from "@/component/snapshot/JSON";
 import style from '@/component/snapshot/Renderer/style/Output.module.scss'
 import { setGetPathToSendFile } from "./sub/setGetPathToSendFile";
 
-const ImageDescription:React.FC<{
-  imageResult:MergedResultItem[],
+const DescriptionOfImage:React.FC<{
+  results:MergedResultItem[],
   getPath:ReturnType<typeof setGetPathToSendFile>
-}> = ({imageResult, getPath})=>{
+}> = ({results, getPath})=>{
   return (<>{
-    imageResult.map(({
+    results.map(({
       requestURL, type, tagName, relURL, href, responseURL, status, contentType, contentLength, shaHash, source, linkSourceIndex, archiveIndex, errorMessage
     })=>{
       if(contentType === undefined || contentType === null){return null;}
@@ -72,4 +72,4 @@ const ImageDescription:React.FC<{
   }</>);
 }
 
-export {ImageDescription}
+export {DescriptionOfImage}

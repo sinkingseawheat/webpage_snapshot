@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import style from '@/component/snapshot/Renderer/style/Output.module.scss'
 
 import { RedirectStatus } from "./RedirectStatus";
-import { ImageDescription } from "./ImageDescription";
+import { DescriptionOfImage } from "./DescriptionOfImage";
+import { DescriptionOfTextFile } from "./DescriptionOfTextFile";
 
 import { getJSONData } from './sub/getJSONData';
 import { setGetPathToSendFile } from "./sub/setGetPathToSendFile";
@@ -129,8 +130,21 @@ const PageResultOutput:React.FC<{
         {
           linksGroupingByContentType === null || linksGroupingByContentType['image'] === undefined ?
           <>画像は検出されませんでした</>
-          : <ImageDescription {...{
-            imageResult:linksGroupingByContentType['image'],
+          : <DescriptionOfImage {...{
+            results: linksGroupingByContentType['image'],
+            getPath,
+          }}/>
+        }
+      </div>
+    </section>
+    <section>
+      <h5 className={style.headingLv3}>テキストファイル</h5>
+      <div>
+        {
+          linksGroupingByContentType === null || linksGroupingByContentType['text'] === undefined  ?
+          <>テキストのファイルはありません</>
+          : <DescriptionOfTextFile {...{
+            results: linksGroupingByContentType["text"],
             getPath,
           }}/>
         }
