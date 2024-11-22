@@ -217,7 +217,8 @@ export function getMainResultRecordJSON(record:MainResultRecord):MainResultRecor
 export type PageResultRecord = {
   redirectTransition: {
     url: string, //レスポンスの格納なのでstring型で問題ない
-    status: number
+    status: number,
+    type: 'Browser'|'Server'
   }[]
   /** ページ内で使用されているURL */
   URLsRequestFromPage: ValidURL[],
@@ -238,7 +239,7 @@ function isPageResultRecord(args:any):args is PageResultRecord{
     const {redirectTransition, URLsRequestFromPage, DOMtext, URLsExtracted, pageCapture} = args;
     if(typeof redirectTransition !== 'object' && redirectTransition === null){return false;}
     if(
-      Array.isArray(redirectTransition) && redirectTransition.every(transition => (typeof transition?.url === 'string' && typeof transition?.status === 'number'))
+      Array.isArray(redirectTransition) && redirectTransition.every(transition => (typeof transition?.url === 'string' && typeof transition?.status === 'number' && (transition?.type === 'Browser' || transition?.type === 'Server')))
       && Array.isArray(URLsRequestFromPage) && URLsRequestFromPage.every((url) => isValidURL(url))
       && (typeof DOMtext === 'string' || DOMtext === null)
       && Array.isArray(URLsExtracted) && URLsExtracted.every((item) => isURLsExtractedItem(item))
@@ -259,7 +260,8 @@ function isPageResultRecord(args:any):args is PageResultRecord{
 export type PageResultRecordJSON = {
   redirectTransition: {
     url: string,
-    status: number
+    status: number,
+    type: 'Browser'|'Server',
   }[],
   URLsRequestFromPage: string[],
   URLsExtracted: URLsExtractedItem<string>[]
@@ -272,7 +274,7 @@ export function isPageResultRecordJSON(args:any):args is PageResultRecordJSON{
     if(typeof args !== 'object' && args === null){return false;}
     const {redirectTransition, URLsRequestFromPage, URLsExtracted} = args;
     if(
-      Array.isArray(redirectTransition) && redirectTransition.every(transition => (typeof transition?.url === 'string' && typeof transition?.status === 'number'))
+      Array.isArray(redirectTransition) && redirectTransition.every(transition => (typeof transition?.url === 'string' && typeof transition?.status === 'number' && typeof transition?.type === 'string'))
       && Array.isArray(URLsRequestFromPage) && URLsRequestFromPage.every((url) => typeof url === 'string')
       && Array.isArray(URLsExtracted) && URLsExtracted.every((item) => isURLsExtractedItem(item))
     ){

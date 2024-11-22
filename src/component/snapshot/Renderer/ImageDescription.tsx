@@ -40,6 +40,7 @@ const ImageDescription:React.FC<{
             <tbody>
               <tr><th>URL（リクエスト）</th><td>{requestURL}</td></tr>
               <tr><th>URL（取得先）</th><td>{requestURL === responseURL ? 'リダイレクト無' : responseURL}</td></tr>
+              <tr><th>リダイレクトの検知</th><td>{source === 'extracted' ? 'サーバーリダイレクトのみ' : 'サーバーおよびブラウザリダイレクト'}</td></tr>
               <tr><th>レスポンスステータス</th><td>{status}</td></tr>
               {
                 type === 'fromCascadingStyleSheets' && href !== undefined ?

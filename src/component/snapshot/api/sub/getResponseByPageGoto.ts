@@ -1,6 +1,7 @@
 import type { Page, Frame, Response } from "playwright";
 import { setting } from "@/utility/Setting";
 import { ErrorMessage } from "@/utility/types/types";
+import { type PageResultRecord } from "../../JSON";
 
 export const getResponseByPageGoto = async (
   page:Page,
@@ -10,9 +11,11 @@ export const getResponseByPageGoto = async (
   const rv:{
     response:Response | null,
     errorMessage:ErrorMessage,
+    redirectInBrowser:[string, string][],
   }={
     response:null,
     errorMessage:'',
+    redirectInBrowser:[],
   }
   try {
     // Basic認証のアイパスの設定
@@ -23,6 +26,9 @@ export const getResponseByPageGoto = async (
     const redirectCountCheck = new Map<Frame, Map<string, number>>();
     let isSetRouter = false;
     page.on('framenavigated', (frame)=>{
+      if(frame === page.mainFrame()){
+        rv.redirectInBrowser.push([requestURL, frame.url()]);
+      }
       // metaやjavascriptによる無限リダイレクトの抑止
       const targetFrame = redirectCountCheck.get(frame);
       if(targetFrame === undefined){

@@ -32,10 +32,7 @@ async function getRedirectStatusFromRequest(
     return url;
   }else{
     let redirectCount:number = 0;
-    const redirectTransition:{
-      url: string;
-      status: number;
-    }[] = [];
+    const redirectTransition:PageResultRecord['redirectTransition'] = [];
     let prevRequest = targetRequest.redirectedFrom();
     let url = targetRequest.url();
     while(prevRequest !== null && redirectCount <= MAX_SERVER_REDIRECT_COUNT){
@@ -45,6 +42,7 @@ async function getRedirectStatusFromRequest(
         redirectTransition.push({
           url,
           status,
+          type:'Server',
         });
       }
       prevRequest = prevRequest.redirectedFrom();

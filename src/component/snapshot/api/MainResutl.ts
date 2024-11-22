@@ -54,6 +54,17 @@ class MainResult{
     }
     return null;
   }
+  getLinksItem(requestURL:string){
+    return this.record.links.get(requestURL);
+  }
+  getLinksItemByResponseURL(resopnseURL:string){
+    for(const [requestURL, linksItem] of this.record.links){
+      if(linksItem.response?.responseURL === resopnseURL){
+        return linksItem;
+      }
+    }
+    return null;
+  }
   async updateLinks(args:{targetURL:ValidURL, requestURLFromPage:ValidURL, request:Request|null, errorMessage:ErrorMessage}):Promise<void>;
   async updateLinks(args:{targetURL:ValidURL, requestURLFromPage:ValidURL}):Promise<void>;
   async updateLinks(args:{targetURL:ValidURL, requestURLFromPage:ValidURL, request?:Request|null, errorMessage?:ErrorMessage}){

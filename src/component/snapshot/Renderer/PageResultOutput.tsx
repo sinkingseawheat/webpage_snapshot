@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { useState, useEffect } from "react";
 import style from '@/component/snapshot/Renderer/style/Output.module.scss'
 
@@ -94,6 +95,7 @@ const PageResultOutput:React.FC<{
     })
 
   return (<>
+    <div className={style['u-mt']}><Link className={style.textLink} href={`/snapshot/${selectedId.replace('-','/')}`}>&lt;メインの結果に移動する</Link></div>
     <p className={`${style.headingLv4} ${style['u-mt--large']}`}>「<span>{indexOfURL}</span>　<strong>{targetURL}</strong>」の結果です。</p>
     <section>
       <h5 className={style.headingLv3}>リダイレクト</h5>

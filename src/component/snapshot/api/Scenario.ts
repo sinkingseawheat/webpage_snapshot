@@ -74,17 +74,7 @@ class Scenario {
       const {referer} = this.otherScenarioOption;
       const gotoOption = (referer === undefined || referer === '') ? undefined : {referer}
       this.responseResultInPage = await getResponseByPageGoto(page, this.targetURL, gotoOption);
-      const {response:pageResponse, errorMessage:pageErrorMessage} = this.responseResultInPage;
-      const redirectTransition:PageResultRecord["redirectTransition"] =  pageResponse === null ?
-        []
-        : [
-          {
-            url:pageResponse.url(),
-            status:pageResponse.status()
-          },
-          ...await getRedirectStatusFromRequest(pageResponse.request(), true)
-        ];
-      this.pageResult.updateRecord({redirectTransition});
+      const {response:pageResponse, errorMessage:pageErrorMessage, redirectInBrowser} = this.responseResultInPage;
       // MainResultRecord["links"]の更新を行う。
       // page.on('requestfailed'),page.on('requestfinished')のリスナーによるデータ収集はここで終える。
       const promises = [];
@@ -104,6 +94,52 @@ class Scenario {
       }
       this.pageResult.updateRecord({URLsRequestFromPage});
       await Promise.all(promises);
+
+      // リダイレクト結果を格納
+      const redirectTransitionInBrowser:PageResultRecord["redirectTransition"] = redirectInBrowser.map(([firstRequestURL, responseURL])=>{
+        const linksItem = this.mainResult.getLinksItem(responseURL);
+        if(linksItem!==undefined){
+          const result = linksItem.response;
+          if(result!==null && result.responseURL!==null){
+            return {
+              url:responseURL,
+              status:result.status,
+              type:'Browser' as const,
+            }
+          }
+        }
+        const linksItemByResponseURL = this.mainResult.getLinksItemByResponseURL(responseURL);
+        if(linksItemByResponseURL !== null && linksItemByResponseURL.response !== null && linksItemByResponseURL.response.responseURL !== null){
+          return {
+            url:responseURL,
+            status:linksItemByResponseURL.response.status,
+            type:'Browser' as const,
+          }
+        }
+        return null;
+      }).filter(item=>item!==null);
+      redirectTransitionInBrowser.reverse() // 新しいリクエストを先頭にする
+      const redirectTransitionInSever:PageResultRecord["redirectTransition"] =  pageResponse === null ?
+        []
+        : [
+          {
+            url:pageResponse.url(),
+            status:pageResponse.status(),
+            type: 'Server',
+          },
+          ...await getRedirectStatusFromRequest(pageResponse.request(), true)
+        ];
+      const laseElementOfBrowserRedirect = redirectTransitionInBrowser[redirectTransitionInBrowser.length-1];
+      const firstElementOfServerRedirect = redirectTransitionInSever[0];
+      if(
+        laseElementOfBrowserRedirect.url === firstElementOfServerRedirect.url
+        && laseElementOfBrowserRedirect.status === firstElementOfServerRedirect.status
+      ){
+        redirectTransitionInBrowser.pop() // サーバーリダイレクトとクライアントリダイレクトの境目では二重に記録されるので削除する
+      }
+      this.pageResult.updateRecord({
+        redirectTransition: [...redirectTransitionInBrowser, ...redirectTransitionInSever]
+      });
       if(pageResponse !== null && pageErrorMessage === ''){
         // afterLoaded ページ読み込み完了後
         await (async ()=>{
@@ -136,7 +172,8 @@ class Scenario {
       if(e instanceof Error && e.message.indexOf('Target page, context or browser has been closed')!==-1){
         this.responseResultInPage = {
           response:null,
-          errorMessage:'[no resopnse]'
+          errorMessage:'[no resopnse]',
+          redirectInBrowser:[]
         }
       }else{
         console.error(e);

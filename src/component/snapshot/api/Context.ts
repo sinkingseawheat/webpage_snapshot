@@ -41,7 +41,7 @@ class Context {
   }
   async init(){
     if(this.browser === null){
-      this.browser = await chromium.launch({headless:true});
+      this.browser = await chromium.launch({headless:false});
     }
     const _browserContextOption = deserializeBrowserContextPickedFormFields(this.formData);
     const browserContextOption = (()=>{
