@@ -25,8 +25,22 @@ const DescriptionOfTextFile:React.FC<{
         {results.map(({
     requestURL, type, tagName, relURL, href, responseURL, status, contentType, contentLength, shaHash, source, linkSourceIndex, archiveIndex, errorMessage
   })=>{
+        const query = (()=>{
+          if(archiveIndex !== null && archiveIndex !== undefined && contentType !== undefined && contentType !== null){
+            const charset = contentType.match(/charset=(.+);?$/)?.[1];
+            if(typeof charset === 'string'){
+              return `contentType=${encodeURIComponent(`text/plain; charset=${charset}`)}`;
+            }else{
+              return `contentType=${encodeURIComponent(`text/plain; charset=UTF-8`)}`;
+            }
+          }
+          else{
+            // アーカイブされていない、またはcontent-Typeが不明な場合はリンクを作成しない
+            return '';
+          }
+        })();
         return (<tr key={requestURL}>
-          <td className={style["table__data--url"]}>{archiveIndex !== null && archiveIndex !== undefined ? <Link target="_blank" className={style.textLink} href={getPath(`archive/${archiveIndex}?contentType=${encodeURIComponent('text/plain; charset=UTF-8')}`)}>{requestURL}</Link> : requestURL}</td>
+          <td className={style["table__data--url"]}>{archiveIndex !== null && archiveIndex !== undefined ? <Link target="_blank" className={style.textLink} href={getPath(`archive/${archiveIndex}?${query}`)}>{requestURL}</Link> : requestURL}</td>
           <td className={style["table__data--url"]}>{requestURL === responseURL ? 'サーバーリダイレクト無' : responseURL}</td>
           <td>{status ?? '取得できません'}</td>
           <td className={style["table__data--url"]}>{shaHash ?? `取得できません`}</td>
