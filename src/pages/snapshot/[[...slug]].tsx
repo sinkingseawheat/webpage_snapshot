@@ -1,7 +1,7 @@
 import dynamic from "next/dynamic";
 import Output from "@/component/snapshot/Renderer/Output";
 import PullDownOfJobId from "@/component/snapshot/Renderer/PullDownOfJobId";
-import style from '@/component/snapshot/Renderer/style/FormInput.module.scss'
+import style from '@/component/snapshot/Renderer/style/FormInput.module.scss';
 
 import { useRouter } from "next/router";
 import { useState, useEffect } from "react";
@@ -10,7 +10,15 @@ const InputForm = dynamic(import("@/component/snapshot/Renderer/InputForm"), {ss
 
 const SnapShot:React.FC<{}> = ()=>{
 
+  const [version, setVersion] = useState<string|null>(null);
   const [jobIds, setJobIds] = useState(['']);
+
+  useEffect(()=>{
+    fetch(`/api/snapshot/info?type=getVersion`)
+    .then((response)=> response.json())
+    .then((json)=>{setVersion(json.version)})
+    .catch((e)=>{setVersion(null)});
+  },[]);
 
   const router = useRouter();
 
@@ -32,6 +40,7 @@ const SnapShot:React.FC<{}> = ()=>{
   return (
     <section>
       <h2 className={style.headingLv1}>ウェブページの一括取得ツール</h2>
+      {typeof version === 'string' ? <span>Version: {version}</span> : ''}
       {ymd === undefined ?
       <section>
         <h3 className={style.headingLv2}>入力欄</h3>

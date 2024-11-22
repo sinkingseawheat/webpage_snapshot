@@ -2,6 +2,7 @@ import path from 'path';
 import { readdir, mkdir } from 'fs/promises';
 
 import type { NextApiRequest, NextApiResponse } from "next";
+import {VERSION} from '@/utility/getVersion';
 
 export default async function handler(
   req:NextApiRequest,
@@ -9,6 +10,9 @@ export default async function handler(
   {
     type: 'jobId'
     jobIds: string[],
+  } |{
+    type: 'getVersion'
+    version: string | null,
   } | {
     error: string
   }
@@ -23,6 +27,12 @@ export default async function handler(
           type:'jobId',
           jobIds,
         });
+        break;
+      case 'getVersion':
+        res.status(200).json({
+          type:'getVersion',
+          version:VERSION ?? null,
+        })
         break;
       default:
         res.status(404).json({
