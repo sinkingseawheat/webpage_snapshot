@@ -1,5 +1,4 @@
 import style from '@/component/snapshot/Renderer/style/Output.module.scss';
-import { type IndexOfURL, isIndexOfURL } from '@/utility/types/types';
 import type { MainResultRecordJSON } from '@/component/snapshot/JSON';
 
 const LinkLists:React.FC<{
@@ -10,8 +9,7 @@ const LinkLists:React.FC<{
   const dataArray = links.map((link)=>{
     const rowData:string[] = [];
     rowData.push(link['requestURL']); //requestURL
-    const responseURL = link?.['responseURL'] ?? '無し';
-    rowData.push(responseURL===link['requestURL'] ? 'リクエストURLと一致' : responseURL); //responseURL
+    rowData.push(link['status']?.toString() ?? '通信エラー');
     const linkSourceIndex:string[] = link['linkSourceIndex'];
     for(const IndexOfURL of tHeadData){
       rowData.push(linkSourceIndex.includes(IndexOfURL) ? '●' : '×');
@@ -30,7 +28,7 @@ const LinkLists:React.FC<{
       <thead>
         <tr>
           <th>最初にリクエストしたURL</th>
-          <th>最後に受け取ったURL</th>
+          <th>ステータス</th>
           {tHeadData.map((data) => (<th key={data} className={style['table__data--indexOfURL']}>{data}</th>))}
         </tr>
       </thead>

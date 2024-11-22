@@ -52,7 +52,8 @@ const MainResultOutput:React.FC<{
     </div>
     </section>
     <section>
-    <h5 className={style.headingLv4}>リンクリスト</h5>
+    <h5 className={style.headingLv4}>各ファイルのURLとそれらが使用されているページ</h5>
+    <p>●が使われているページ、×が使われていないか検出できなかったページを表す</p>
     <div className={style.table}>
       <LinkLists  {...{targetURLs, links}} />
     </div>
