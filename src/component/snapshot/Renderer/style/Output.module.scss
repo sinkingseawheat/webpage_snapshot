@@ -43,8 +43,13 @@
   font-weight: bold;
   flex: 0 0 auto;
 }
-.imageItem__preview{
+.imageItem__previewBlock{
   flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+.imageItem__preview{
+  flex: 1 0 auto;
   padding:10px;
   display: flex;
   justify-content: center;

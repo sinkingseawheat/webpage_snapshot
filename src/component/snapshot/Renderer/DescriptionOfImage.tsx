@@ -1,6 +1,7 @@
 import { type MergedResultItem } from "@/component/snapshot/JSON";
 import style from '@/component/snapshot/Renderer/style/Output.module.scss'
 import { setGetPathToSendFile } from "./sub/setGetPathToSendFile";
+import { ImageWithOption } from "./ImageWithOption";
 
 const DescriptionOfImage:React.FC<{
   results:MergedResultItem[],
@@ -28,10 +29,10 @@ const DescriptionOfImage:React.FC<{
             : type === 'styleAttribute' ? 'style属性で使用'
             : undefined
           }</div>
-          <div className={style.imageItem__preview}>
+          <div className={style.imageItem__previewBlock}>
             {(archiveIndex === null || archiveIndex === undefined) ?
               <>アーカイブ対象外などの要因で画像を表示できません</>
-              : <img src={getPath(`archive/${archiveIndex}?${query}`)} alt="" />
+              : <ImageWithOption {...{archiveIndex,query,getPath}} />
             }
           </div>
         </div>
