@@ -182,8 +182,11 @@ class Scenario {
       }
     }finally{
       await page.close({reason:'全てのシナリオが終了したため、ページをクローズ'});
-      await this.pageResult.storeCapture();
-      await this.pageResult.dumpJSON();
+      await Promise.all([
+        this.pageResult.storeCapture(),
+        this.pageResult.storeDOMtext(),
+        this.pageResult.dumpJSON(),
+      ]);
       console.log(`次のページ単体の処理を完了しました:${this.targetURL}`);
       return {
         targetURL: this.targetURL,
