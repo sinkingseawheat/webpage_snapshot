@@ -76,8 +76,12 @@ const PageResultOutput:React.FC<{
       }else if(list.type === 'fromCascadingStyleSheets'){
         result.href = list.href;
       }
-      const prevResult = linksResult.get(url);
-      linksResult.set(url, {...result, ...prevResult}); //既存の結果を優先してマージ
+      const prevResult = links.get(url);
+      if(prevResult === undefined){
+        linksResult.set(url, result); //既存の結果を優先してマージ
+      }else{
+        linksResult.set(url, {...result, ...prevResult}); //既存の結果を優先してマージ
+      }
     });
   }
   const linksResultFlatted = Array.from(linksResult).map(([k,v])=>{
@@ -92,6 +96,8 @@ const PageResultOutput:React.FC<{
       const {contentType} = item;
       if(contentType === null || contentType === undefined){return 'other'}
       if(/^image/.test(contentType)){return 'image'}
+      if(/^application\/javascript/.test(contentType)){return 'text'}
+      if(/^application\/json/.test(contentType)){return 'text'}
       if(/^text/.test(contentType)){return 'text'}
       return 'other'
     })
