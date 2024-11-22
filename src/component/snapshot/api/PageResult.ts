@@ -1,5 +1,6 @@
 import { type IndexOfURL, type ValidURL, } from '@/utility/types/types';
 import { getPageResultRecordJSON, type PageResultRecord } from '@/component/snapshot/JSON';
+import { setting } from '@/utility/Setting';
 
 import fs from 'fs/promises';
 import path from 'path';
@@ -42,6 +43,13 @@ class PageResult {
       Promise.all(pageCapture.map(
         (capture) => fs.writeFile(path.join(this.occupiedDirectoryPath, this.indexOfURL, `${capture.name}`), capture.buffer, {flag:'ax'})
       ));
+    }
+  }
+  async storeDOMtext(){
+    const {DOMtext} = this.record;
+    if(setting.isAllowedArchiveURL(this.targetURL) && typeof DOMtext === 'string'){
+      await fs.mkdir(path.join(this.occupiedDirectoryPath, this.indexOfURL), {recursive:true});
+      await fs.writeFile(path.join(this.occupiedDirectoryPath, this.indexOfURL, `document_object_model.txt`), DOMtext, {flag:'ax'})
     }
   }
 }

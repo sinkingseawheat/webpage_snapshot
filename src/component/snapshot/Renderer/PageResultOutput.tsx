@@ -24,17 +24,21 @@ const PageResultOutput:React.FC<{
 
   const [pageResultRecordJSON, setPageResultRecordJSON] = useState<undefined|null|PageResultRecordJSON>(undefined);
   const [errorMessageOfPageResult, setErrorMessageOfPageResult] = useState<string>('');
+  const [isDOMtextExists, setIsDOMtextExists] = useState<boolean|undefined>(undefined);
 
   useEffect(()=>{
     (async ()=>{
       const [
         pageData,
+        responseDOMtextExists,
       ] = await Promise.all([
         getJSONData({selectedId, relativeJSONPath:`${indexOfURL}/page.json`}),
+        fetch(getPath(`${indexOfURL}/document_object_model.txt`))
       ]);
       const {jsonData:pageResultRecordJSON, errorMessage:errorMessageOfPageResult} = pageData;
       setPageResultRecordJSON(pageResultRecordJSON);
       setErrorMessageOfPageResult(errorMessageOfPageResult);
+      setIsDOMtextExists(responseDOMtextExists.ok);
     })();
   }, [selectedId, indexOfURL]);
 
@@ -118,6 +122,14 @@ const PageResultOutput:React.FC<{
           }} />
         }
       </div>
+    </section>
+    <section>
+      <h5 className={style.headingLv3}>DocumentObjectModelテキスト</h5>
+      <p>{
+      isDOMtextExists === undefined ? 'ファイルの存在を確認中です'
+      : isDOMtextExists === false ? 'ファイルが存在していません。アーカイブされていません'
+      : (<Link target="_blank" className={style.textLink} href={getPath(`${indexOfURL}/document_object_model.txt`)+'?contentType='+encodeURIComponent('text/plain; charset=UTF-8')}>ファイルはこちらです</Link>)
+      }</p>
     </section>
     <section>
       <h5 className={style.headingLv3}>キャプチャ</h5>
