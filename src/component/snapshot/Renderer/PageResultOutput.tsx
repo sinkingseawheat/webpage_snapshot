@@ -71,6 +71,7 @@ const PageResultOutput:React.FC<{
     list.absURLs.forEach((url,index)=>{
       if(url===null){return null};
       const result:Pick<MergedResultItem,'type'|'tagName'|'href'|'relURL'> = {};
+      result.type = list.type;
       if(list.type === 'DOM_Attribute'){
         result.tagName = list.tagName;
       }else if(list.type === 'fromCascadingStyleSheets'){
