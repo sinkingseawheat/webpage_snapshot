@@ -1,5 +1,4 @@
-
-
+import Link from 'next/link';
 import { TargetURLs } from './TargetURLs';
 import { FormFieldSource } from './FormFieldSource';
 import { LinkLists } from './LinkLists';
@@ -38,6 +37,7 @@ const MainResultOutput:React.FC<{
   }
 
   return (<>
+  <div className={style['u-mt']}><Link className={style.textLink} href="/snapshot/">&lt;入力画面に戻る</Link></div>
     <p className={`${style.headingLv4} ${style['u-mt']}`}>メインの結果です。</p>
   <section>
     <h5 className={style.headingLv4}>URL</h5>
