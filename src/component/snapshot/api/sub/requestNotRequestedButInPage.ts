@@ -21,18 +21,18 @@ export const requestNotRequestedButInPage = async (args:{
   try{
     // page["route"]はリダイレクトによる再リクエストには反映されないらしいので、これで問題ないはず
     await page.route('**/*',(route, request)=>{
-      if(request.url() !== requestURLFromPage){
-        route.abort();
-      }else{
+      if(request.isNavigationRequest()){
         route.continue();
+      }else{
+        route.abort();
       }
     });
 
     const textNoNeedRequest:ErrorMessage = '[no need to request url]';
     const isNeedRequest = !/^javascript:/.test(requestURLFromPage) && !/^data:/.test(requestURLFromPage);
-    const {response:pageResponse, errorMessage} = isNeedRequest ?
+    const {response:pageResponse, errorMessage, redirectInBrowser} = isNeedRequest ?
       await getResponseByPageGoto(page, requestURLFromPage, {})
-      : {response:null, errorMessage:textNoNeedRequest};
+      : {response:null, errorMessage:textNoNeedRequest, redirectInBrowser:[]};
     if(pageResponse === null){
       if(errorMessage==='ERR_INVALID_AUTH_CREDENTIALS'){
         rv.updatedLinksItem.response = {
