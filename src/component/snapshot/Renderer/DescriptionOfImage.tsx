@@ -12,7 +12,7 @@ const DescriptionOfImage:React.FC<{
     })=>{
       if(contentType === undefined || contentType === null){return null;}
       const query = (()=>{
-        if(archiveIndex !== null || archiveIndex !== undefined){
+        if(archiveIndex !== null && archiveIndex !== undefined){
           return `contentType=${encodeURIComponent(contentType)}`;
         }
         else{

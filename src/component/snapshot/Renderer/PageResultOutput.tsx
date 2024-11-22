@@ -5,6 +5,7 @@ import style from '@/component/snapshot/Renderer/style/Output.module.scss'
 import { RedirectStatus } from "./RedirectStatus";
 import { DescriptionOfImage } from "./DescriptionOfImage";
 import { DescriptionOfTextFile } from "./DescriptionOfTextFile";
+import { DescriptionOfOtherFile } from "./DescriptionOfOtherFile";
 
 import { getJSONData } from './sub/getJSONData';
 import { setGetPathToSendFile } from "./sub/setGetPathToSendFile";
@@ -89,7 +90,7 @@ const PageResultOutput:React.FC<{
     null
     : Object.groupBy(linksResultFlatted, (item)=>{
       const {contentType} = item;
-      if(contentType === null || contentType === undefined){return 'none'}
+      if(contentType === null || contentType === undefined){return 'other'}
       if(/^image/.test(contentType)){return 'image'}
       if(/^text/.test(contentType)){return 'text'}
       return 'other'
@@ -145,6 +146,20 @@ const PageResultOutput:React.FC<{
           <>テキストのファイルはありません</>
           : <DescriptionOfTextFile {...{
             results: linksGroupingByContentType["text"],
+            getPath,
+          }}/>
+        }
+      </div>
+    </section>
+    <section>
+      <h5 className={style.headingLv3}>その他のファイル</h5>
+      <p>ヘッダーのContent-Typeでフィルタリングを行っています。そのため、画像・テキストファイルがここに記載される場合もあります</p>
+      <div>
+        {
+          linksGroupingByContentType === null || linksGroupingByContentType['other'] === undefined  ?
+          <>テキストのファイルはありません</>
+          : <DescriptionOfOtherFile {...{
+            results: linksGroupingByContentType["other"],
             getPath,
           }}/>
         }
