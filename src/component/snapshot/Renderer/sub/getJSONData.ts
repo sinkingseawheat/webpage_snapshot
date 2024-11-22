@@ -20,7 +20,6 @@ export const getJSONData = async (args:{
       const response = await fetch(getPath(relativeJSONPath));
       if(response.ok){
         jsonData = await response.json();
-        console.log(jsonData)
       }else{
         if(response.status === 404){
           errorMessage = `Not Found:${getPath(relativeJSONPath)}の読み込みに失敗しました。ファイルが存在しません`;
