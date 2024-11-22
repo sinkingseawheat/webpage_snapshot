@@ -47,7 +47,7 @@ class Setting {
           console.log(json['proxy']);
           return json['proxy'];
         }else{
-          console.log('proxyは無効となりました')
+          console.log('proxyは未設定です')
           return null;
         }
       })();
