@@ -21,6 +21,7 @@ export const requestNotRequestedButInPage = async (args:{
   try{
     // page["route"]はリダイレクトによる再リクエストには反映されないらしいので、これで問題ないはず
     await page.route('**/*',(route, request)=>{
+      // javascriptなどのブラウザでのリダイレクトはfalseになるので、要検討
       if(request.isNavigationRequest()){
         route.continue();
       }else{
