@@ -1,4 +1,4 @@
-import { chromium } from "playwright";
+import { Browser, chromium } from "playwright";
 import { getResponseByPageGoto } from "./getResponseByPageGoto";
 
 const stubHTML = `
@@ -44,25 +44,38 @@ const stubMetaRedirectedHTML = `
 </body>
 </html>`;
 
-test('redirectTest',async ()=>{
-  const browser = await chromium.launch();
+
+
+const stubInfiniteJSRedirectedHTML = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>meta redirect</title>
+  <script>
+    location.href='/infinite_redirect_loop.html';
+  </script>
+</head>
+<body>
+
+</body>
+</html>`;
+
+const getResponse = async(args:{
+  url:string,
+  htmlSrc:string,
+  browser:Browser,
+})=>{
+  const { url, htmlSrc, browser } = args;
   const page = await browser.newPage();
   page.on('console',(consoleMessage)=>{
     console.log(consoleMessage);
-  })
-  await page.route('**/*',(route)=>{
-    const url = route.request().url();
-    if(/js_redirect\.html$/.test(url)){
+  });
+  page.route('**/*',(route)=>{
+    if(route.request().url() === url){
       route.fulfill({
-        body:stubJSRedirectedHTML,
-        status:200,
-        headers:{
-          'Content-Type':'test,html'
-        }
-      });
-    }else if(/meta_redirect\.html$/.test(url)){
-      route.fulfill({
-        body:stubMetaRedirectedHTML,
+        body:htmlSrc,
         status:200,
         headers:{
           'Content-Type':'test,html'
@@ -78,14 +91,33 @@ test('redirectTest',async ()=>{
       });
     }
   });
-  for await(const [url, type] of [
-    ['https://example.com/js_redirect.html', 'js'],
-    ['https://example.com/meta_redirect.html', 'meta'],
-  ]){
-    const {response, errorMessage, redirectInBrowser} = await getResponseByPageGoto(page, url);
-    console.log(`${type} redirect\n${redirectInBrowser.join('\n').toString()}`);
-  }
-
+  const response = await getResponseByPageGoto(page, url);
   await page.close();
+  return response;
+}
+
+
+test('js', async ()=>{
+  const browser = await chromium.launch();
+  const {response, errorMessage, redirectInBrowser} = await getResponse({url:'https://example.com/js_redirect.html', htmlSrc:stubJSRedirectedHTML, browser});
+  expect(errorMessage).toBe('');
+  expect(redirectInBrowser).toEqual([
+    'https://example.com/js_redirect.html','https://example.com/index.html'
+  ]);
   await browser.close();
-})
+});
+test('meta', async ()=>{
+  const browser = await chromium.launch();
+  const {response, errorMessage, redirectInBrowser} = await getResponse({url:'https://example.com/meta_redirect.html', htmlSrc:stubMetaRedirectedHTML, browser});
+  expect(errorMessage).toBe('');
+  expect(redirectInBrowser).toEqual([
+    'https://example.com/meta_redirect.html','https://example.com/index.html'
+  ]);
+  await browser.close();
+});
+test('infinite loop', async ()=>{
+  const browser = await chromium.launch();
+  const {response, errorMessage, redirectInBrowser} = await getResponse({url:'https://example.com/infinite_redirect_loop.html', htmlSrc:stubInfiniteJSRedirectedHTML, browser});
+  expect(errorMessage).toBe('[too many redirects]');
+  await browser.close();
+});
