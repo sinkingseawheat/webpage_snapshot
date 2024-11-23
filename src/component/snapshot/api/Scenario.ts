@@ -75,6 +75,9 @@ class Scenario {
       const gotoOption = (referer === undefined || referer === '') ? undefined : {referer}
       this.responseResultInPage = await getResponseByPageGoto(page, this.targetURL, gotoOption);
       const {response:pageResponse, errorMessage:pageErrorMessage, redirectInBrowser} = this.responseResultInPage;
+      if(pageErrorMessage === 'ERR_INVALID_AUTH_CREDENTIALS'){
+        throw new ScenarioError(`ERR_INVALID_AUTH_CREDENTIALS`);
+      }
       // MainResultRecord["links"]の更新を行う。
       // page.on('requestfailed'),page.on('requestfinished')のリスナーによるデータ収集はここで終える。
       const promises = [];
@@ -96,7 +99,7 @@ class Scenario {
       await Promise.all(promises);
 
       // リダイレクト結果を格納
-      const redirectTransitionInBrowser:PageResultRecord["redirectTransition"] = redirectInBrowser.map(([firstRequestURL, responseURL])=>{
+      const redirectTransitionInBrowser:PageResultRecord["redirectTransition"] = redirectInBrowser.map((responseURL)=>{
         const linksItem = this.mainResult.getLinksItem(responseURL);
         if(linksItem!==undefined){
           const result = linksItem.response;
@@ -169,6 +172,9 @@ class Scenario {
         })();
       }
     }catch(e){
+      if(e instanceof ScenarioError && e.message.indexOf(`ERR_INVALID_AUTH_CREDENTIALS`)!==-1){
+        throw e;
+      }
       if(e instanceof Error && e.message.indexOf('Target page, context or browser has been closed')!==-1){
         this.responseResultInPage = {
           response:null,
