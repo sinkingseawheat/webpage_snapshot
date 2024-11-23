@@ -31,6 +31,7 @@ export const requestNotRequestedButInPage = async (args:{
 
     const textNoNeedRequest:ErrorMessage = '[no need to request url]';
     const isNeedRequest = !/^javascript:/.test(requestURLFromPage) && !/^data:/.test(requestURLFromPage);
+    // page["route"]の都合上、redirectInBrowserは反映されない
     const {response:pageResponse, errorMessage, redirectInBrowser} = isNeedRequest ?
       await getResponseByPageGoto(page, requestURLFromPage, {})
       : {response:null, errorMessage:textNoNeedRequest, redirectInBrowser:[]};
