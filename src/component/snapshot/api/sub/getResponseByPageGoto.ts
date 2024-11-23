@@ -53,12 +53,30 @@ export const getResponseByPageGoto = async (
         }
       }
     });
-    const response = await page.goto(requestURL, {
+    const gotoOption = {
       ...{
-        waitUntil: 'networkidle',
+        waitUntil: 'networkidle' as const,
       },
       ...option
-    });
+    };
+    const response = await page.goto(requestURL, gotoOption);
+    // meta refreshリダイレクトで秒数が指定されている場合は、無理やり遷移させる。
+    let urlGottenFromMetaRefresh = null;
+    do{
+      const metaContent = await page.evaluate(()=>{
+        const metaElm = document.querySelector('meta[http-equiv="refresh"]');
+        if(metaElm!==null){
+          return metaElm.getAttribute('content');
+        }else{
+          return null;
+        }
+      });
+      const urlGottenFromMetaRefresh = metaContent?.match(/url=(.+)/)?.[1];
+      if(typeof urlGottenFromMetaRefresh === 'string' && URL.canParse(urlGottenFromMetaRefresh, requestURL)){
+        const href = new URL(urlGottenFromMetaRefresh, requestURL).href;
+        await page.goto(href, gotoOption);
+      }
+    }while(urlGottenFromMetaRefresh !== null)
     if(rv.errorMessage === ''){
       rv.errorMessage = (response === null) ? '[no resopnse]' : '';
     }
@@ -71,6 +89,9 @@ export const getResponseByPageGoto = async (
       rv.errorMessage = 'ERR_INVALID_AUTH_CREDENTIALS';
     }else if(e instanceof Error && e.name === 'TimeoutError'){
       rv.errorMessage = '[TimeoutError]';
+    }else if(e instanceof Error && e.message.indexOf('Cannot navigate to invalid URL') !== -1){
+      console.error(e);
+      rv.errorMessage = '[no resopnse]';
     }else if(e instanceof Error){
       console.error('---')
       console.error(e)

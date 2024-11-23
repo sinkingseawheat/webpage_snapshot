@@ -45,6 +45,20 @@ const stubMetaRedirectedHTML = `
 </html>`;
 
 
+const stubMetaRedirected5secondsHTML = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>meta redirect</title>
+  <meta http-equiv="refresh" content="5;url=/index.html" >
+</head>
+<body>
+
+</body>
+</html>`;
+
 
 const stubInfiniteJSRedirectedHTML = `
 <!DOCTYPE html>
@@ -99,19 +113,28 @@ const getResponse = async(args:{
 
 test('js', async ()=>{
   const browser = await chromium.launch();
-  const {response, errorMessage, redirectInBrowser} = await getResponse({url:'https://example.com/js_redirect.html', htmlSrc:stubJSRedirectedHTML, browser});
+  const {response, errorMessage, redirectInBrowser} = await getResponse({url:'https://example.com/redirect.html', htmlSrc:stubJSRedirectedHTML, browser});
   expect(errorMessage).toBe('');
   expect(redirectInBrowser).toEqual([
-    'https://example.com/js_redirect.html','https://example.com/index.html'
+    'https://example.com/redirect.html','https://example.com/index.html'
   ]);
   await browser.close();
 });
 test('meta', async ()=>{
   const browser = await chromium.launch();
-  const {response, errorMessage, redirectInBrowser} = await getResponse({url:'https://example.com/meta_redirect.html', htmlSrc:stubMetaRedirectedHTML, browser});
+  const {response, errorMessage, redirectInBrowser} = await getResponse({url:'https://example.com/redirect.html', htmlSrc:stubMetaRedirectedHTML, browser});
   expect(errorMessage).toBe('');
   expect(redirectInBrowser).toEqual([
-    'https://example.com/meta_redirect.html','https://example.com/index.html'
+    'https://example.com/redirect.html','https://example.com/index.html'
+  ]);
+  await browser.close();
+});
+test('meta wait for seconds', async ()=>{
+  const browser = await chromium.launch();
+  const {response, errorMessage, redirectInBrowser} = await getResponse({url:'https://example.com/redirect.html', htmlSrc:stubMetaRedirected5secondsHTML, browser});
+  expect(errorMessage).toBe('');
+  expect(redirectInBrowser).toEqual([
+    'https://example.com/redirect.html','https://example.com/index.html'
   ]);
   await browser.close();
 });
