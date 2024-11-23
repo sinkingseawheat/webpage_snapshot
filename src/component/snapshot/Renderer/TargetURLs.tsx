@@ -34,7 +34,7 @@ const TargetURLs:React.FC<{
       <tr>
         <th>番号</th>
         <th className={style['table__data--url']}>最初にリクエストしたURL</th>
-        <th className={style['table__data--url']}>最後に受け取ったURL</th>
+        <th className={style['table__data--url']}>サーバーリダイレクト後のURL</th>
         <th>レスポンスステータス</th>
         <th>ページ詳細を見るリンク</th>
       </tr>
