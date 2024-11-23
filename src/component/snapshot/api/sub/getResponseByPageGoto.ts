@@ -11,7 +11,7 @@ export const getResponseByPageGoto = async (
   const rv:{
     response:Response | null,
     errorMessage:ErrorMessage,
-    redirectInBrowser:[string, string][],
+    redirectInBrowser:string[],
   }={
     response:null,
     errorMessage:'',
@@ -27,7 +27,7 @@ export const getResponseByPageGoto = async (
     let isSetRouter = false;
     page.on('framenavigated', (frame)=>{
       if(frame === page.mainFrame()){
-        rv.redirectInBrowser.push([requestURL, frame.url()]);
+        rv.redirectInBrowser.push(frame.url());
       }
       // metaやjavascriptによる無限リダイレクトの抑止
       const targetFrame = redirectCountCheck.get(frame);
@@ -63,7 +63,6 @@ export const getResponseByPageGoto = async (
       rv.errorMessage = (response === null) ? '[no resopnse]' : '';
     }
     rv.response = response;
-    return rv;
   }catch(e){
     if(e instanceof Error && e.message.indexOf('net::ERR_FAILED')!==-1){
       rv.errorMessage = 'net::ERR_FAILED';
@@ -83,6 +82,7 @@ export const getResponseByPageGoto = async (
       rv.errorMessage = '[unplanned]';
     }
     rv.response = null;
+  }finally{
     return rv;
   }
 }
