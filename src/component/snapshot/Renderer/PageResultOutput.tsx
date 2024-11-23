@@ -27,19 +27,25 @@ const PageResultOutput:React.FC<{
   const [isDOMtextExists, setIsDOMtextExists] = useState<boolean|undefined>(undefined);
 
   useEffect(()=>{
-    (async ()=>{
-      const [
-        pageData,
-        responseDOMtextExists,
-      ] = await Promise.all([
-        getJSONData({selectedId, relativeJSONPath:`${indexOfURL}/page.json`}),
-        fetch(getPath(`${indexOfURL}/document_object_model.txt`))
-      ]);
-      const {jsonData:pageResultRecordJSON, errorMessage:errorMessageOfPageResult} = pageData;
-      setPageResultRecordJSON(pageResultRecordJSON);
+    try{
+      (async ()=>{
+        const [
+          pageData,
+          responseDOMtextExists,
+        ] = await Promise.all([
+          getJSONData({selectedId, relativeJSONPath:`${indexOfURL}/page.json`}),
+          fetch(getPath(`${indexOfURL}/document_object_model.txt`))
+        ]);
+        const {jsonData:pageResultRecordJSON, errorMessage:errorMessageOfPageResult} = pageData;
+        setPageResultRecordJSON(pageResultRecordJSON);
+        setErrorMessageOfPageResult(errorMessageOfPageResult);
+        setIsDOMtextExists(responseDOMtextExists.ok);
+      })();
+    }catch(e){
+      setPageResultRecordJSON(null);
       setErrorMessageOfPageResult(errorMessageOfPageResult);
-      setIsDOMtextExists(responseDOMtextExists.ok);
-    })();
+      setIsDOMtextExists(undefined);
+    }
   }, [selectedId, indexOfURL]);
 
   if(mainResultRecordJSON === undefined || pageResultRecordJSON === undefined){

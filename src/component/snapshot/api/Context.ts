@@ -100,7 +100,13 @@ class Context {
         if(this.iscaughtError){
           this.browserContext?.pages().forEach(async (page)=>{
             await page.close();
-          })
+          });
+          await this.browserContext?.close();
+          this.browserContext = null;
+          await this.browser?.close();
+          this.browser = null;
+          console.log(`-- ${this.jobId}の処理を強制終了しました --`);
+          console.log('強制終了したため、browserを終了させました');
         }
         entrance.check(true);
         if(this.browserContext !== null){
@@ -110,6 +116,7 @@ class Context {
               await this.mainResult.dumpJSON();
               if(this.browserContext !== null){
                 this.browserContext.close().finally(()=>{
+                  this.browserContext = null;
                   console.log(`-- ${this.jobId}の処理を完了しました --`);
                   // broser.contextが0の状態で起動したまま、Context["request"]を繰り返すとChromeのスレッドが増殖していくのでちゃんと閉じる
                   if(this.browser !== null && this.browser.contexts().length === 0){

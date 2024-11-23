@@ -21,6 +21,9 @@ const Output:React.FC<{
       if(isMainResultRecordJSON(jsonData)){
         setMainResultRecordJSON(jsonData)
         setErrorMessageOfMainResult(errorMessageOfMainResult)
+      }else{
+        setMainResultRecordJSON(null)
+        setErrorMessageOfMainResult(errorMessageOfMainResult)
       }
     })()
   }, [selectedId]);
