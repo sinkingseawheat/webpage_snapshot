@@ -1,40 +1,75 @@
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-## Getting Started
+## どんなツール？
 
-First, run the development server:
+playwrightを用いたWebページのスナップショットツールです。
+まだアルファ版です。Electronでアプリ化ができなかったので、あたらめて作り直すかもしれません。
+エラーハンドルがまだまだ甘いと思います。
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 設定
+
+結果は`./_data/result`に保存されます。
+設定は`./data/.networkSetting.json`で行います。
+
+以下は設定ファイルの例です。
+
+```JSON
+{
+  "proxy":{
+    "server":"",
+    "bypass":"",
+    "username":"",
+    "password":""
+  },
+  "basicAuth":{
+    "^https://example.com":{
+      "username":"guest",
+      "password":"****"
+    },
+  },
+  "allowArchive":[
+    "^https://example.com",
+  ]
+}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### proxy
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+proxyがある場合の設定です。 [Browser["newContext"]のoptionsにあるproxy](https://playwright.dev/docs/api/class-browser#browser-new-context)に形式を合わせています。
+serverを空の文字列に設定すると無効になります。
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+### basicAuth
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+Basic認証の設定です。Basic認証が設定されているリクエストURLを特定する正規表現をkeyに、そのリクエストURLへのアクセスに必要なユーザー名、パスワードをvalueに設定してください。
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+### allowArchive
 
-## Learn More
+ファイルを保存する対象のURLを特定する正規表現の配列です。どれか1つの正規表現にマッチしたら保存します。
 
-To learn more about Next.js, take a look at the following resources:
+## 始め方
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+まずはコンソールで以下のコマンドでビルドしてください。
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+```bash
+npm build
+```
 
-## Deploy on Vercel
+以下のコマンドでローカルサーバーを起動してください。
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm start
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+ブラウザで[http://localhost:3000/snapshot](http://localhost:3000/snapshot)を開いてください。
+
+「入力欄」の「URL」対象のURLを改行区切りで入力してください。
+
+「送信」ボタンを押してください。
+
+今はまだ、コンソールにのみ進捗状況が表示されます。
+`-- 20241124-gaane0xs2w8yywxvの処理を完了しました --`
+のように表示されたら完了です。
+
+下部のプルダウンを展開すると選択肢が表示されます。選択すると送信したURL全体の結果が表示されます。
+
+各URLの行の「ページ詳細を見るリンク」から各ページの詳細に遷移できます。
