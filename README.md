@@ -108,26 +108,34 @@ _data/
 
 ### main.json
 
-formData
+__formData__
+
  ツールで受け付けたフォームデータ。使用していないフィールドも入っている。
 
-versiton
+__versiton__
+
  ツールのバージョン。package.jsonから取得。
 
-targetURLs
+__targetURLs__
+
  このツールでは受け付けたURLにインデクスをつけて処理している。その対照リスト。
 
-links
+__links__
+
  targetURLおよびそれらから発生したリクエスト、加えてページから抽出したリンクのレスポンス結果を記載。
 
 ### page.json
-redirectTransition
+
+__redirectTransition__
+
  URLのリダイレクトの様子を記載。ここだけmeta refreshやjavascriptによるリダイレクトも反映する。ただし、サーバーリダイレクト→ブラウザでのリダイレクト→再びサーバーリダイレクトなど複雑な場合は正しい順番では格納されない。
 
-URLsRequestFromPage
+__URLsRequestFromPage__
+
  このページからリクエストが発生したURL。
 
-URLsExtracted
+__URLsExtracted__
+
  このページから抽出したURL。いくつかのHTMLタグ（`[href], [src], [srcset], [action], picture, meta[property="og:image"], meta[name="twitter:image"]`）・style属性とCSSファイルおよびstyleタグのbackground-imageとmask-imageに対応している。全量ではない。
 
 ### アーカイブファイルの名前について
