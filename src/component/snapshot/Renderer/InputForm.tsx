@@ -110,7 +110,6 @@ const InputForm:React.FC<{}> = ()=>{
         {
           [
             {labelName:'設定なし',value:''},
-            {labelName:'PC',value:'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'},
           ].map((item)=>{
           return (
             <label key={item.value}>
