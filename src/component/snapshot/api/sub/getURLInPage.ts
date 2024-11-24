@@ -44,7 +44,9 @@ export const getURLInPage = ():PageResultRecord["URLsExtracted"]=>{
     }, new Set<string|null>());
     rv.push({
       type:'DOM_Attribute',
-      tagName,
+      tagName: tagName==='IMG' ?
+        `${tagName.toLocaleLowerCase()} ${node.getAttribute('alt')===null ? `[no alt attribute]` : `alt="${node.getAttribute('alt')}"`}`
+        : tagName.toLocaleLowerCase(),
       relURLs: Array.from(url).filter((item)=>item!==null),
       absURLs:[],
     });

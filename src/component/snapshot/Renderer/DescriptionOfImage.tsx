@@ -24,7 +24,7 @@ const DescriptionOfImage:React.FC<{
       return (<div key={requestURL} className={style.imageItem}>
         <div className={style.imageItem__Block01}>
           <div className={style.imageItem__tagName}>{
-            type === 'DOM_Attribute' && tagName !== undefined ? <>&lt;{tagName.toLowerCase()}&gt;で使用</>
+            type === 'DOM_Attribute' && tagName !== undefined ? <>&lt;{tagName}&gt;で使用</>
             : type === 'fromCascadingStyleSheets' ? 'CSSで使用'
             : type === 'styleAttribute' ? 'style属性で使用'
             : undefined
