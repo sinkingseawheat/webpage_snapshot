@@ -1,5 +1,5 @@
 import path from 'path';
-import { readdir, mkdir } from 'fs/promises';
+import { readdir, mkdir, stat } from 'fs/promises';
 
 import type { NextApiRequest, NextApiResponse } from "next";
 import {VERSION} from '@/utility/getVersion';
@@ -48,6 +48,7 @@ export default async function handler(
 const DIRECTORY_STORING_RESULT = path.join(process.cwd(), './_data/result/snapshot');
 
 async function getJobIds(){
+  const rvWithBirthtime:[number, string][] = [];
   const rv:string[] = [];
   try{
     await mkdir(DIRECTORY_STORING_RESULT, {recursive:true});
@@ -56,11 +57,16 @@ async function getJobIds(){
         const parentPath = dirent.path || dirent.parentPath;
         for(const childDirent of await readdir(path.join(parentPath, dirent.name), {withFileTypes:true})){
           if(childDirent.isDirectory() && childDirent.name.length === 16){
-            rv.push(`${dirent.name}-${childDirent.name}`);
+            const stats = await stat(path.join(parentPath, dirent.name, childDirent.name));
+            rvWithBirthtime.push([stats.birthtime.getTime(), `${dirent.name}-${childDirent.name}`]);
           }
         }
       }
     }
+    rvWithBirthtime.sort((a,b) => b[0] - a[0]);
+    rvWithBirthtime.forEach(([birthtime, jobId])=>{
+      rv.push(jobId);
+    })
   }catch(e){
     console.error(e);
   }finally{
