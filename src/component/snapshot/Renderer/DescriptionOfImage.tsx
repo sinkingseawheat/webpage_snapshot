@@ -44,7 +44,7 @@ const DescriptionOfImage:React.FC<{
               <tr><th>レスポンスステータス</th><td>{status}</td></tr>
               {
                 type === 'fromCascadingStyleSheets' && href !== undefined ?
-                <><tr><th>記述されているCSSファイル</th><td>{href === null ? 'インラインCSS' : href},</td></tr>
+                <><tr><th>記述されているCSSファイル</th><td>{href === null ? 'インラインCSS' : href}</td></tr>
                 <tr><th>CSSテキスト</th><td>{relURL}</td></tr></> : ''
               }
               <tr><th>ハッシュ（sha-256）</th><td>{shaHash ?? `取得できません`}</td></tr>

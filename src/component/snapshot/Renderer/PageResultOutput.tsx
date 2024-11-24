@@ -86,6 +86,7 @@ const PageResultOutput:React.FC<{
         result.tagName = list.tagName;
       }else if(list.type === 'fromCascadingStyleSheets'){
         result.href = list.href;
+        result.relURL = list.relURLs[index];
       }
       const prevResult = links.get(url);
       if(prevResult === undefined){
