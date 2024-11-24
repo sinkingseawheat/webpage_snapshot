@@ -7,16 +7,23 @@
 ## どんなツール？
 
 playwrightを用いたWebページのスナップショットツールです。対象のサイトで禁止されていないか確認してご利用ください。
-まだアルファ版です。Electronでアプリ化ができなかったので、あたらめて作り直すかもしれません。
+ __まだアルファ版です。__ Electronでアプリ化ができなかったので、あたらめて作り直すかもしれません。
 
 ## 用語について
 
 このREADMEではURLをいくつか分類しています。
 
-targetURL: ブラウザのフォームで入力してapiに送信するURL
-URLrequestedFromPage: targetURLをヘッドレスブラウザでロードが完了し、ネットワークがアイドル状態になるまでに発生するリクエストのURL
-extractedLink: targetURLをヘッドレスブラウザで読み込んだ際にリクエストされないが、ページから読み取れるURL（スマートフォン用画像・リンクなど）
-requestURL: 上記3つの総称
+targetURL:  
+ブラウザのフォームで入力してapiに送信するURL  
+
+URLrequestedFromPage:  
+targetURLをヘッドレスブラウザでロードが完了し、ネットワークがアイドル状態になるまでに発生するリクエストのURL  
+
+extractedLink:  
+targetURLのページから読み取れるURL（スマートフォン用画像・リンクなども含む）  
+
+requestURL:  
+上記3つの総称  
 
 ## 設定
 
@@ -47,7 +54,7 @@ requestURL: 上記3つの総称
 
 ### proxy
 
-proxyがある場合の設定です。 [Browser["newContext"]のoptionsにあるproxy](https://playwright.dev/docs/api/class-browser#browser-new-context)に形式を合わせています。
+proxyがある場合の設定です。 Playwrightの[Browser["newContext"]のoptionsにあるproxy](https://playwright.dev/docs/api/class-browser#browser-new-context)に形式を合わせています。
 serverを空の文字列に設定すると無効になります。
 
 ### basicAuth
@@ -57,7 +64,7 @@ Basic認証の設定です。Basic認証が設定されているrequestURLを特
 ### allowArchive
 
 ファイルを保存するrequestURLを特定する正規表現の配列です。どれか1つの正規表現にマッチしたら保存します。
-※ Webページの保存を禁止しているサイトもあります。ご注意ください
+※ Webページの保存を禁止しているサイトもあるようです。ご注意ください。
 
 ## 始め方
 
